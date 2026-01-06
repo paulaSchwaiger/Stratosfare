@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="de">
+  <head>
+    <meta charset="utf-8" />
+    <title>Stratosfare WebAR Prototyp AR</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+
+    <link rel="stylesheet" href="style.css" />
+ 
+    <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/gh/AR-js-org/AR.js@3.4.5/aframe/build/aframe-ar.min.js"></script>
+  </head>
+
+  <body class="page-ar">
+    <!-- HEADER -->
+    <header id="main-header">
+      <div class="header-left">
+        <img
+          src="sources/stratosfare-logo.svg"
+          alt="Stratosfare Logo"
+          class="logo-img"
+        />
+      </div>
+
+      <button class="menu-toggle" aria-label="Menü öffnen">
+        <span></span>
+        <span></span>
+        <span></span>
+      </button>
+    </header>
+
+    <!-- Kamera-Erlaubnis-Overlay (unser eigener Dialog) -->
+    <div id="permission-overlay">
+      <div class="permission-dialog">
+        <h2>Kamera Erlaubnis</h2>
+        <p>
+          Für die AR-Darstellung greift diese Anwendung auf die Kamera deines
+          Geräts zu. Das Kamerabild wird nur lokal im Browser verarbeitet und
+          nicht gespeichert.
+        </p>
+        <ul>
+          <li>Nur zur Erkennung des AR-Markers (z. B. HIRO).</li>
+          <li>Keine Übertragung an einen Server.</li>
+          <li>Ohne Kamerazugriff kann die Anwendung nicht genutzt werden.</li>
+        </ul>
+        <div class="permission-actions">
+          <button id="deny-btn" class="btn btn-secondary">Zurück</button>
+          <button id="allow-btn" class="btn btn-primary">
+            Zustimmen &amp; starten
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Loading für die AR-Szene -->
+    <div id="loading" class="hidden">AR-Szene wird geladen…</div>
+
+    <!-- AR-Bereich -->
+    <div id="ar-wrapper">
+      <div id="ar-root"></div>
+    </div>
+
+    <!-- Countdown -->
+    <div id="countdown-overlay" class="countdown-overlay hidden">
+      <div id="countdown-number" class="countdown-number">3</div>
+    </div>
+
+    <!-- Info Overlay -->
+    <div id="info-overlay" class="info-overlay hidden" role="dialog" aria-modal="true">
+      <div class="info-card">
+        <button id="info-close" class="info-close" aria-label="Overlay schließen">×</button>
+
+        <h3 id="info-title" class="info-title">Title</h3>
+        <p id="info-text" class="info-text">
+          Text
+        </p>
+      </div>
+    </div>
+
+
+    <!-- FOOTER -->
+    <footer id="ar-footer" class="ar-footer hidden">
+      <div class="footer-progress" aria-label="Fortschritt">
+        <div class="footer-progress-bar" style="width: 25%;"></div>
+      </div>
+
+      <a href="#" class="footer-cta">RAKETE STARTEN</a>
+    </footer>
+
+    <!-- AR-Logik -->
+    <script src="ar.js"></script>
+  </body>
+</html>
