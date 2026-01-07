@@ -34,7 +34,7 @@ document.addEventListener("DOMContentLoaded", () => {
           <a-plane
             id="hit-1"
             class="pin"
-            position="0.62 0.7 -0.5"
+            position="0.62 2 0.35"
             rotation="0 0 0"
             width="0.75"
             height="0.18"
@@ -105,7 +105,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
           <!-- TITEL -->
           <a-text
-            value="GESCHÄFTSMODELL"
+            value="GESCH\u00c4FTSMODELL"
             position="-0.78 0.7 -0.25"
             rotation="-90 0 0"
             align="right"
@@ -221,6 +221,38 @@ document.addEventListener("DOMContentLoaded", () => {
   const rocket = document.getElementById("rocket");
   const label = document.getElementById("rocket-label");
   const hint = document.getElementById("hint");
+
+const arRoot = document.getElementById("ar-root");
+
+const fixARAspect = () => {
+  if (!scene || !arRoot) return;
+
+  const w = arRoot.clientWidth;
+  const h = arRoot.clientHeight;
+  if (!w || !h) return;
+
+  // Renderer auf Containergröße setzen
+  if (scene.renderer) scene.renderer.setSize(w, h, false);
+
+  // Kamera-Aspect anpassen
+  if (scene.camera) {
+    scene.camera.aspect = w / h;
+    scene.camera.updateProjectionMatrix();
+  }
+};
+
+// Sobald die Scene wirklich bereit ist
+if (scene.hasLoaded) {
+  fixARAspect();
+} else {
+  scene.addEventListener("loaded", fixARAspect, { once: true });
+}
+
+// Bei Resize / Orientation nochmal korrigieren
+window.addEventListener("resize", fixARAspect);
+window.addEventListener("orientationchange", () => setTimeout(fixARAspect, 250));
+
+
 
   if (!scene || !marker || !rocket) return;
 
