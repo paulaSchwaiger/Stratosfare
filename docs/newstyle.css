@@ -1,0 +1,208 @@
+/* =========================
+   RESET / BASIS
+========================= */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: Arial, sans-serif;
+}
+
+/* =========================
+   HEADER
+========================= */
+
+.landing-header {
+  position: fixed;
+  width: 100%;
+  background-color: #000;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 90px 0;
+}
+
+/* LINKER BEREICH (LOGO) */
+.header-left {
+  margin-left: 20px;
+}
+
+.logo-img {
+  width: 80%;
+  
+  display: block;
+}
+
+/* =========================
+   BURGER MENU
+========================= */
+
+.menu-toggle {
+  margin-right: 30px;
+  background: none;
+  border: none;
+  cursor: pointer;
+
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+
+  width: 50px;
+  height: 50px;
+}
+
+.menu-toggle span {
+  display: block;
+  height: 5px;
+  width: 100%;
+  background-color: #fff;
+  border-radius: 2px;
+}
+
+/* Hintergrundbild */
+.page-landing {
+   min-height: 100%;
+  background-image: url("sources/new.png");
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+
+}
+
+/* Main Layout */
+.landing-main {
+  width: 100%;          /* wie gewünscht erstmal fix */
+  margin: 0 ;        /* zentriert auf größeren Screens */
+  min-height: calc(100vh - 110px); /* grob: Headerhöhe, passt später dynamisch */
+  display: flex;
+  flex-direction: column;
+  padding: 0 80px;
+}
+
+/* Überschrift 50px unter Header */
+.landing-intro {
+  padding-top: 350px;
+  text-align: center;
+  align-content: center;
+}
+
+.landing-title {
+  color: #ffffff;
+  font-size: 33pt;
+  font-weight: bold;
+  line-height: 1.2;
+  margin-bottom: 70px;
+  letter-spacing: 0.5px;
+}
+
+.landing-subtext {
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 30pt;
+  line-height: 1.5;
+  max-width: 820px;
+}
+
+/* Buttons unten */
+.landing-actions {
+  margin-top: auto;      /* schiebt den Bereich nach unten */
+  padding-bottom: 100px;
+  padding-left: 30px;
+  padding-right: 30px;
+  display: grid;
+  grid-template-columns: repeat(2,1fr);
+  gap: 30px;
+}
+
+.action-btn {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  text-decoration: none;
+  color: #000000;
+  font-size: 30pt;
+  font-weight: bold;
+
+  padding: 14px 40px;
+  border-radius: 60px;
+
+  background: rgb(255, 255, 255);
+  border: 2px solid rgb(0, 0, 0);
+
+  transition: 
+    color 0.25s ease,
+    border-color 0.25s ease;
+}
+
+.action-btn:hover {
+  color: #00DCB5;
+  border-color: #00DCB5;
+}
+
+
+.action-btn:active {
+  transform: scale(0.99);
+}
+
+.arrow-icon {
+  width: 50px;
+  height: 50px;
+  flex: 0 0 auto;
+}
+
+/* MEHR ERFAHREN SEITE */
+
+.cta-stack {
+  width: 100%;
+   margin-top: auto;
+  padding-bottom: 100px;
+  padding-left: 30px;
+  padding-right: 30px;
+  display: flex;
+  flex-direction: column;
+  gap: 30px; /* Abstand zwischen den beiden Buttons */
+}
+
+
+.btn-cta {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  text-decoration: none;
+  text-align: center;
+  font-size: 30pt;
+  font-weight: bold;
+
+  padding: 14px 40px;
+  border-radius: 999px;
+  background: rgb(255, 255, 255);
+  border: 2px solid rgb(0, 0, 0);
+
+  transition: 
+    color 0.25s ease,
+    border-color 0.25s ease;
+}
+
+/* Optional: Hover/Active für Desktop/Touch */
+.btn-cta:hover {
+  color: #00DCB5;
+  border-color: #00DCB5;
+}
+
+.btn-cta:active {
+  transform: scale(0.99);
+}
+
+.btn-cta.secondary {
+  color: rgba(0, 0, 0, 0.75);
+  border: 2px solid rgb(255, 255, 255);
+}
+
+.btn-cta.secondary:hover {
+  color: #00DCB5;
+}
