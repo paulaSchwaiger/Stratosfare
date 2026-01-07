@@ -23,9 +23,9 @@ document.addEventListener("DOMContentLoaded", () => {
           id="rocket"
           visible="false"
           position="0 0 0"
-          rotation="-90 0 0"
-          width="1"
-          height="1.8"
+          rotation="0 0 0"
+          width="1.2"
+          height="3"
           material="src: url(sources/Rakete_00.png); transparent: true;"
         ></a-plane>
 
@@ -35,45 +35,43 @@ document.addEventListener("DOMContentLoaded", () => {
             id="hit-1"
             class="pin"
             position="0.62 0.7 -0.5"
-            rotation="-90 0 0"
+            rotation="0 0 0"
             width="0.75"
             height="0.18"
-            material="opacity: 0; transparent: true; side: double; depthWrite: false;"
+            material="opacity: 0.001; transparent: true; side: double; depthWrite: false;"
           ></a-plane>
 
           <!-- Pin -->
           <a-sphere
             id="pin-1"
             class="pin"
-            position="0.35 0.7 -0.5"
-            radius="0.04"
+            position="0.35 2 0.35"
+            radius="0.06"
             material="color: #EBFF00; emissive: #EBFF00; emissiveIntensity: 0.9;"
           ></a-sphere>
 
           <!-- Linie -->
           <a-plane
-            position="0.57 0.7 -0.5"
+            position="0.57 2 0.35"
             rotation="-90 0 0"
-            width="0.37"
+            width="0.39"
             height="0.01"
-            material="color: #EBFF00; emissive: #EBFF00; emissiveIntensity: 0.7; shader: flat;"
+            material="color: #EBFF00; emissive: #EBFF00; emissiveIntensity: 0.7; shader: flat; side: double;"
+            look-at="[camera]"
           ></a-plane>
 
           <!-- Titel -->
           <a-text
             value="MISSION"
-            position="0.78 0.7 -0.5"
-            rotation="-90 0 0"
+            position="0.78 2 0.35"
+            rotation="0 0 0"
             align="left"
-            width="2.2"
+            width="3.5"
             color="#EBFF00"
+            side="double"
           ></a-text>
 
         </a-entity>
-
-        <a-sphere id="pin-2" class="pin" visible="false" position="-0.35 0.7 -0.25" radius="0.08"
-          material="color: #EBFF00; emissive: #EBFF00; emissiveIntensity: 0.9;"
-        ></a-sphere>
 
         <a-entity id="pinGroup-2" visible="false">
 
@@ -153,7 +151,7 @@ document.addEventListener("DOMContentLoaded", () => {
             position="0.78 0.7 0"
             rotation="-90 0 0"
             align="left"
-            width="2.2"
+            width="1.8"
             color="#EBFF00"
           ></a-text>
 
