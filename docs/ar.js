@@ -1,5 +1,39 @@
 // ar.js
 
+//====== A-Frame Components ===============
+AFRAME.registerComponent("occluder-obj", {
+  init: function () {
+    const el = this.el;
+
+    const apply = () => {
+      el.object3D.traverse((node) => {
+        if (!node.isMesh) return;
+
+        // Material klonen, damit wir nichts anderes beeinflussen
+        node.material = node.material.clone();
+
+        // Unsichtbar, aber depth schreiben (Occlusion)
+        node.material.colorWrite = false;
+        node.material.depthWrite = true;
+        node.material.depthTest = true;
+      });
+    };
+
+    // OBJ kommt manchmal async rein -> paar Frames warten
+    let tries = 0;
+    const tick = () => {
+      tries++;
+      if (el.object3D && el.object3D.children && el.object3D.children.length) {
+        apply();
+      } else if (tries < 60) {
+        requestAnimationFrame(tick);
+      }
+    };
+    tick();
+  },
+});
+
+
 document.addEventListener("DOMContentLoaded", () => {
   const permissionOverlay = document.getElementById("permission-overlay");
   const allowBtn = document.getElementById("allow-btn");
@@ -17,43 +51,81 @@ document.addEventListener("DOMContentLoaded", () => {
       renderer="antialias: true; alpha: true"
       arjs="sourceType: webcam; facingMode: environment; debugUIEnabled: false;"
     >
-      <a-marker id="marker-hiro" preset="hiro">
+
+    <!--  ASSETS -->
+    <a-assets>
+      <a-asset-item id="podest-obj" src="sources/3D/Podest.obj"></a-asset-item>
+      <a-asset-item id="podest-mtl" src="sources/3D/Podest.mtl"></a-asset-item>
+    </a-assets>
+
+
+    <!--  MARKER -->
+      <a-marker 
+      id="marker-hiro" preset="hiro"
+      smooth="true"
+      smoothCount="10"
+      smoothTolerance="0.01"
+      smoothThreshold="2"
+      >
+
+        <!-- Sichtbar zum Ausrichten -->
+        <a-entity
+          id="podest-debug"
+          obj-model="obj: #podest-obj; mtl: #podest-mtl"
+          position="-3.5 -0.2 0"
+          rotation="0 90 0"
+          scale="0.1 0.1 0.1"
+          material="color: #00ffcc; opacity: 0.6; transparent: true;"
+        ></a-entity>
+
+        <!-- Occluder -->
+        <a-entity
+          id="podest-occluder"
+          obj-model="obj: #podest-obj; mtl: #podest-mtl"
+          position="0 -0.4375 0"
+          rotation="0 0 0"
+          scale="1 1 1"
+          occluder-obj
+        ></a-entity>
+
+        <a-sphere position="0 0 0" radius="0.03" color="red"></a-sphere>
 
         <a-plane
           id="rocket"
           visible="false"
-          position="0 0 0"
+          position="0 0.03 0"
           rotation="0 0 0"
-          width="1.2"
+          width="1"
           height="3"
-          material="src: url(sources/Rakete_00.png); transparent: true;"
+          material="src: url(sources/Rakete_final.png); transparent: true;"
         ></a-plane>
 
         <a-entity id="pinGroup-1" visible="true">
-        <!-- Hitbox -->
-          <a-plane
+        <!-- HITBOX als BOX (viel besser klickbar als plane) -->
+          <a-box
             id="hit-1"
             class="pin"
-            position="0.62 2 0.35"
+            position="0.8 2 0.35"
             rotation="0 0 0"
-            width="0.75"
-            height="0.18"
-            material="opacity: 0.001; transparent: true; side: double; depthWrite: false;"
-          ></a-plane>
+            width="1.6"
+            height="0.45"
+            depth="0.3"
+            material="opacity: 0.7; color: #EBFF00; side: double; depthWrite: false; depthTest: false;"
+          ></a-box>
+
 
           <!-- Pin -->
           <a-sphere
-            id="pin-1"
-            class="pin"
-            position="0.35 2 0.35"
+            id="pin-1"  
+            position="0.35 2.001 0.35"
             radius="0.06"
             material="color: #EBFF00; emissive: #EBFF00; emissiveIntensity: 0.9;"
           ></a-sphere>
 
           <!-- Linie -->
           <a-plane
-            position="0.57 2 0.35"
-            rotation="-90 0 0"
+            position="0.57 2.002 0.35"
+            rotation="0 0 0"
             width="0.39"
             height="0.01"
             material="color: #EBFF00; emissive: #EBFF00; emissiveIntensity: 0.7; shader: flat; side: double;"
@@ -63,7 +135,7 @@ document.addEventListener("DOMContentLoaded", () => {
           <!-- Titel -->
           <a-text
             value="MISSION"
-            position="0.78 2 0.35"
+            position="0.78 2.015 0.35"
             rotation="0 0 0"
             align="left"
             width="3.5"
@@ -79,49 +151,51 @@ document.addEventListener("DOMContentLoaded", () => {
           <a-plane
             id="hit-2"
             class="pin"
-            position="-0.62 0.7 -0.25"
+            position="-0.62 1.499 0.35"
             rotation="-90 0 0"
-            width="0.75"
-            height="0.18"
+            width="0.95"
+            height="0.25"
             material="opacity: 0.001; transparent: true; side: double; depthWrite: false;"
           ></a-plane>
 
           <!-- PIN -->
           <a-sphere
             id="pin-2"
-            position="-0.35 0.7 -0.25"
+            position="-0.35 1.499 0.35"
             radius="0.04"
             material="color: #EBFF00; emissive: #EBFF00; emissiveIntensity: 0.9;"
           ></a-sphere>
 
-          <!-- LINIE -->
+          <!-- LINIE (ohne look-at, flach auf Marker) -->
           <a-plane
-            position="-0.57 0.7 -0.25"
+            position="-0.57 1.498 0.35"
             rotation="-90 0 0"
-            width="0.37"
+            width="0.39"
             height="0.01"
-            material="color: #EBFF00; emissive: #EBFF00; emissiveIntensity: 0.7; shader: flat;"
+            material="color: #EBFF00; emissive: #EBFF00; emissiveIntensity: 0.7; shader: flat; side: double;"
           ></a-plane>
 
-          <!-- TITEL -->
+          <!-- TITEL (auch flach, leicht höher) -->
           <a-text
-            value="GESCH\u00c4FTSMODELL"
-            position="-0.78 0.7 -0.25"
-            rotation="-90 0 0"
+            value="GESCHÄFTSMODELL"
+            position="-0.78 1.485 0.35"
+            rotation="0 0 0"
             align="right"
-            width="2.2"
+            width="3.5"
             color="#EBFF00"
+            side="double"
           ></a-text>
 
         </a-entity>
+
 
         <a-entity id="pinGroup-3" visible="true">
         <!-- Hitbox -->
           <a-plane
             id="hit-3"
             class="pin"
-            position="0.62 0.7 0"
-            rotation="-90 0 0"
+            position="0.62 1 0.35"
+            rotation="0 0 0"
             width="0.75"
             height="0.18"
             material="opacity: 0; transparent: true; side: double; depthWrite: false;"
@@ -131,73 +205,71 @@ document.addEventListener("DOMContentLoaded", () => {
           <a-sphere
             id="pin-3"
             class="pin"
-            position="0.35 0.7 0"
+            position="0.35 1 0.35"
             radius="0.04"
             material="color: #EBFF00; emissive: #EBFF00; emissiveIntensity: 0.9;"
           ></a-sphere>
 
           <!-- Linie -->
           <a-plane
-            position="0.57 0.7 0"
+            position="0.57 1 0.35"
             rotation="-90 0 0"
-            width="0.37"
+            width="0.39"
             height="0.01"
-            material="color: #EBFF00; emissive: #EBFF00; emissiveIntensity: 0.7; shader: flat;"
+            material="color: #EBFF00; emissive: #EBFF00; emissiveIntensity: 0.7; shader: flat; side: double;"
+            look-at="[camera]"
           ></a-plane>
 
           <!-- Titel -->
           <a-text
             value="TEAM & ARBEITSWEISE"
-            position="0.78 0.7 0"
-            rotation="-90 0 0"
+            position="0.78 1 0.35"
+            rotation="0 0 0"
             align="left"
-            width="1.8"
+            width="3.5"
             color="#EBFF00"
+            side="double"
           ></a-text>
 
         </a-entity>
+<a-entity id="pinGroup-4" visible="false">
 
-        <a-entity id="pinGroup-4" visible="false">
+  <a-plane
+    id="hit-4"
+    class="pin"
+    position="-0.62 0.001 0.35"
+    rotation="-90 0 0"
+    width="0.95"
+    height="0.25"
+    material="opacity: 0.001; transparent: true; side: double; depthWrite: false;"
+  ></a-plane>
 
-          <!-- HITBOX -->
-          <a-plane
-            id="hit-4"
-            class="pin"
-            position="-0.62 0.7 0.25"
-            rotation="-90 0 0"
-            width="0.75"
-            height="0.18"
-            material="opacity: 0.001; transparent: true; side: double; depthWrite: false;"
-          ></a-plane>
+  <a-sphere
+    id="pin-4"
+    position="-0.35 0.001 0.35"
+    radius="0.04"
+    material="color: #EBFF00; emissive: #EBFF00; emissiveIntensity: 0.9;"
+  ></a-sphere>
 
-          <!-- PIN -->
-          <a-sphere
-            id="pin-4"
-            position="-0.35 0.7 0.25"
-            radius="0.04"
-            material="color: #EBFF00; emissive: #EBFF00; emissiveIntensity: 0.9;"
-          ></a-sphere>
+  <a-plane
+    position="-0.57 0.002 0.35"
+    rotation="-90 0 0"
+    width="0.39"
+    height="0.01"
+    material="color: #EBFF00; emissive: #EBFF00; emissiveIntensity: 0.7; shader: flat; side: double;"
+  ></a-plane>
 
-          <!-- LINIE -->
-          <a-plane
-            position="-0.57 0.7 0.25"
-            rotation="-90 0 0"
-            width="0.37"
-            height="0.01"
-            material="color: #EBFF00; emissive: #EBFF00; emissiveIntensity: 0.7; shader: flat;"
-          ></a-plane>
+  <a-text
+    value="PROJEKTE"
+    position="-0.78 0.015 0.35"
+    rotation="-90 0 0"
+    align="right"
+    width="3.5"
+    color="#EBFF00"
+    side="double"
+  ></a-text>
 
-          <!-- TITEL -->
-          <a-text
-            value="PROJEKTE"
-            position="-0.78 0.7 0.25"
-            rotation="-90 0 0"
-            align="right"
-            width="2.2"
-            color="#EBFF00"
-          ></a-text>
-
-        </a-entity>
+</a-entity>
 
 
       </a-marker>
@@ -207,7 +279,7 @@ document.addEventListener("DOMContentLoaded", () => {
         id="cam"
         camera
         cursor="rayOrigin: mouse; fuse: false"
-        raycaster="objects: .pin; far: 20"
+        raycaster="objects: .pin; far: 30; interval: 0"
       ></a-entity>
 
     </a-scene>
@@ -223,6 +295,13 @@ document.addEventListener("DOMContentLoaded", () => {
   const hint = document.getElementById("hint");
 
 const arRoot = document.getElementById("ar-root");
+
+const podest = document.getElementById("podest-debug");
+if (podest) {
+  podest.addEventListener("model-loaded", () => console.log("✅ Podest geladen"));
+  podest.addEventListener("model-error", (e) => console.log("❌ Podest Fehler", e.detail));
+}
+
 
 const fixARAspect = () => {
   if (!scene || !arRoot) return;
@@ -325,10 +404,12 @@ window.addEventListener("orientationchange", () => setTimeout(fixARAspect, 250))
     hint?.setAttribute("visible", "false");
 
     // Bewegung erst jetzt starten (optional)
+    /*
     rocket.setAttribute(
       "animation",
       "property: position; dir: alternate; dur: 2000; easing: easeInOutSine; loop: true; to: 0 0.7 0"
     );
+    */
 
     loadingEl.classList.add("hidden");
     arFooter.classList.remove("hidden");
@@ -386,13 +467,13 @@ const disableARInteraction = () => {
   const pinContent = [
     {
       title: "MISSION & VISION",
-      text: "Stratosfare verfolgt das Ziel, den Mittelstand bei der Einführung neuer Technologien zu unterstützen. Durch die Verbindung von etablierten Unternehmen und innovativen Start-ups sollen zukunftsorientierte Lösungen schneller entwickelt, getestet und in reale Unternehmensprozesse integriert werden.", },
-    { title: "GESCHÄFTSMODELL", 
-      text: "Der Venture-Client-Ansatz ermöglicht es Unternehmen, Innovationen nicht zu kaufen oder zu investieren, sondern sie direkt zu nutzen. Stratosfare identifiziert passende Start-ups und schafft Pilotprojekte, in denen neue Technologien unter realen Bedingungen erprobt und weiterentwickelt werden." },
+      text: "Jede Mission beginnt mit dem Mut, Neues zu denken. Stratosfare bringt Innovation in Bewegung und gibt Ideen eine Richtung.", },
+    { title: "NETZWERK & PARTNERSCHAFTEN", 
+      text: "Große Missionen gelingen nie allein. Wenn Unternehmen, Start-ups und Forschung zusammenkommen, entsteht echte Aufbruchsstimmung." },
     { title: "TEAM & ARBEITSWEISE", 
-      text: "Das Team von Stratosfare vereint Expertise aus Technologie, Innovation und Unternehmensentwicklung. In enger Zusammenarbeit mit Unternehmen begleitet es den gesamten Innovationsprozess – von der Identifikation geeigneter Start-ups bis zur Umsetzung erfolgreicher Pilotprojekte." },
+      text: "Hinter jedem Start steht ein engagiertes Team. Mit Erfahrung, Neugier und Vertrauen begleitet es Innovation bis zum Abheben." },
     { title: "PROJEKTE", 
-      text: "In Formaten wie Workshops, Innovationsprogrammen und Pilotprojekten bringt Stratosfare Unternehmen und Start-ups zusammen. Die Aktivitäten zielen darauf ab, konkrete Anwendungsfälle umzusetzen, technologische Hürden zu reduzieren und Innovation im Mittelstand messbar voranzutreiben." },
+      text: "Ideen heben ab, wenn man sie teilt. In gemeinsamen Projekten werden Visionen getestet, geschärft und umgesetzt." },
   ];
 
   // robust: Sichtbarkeit wirklich setzen
@@ -630,25 +711,21 @@ const startCountdown = (seconds = 3, onDone) => {
 // --- Hol dir Kamera + Canvas (A-Frame) ---
 const cam = document.getElementById("cam");
 
+let hoverCount = 0;
+
 hitTargets.forEach((hit, idx) => {
   if (!hit) return;
 
   hit.addEventListener("raycaster-intersected", () => {
-    const v = visualPins[idx];
-    if (v) {
-      v.setAttribute("scale", "1.2 1.2 1.2");
-      v.setAttribute("material", "emissiveIntensity", 1.4);
-    }
+    hoverCount++;
+    pinGroups[idx]?.setAttribute("scale", "1.06 1.06 1.06");
     if (scene.canvas) scene.canvas.style.cursor = "pointer";
   });
 
   hit.addEventListener("raycaster-intersected-cleared", () => {
-    const v = visualPins[idx];
-    if (v) {
-      v.setAttribute("scale", "1 1 1");
-      v.setAttribute("material", "emissiveIntensity", 0.7);
-    }
-    if (scene.canvas) scene.canvas.style.cursor = "default";
+    hoverCount = Math.max(0, hoverCount - 1);
+    pinGroups[idx]?.setAttribute("scale", "1 1 1");
+    if (scene.canvas) scene.canvas.style.cursor = hoverCount ? "pointer" : "default";
   });
 });
 
