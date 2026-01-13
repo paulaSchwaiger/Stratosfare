@@ -767,7 +767,7 @@ else scene.addEventListener("loaded", setupCanvasPick, { once: true });
   //------------------------------------------------------------------------------------ 
   //                                   Buttons 
   //  ----------------------------------------------------------------------------------
-  denyBtn?.addEventListener("click", () => (window.location.href = "home.html"));
+  denyBtn?.addEventListener("click", () => (window.location.href = "index.html"));
 
   allowBtn?.addEventListener("click", async () => {
     try {
