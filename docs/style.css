@@ -487,6 +487,23 @@ a-scene {
   color: #e5e7eb;
 }
 
+.info-subtitle {
+  font-size: 0.95rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: #EBFF00;
+  margin-bottom: 10px; 
+}
+
+.info-icon {
+  width: 56px;
+  height: 56px;
+  display: block;
+  margin: 8px 0 12px;
+  object-fit: contain;
+}
+
+
 /* ------------------- COUNTDOWN ------------------------- */
 .countdown-overlay {
   position: fixed;
@@ -595,6 +612,50 @@ a-scene {
   filter: grayscale(0.2);
 }
 
+/* ===== Footer Views (Pins vs Minigame) ===== */
+.footer-view {
+  width: 100%;
+}
+
+.footer-view.hidden {
+  display: none !important;
+}
+
+/* ===== Minigame Layout im Footer ===== */
+.footer-view-minigame .mg-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.footer-view-minigame .mg-text {
+  flex: 1;
+  min-width: 0;
+}
+
+.footer-view-minigame .mg-status {
+  color: #e5e7eb;
+  font-weight: 700;
+  font-size: 0.95rem;
+  line-height: 1.15;
+  margin-bottom: 6px;
+}
+
+.footer-view-minigame .mg-meta {
+  color: rgba(229, 231, 235, 0.9);
+  font-size: 0.9rem;
+  line-height: 1.1;
+}
+
+/* Button im Minigame-Footer nicht full-width */
+.footer-view-minigame .footer-cta {
+  width: auto;
+  padding-inline: 18px;
+  flex: 0 0 auto;
+  white-space: nowrap;
+}
+
+
 /* =====  FULLSCREEN (robust) ===== */
 html, body {
   margin: 0 !important;
@@ -653,3 +714,198 @@ canvas, a-scene {
   background: transparent !important;
 }
 
+/* ===================================================================
+   MINIGAME (Mission 2)
+========================================================================= */
+.minigame-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 2600; /* über AR */
+  pointer-events: auto;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Top-Bar direkt unter Header */
+.minigame-topbar {
+  width: 100%;
+  margin-top: 110px; /* <- an deine Headerhöhe anpassen */
+  padding: 14px 16px 16px;
+
+  background: linear-gradient(
+    to right,
+    rgba(0, 255, 238, 0.8),
+    rgba(23, 1, 62, 0.8)
+  );
+
+  backdrop-filter: blur(8px);
+
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.minigame-toptext {
+  margin: 0;
+  color: #e5e7eb;
+  font-size: 0.95rem;
+  line-height: 1.25;
+  flex: 1;
+}
+
+.minigame-start-btn {
+  padding: 12px 16px;
+  border-radius: 999px;
+  border: 2px solid #ffffff;
+  background: rgba(0, 0, 0, 0.0);
+  color: #ffffff;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.minigame-start-btn:active {
+  transform: scale(0.99);
+}
+
+.minigame-top-left {
+  flex: 1;
+}
+
+.minigame-meta {
+  margin-top: 6px;
+  font-size: 0.9rem;
+  color: rgba(229, 231, 235, 0.9);
+}
+
+
+/* Bühne (Mitte) */
+.minigame-stage {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+
+  /* statt grid-centering: wir steuern den Abstand selbst */
+  justify-content: center;
+
+  padding: 10px 10px;
+  padding-top: 120px;      /* Header-Puffer (anpassen) */
+  padding-bottom: 170px;   /* Footer-Puffer */
+  gap: 6px;                /* ✅ kleiner Abstand zwischen Progress/Time/Tapbox */
+}
+
+
+/* Progressbar direkt über Tap-Box */
+.minigame-progress {
+  width: min(78vw, 360px);
+  height: 20px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.2);
+  overflow: hidden;
+
+  z-index: 9999 !important;
+  
+}
+
+.minigame-progress-bar {
+  height: 100%;
+  width: 20%;
+  background: #ffffff;
+  transition: width 120ms linear, background-color 160ms ease;
+}
+
+.minigame-time {
+  width: min(78vw, 360px);
+  margin-top: 2px;
+  margin-bottom: 15px;
+
+  text-align: center;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  color: rgba(229, 231, 235, 0.95);
+}
+
+
+/* Tap-Quadrat */
+.tap-box {
+  width: min(78vw, 250px);
+  aspect-ratio: 1 / 1;
+  border-radius: 18px;
+
+  border: 3px dashed rgba(255, 255, 255, 0.85);
+  background: rgba(0, 0, 0, 0.28);
+  backdrop-filter: blur(6px);
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+
+.tap-box.is-disabled {
+  opacity: 0.55;
+  border-color: rgba(255, 255, 255, 0.28);
+}
+
+/* Text im Quadrat */
+.tap-box-text {
+  font-size: 1.35rem;
+  font-weight: 900;
+  color: #ffffff;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.tap-box-sub {
+  font-size: 1rem;
+  color: rgba(229, 231, 235, 0.95);
+}
+
+/* Tap Feedback */
+@keyframes tapPop {
+  0% { transform: scale(1); }
+  60% { transform: scale(1.03); }
+  100% { transform: scale(1); }
+}
+.tap-box.pop {
+  animation: tapPop 120ms ease-out;
+}
+/* Minigame countdown */
+
+.minigame-countdown {
+  position: fixed;
+  inset: 0;
+  z-index: 2700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+
+.minigame-countdown-number {
+  font-size: 6rem;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  color: #EBFF00;
+  text-shadow: 0 10px 40px rgba(235, 255, 0, 0.35);
+  will-change: transform, opacity;
+}
+
+@keyframes popInOut {
+  0%   { transform: scale(0.7); opacity: 0; }
+  35%  { transform: scale(1.18); opacity: 1; }
+  70%  { transform: scale(0.95); opacity: 1; }
+  100% { transform: scale(0.7); opacity: 0; }
+}
+
+.minigame-countdown-number.pop {
+  animation: popInOut 0.85s ease-in-out;
+}

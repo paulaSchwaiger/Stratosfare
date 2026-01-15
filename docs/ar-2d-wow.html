@@ -62,6 +62,28 @@
       <div id="ar-root"></div>
     </div>
 
+    <!--  MINIGAME -->
+    <div id="minigame-overlay" class="minigame-overlay hidden">
+
+    <div id="minigame-countdown" class="minigame-countdown hidden">
+      <div id="minigame-countdown-number" class="minigame-countdown-number"></div>
+    </div>
+
+    <!-- Center Area -->
+    <section class="minigame-stage">
+      <div class="minigame-progress">
+        <div id="minigame-progress-bar" class="minigame-progress-bar"></div>
+      </div>
+
+      <div class="minigame-time" id="minigame-time">5.0s</div>
+
+      <div id="tap-box" class="tap-box is-disabled" role="button" aria-label="Tap here">
+        <div class="tap-box-text">Tap here</div>
+      </div>
+    </section>
+  </div>
+
+
     <!-- Countdown -->
     <div id="countdown-overlay" class="countdown-overlay hidden">
       <div id="countdown-number" class="countdown-number">3</div>
@@ -72,23 +94,42 @@
       <div class="info-card">
         <button id="info-close" class="info-close" aria-label="Overlay schließen">×</button>
 
-        <h3 id="info-title" class="info-title">Title</h3>
+        <img id="info-icon" class="info-icon" src="" alt="" />
+        <h3 id="info-subtitle" class="info-subtitle">Subtitle</h3>
         <p id="info-text" class="info-text">
           Text
         </p>
       </div>
     </div>
 
-    <!-- Mini Game -->
-
-
     <!-- FOOTER -->
     <footer id="ar-footer" class="ar-footer hidden">
-      <div class="footer-progress" aria-label="Fortschritt">
-        <div class="footer-progress-bar" style="width: 25%;"></div>
+      <!-- Progressbar bleibt ganz oben -->
+      <div class="footer-progress">
+        <div class="footer-progress-bar" id="footer-progress-bar"></div>
       </div>
 
-      <a href="#" class="footer-cta">RAKETE STARTEN</a>
+      <!-- ===== VIEW: Mission 1 (Pins) ===== -->
+      <div class="footer-view footer-view-pins" id="footer-view-pins">
+        <button class="footer-cta" id="footer-btn-pins">MISSION ABSCHLIEßEN</button>
+      </div>
+
+      <!-- ===== VIEW: Mission 2 (Minigame) ===== -->
+      <div class="footer-view footer-view-minigame hidden" id="footer-view-minigame">
+        <div class="mg-row">
+          <div class="mg-text">
+            <div class="mg-status" id="mg-status">Erreiche das Tap-Ziel!</div>
+            <div class="mg-meta">
+              <span><span id="mg-taps">0</span>/<span id="mg-goal">30</span> Taps</span>
+            </div>
+          </div>
+          <button class="footer-cta" id="mg-start-btn">START</button>
+        </div>
+      </div>
+
+      <div class="footer-view footer-view-launch hidden" id="footer-view-launch">
+  <button class="footer-cta" id="launch-btn">RAKETE STARTEN</button>
+</div
     </footer>
 
     <!-- AR-Logik -->
