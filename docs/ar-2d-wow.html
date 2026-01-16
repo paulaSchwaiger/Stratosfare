@@ -2,7 +2,8 @@
 <html lang="de">
   <head>
     <meta charset="utf-8" />
-    <title>Stratosfare WebAR Prototyp AR</title>
+    <title>Stratosfare - Version 2</title>
+    <link rel="icon" type="image/x-icon" href="/docs/sources/stratosfare-triangle.png">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 
     <link rel="stylesheet" href="style.css" />
@@ -62,6 +63,14 @@
       <div id="ar-root"></div>
     </div>
 
+    <!-- Mission Text -->
+    <div id="mission-overlay" class="mission-overlay hidden">
+      <div class="mission-wrap" id="mission-wrap">
+        <div class="mission-title" id="mission-title">MISSION 1</div>
+        <div class="mission-sub" id="mission-sub">Tippe alle Pins an</div>
+      </div>
+    </div>
+
     <!--  MINIGAME -->
     <div id="minigame-overlay" class="minigame-overlay hidden">
 
@@ -95,8 +104,8 @@
         <button id="info-close" class="info-close" aria-label="Overlay schließen">×</button>
 
         <img id="info-icon" class="info-icon" src="" alt="" />
-        <h3 id="info-subtitle" class="info-subtitle">Subtitle</h3>
-        <p id="info-text" class="info-text">
+        <h3 id="info-subtitle" class="info-subtitle"></h3>
+        <p id="info-text2" class="info-text2">
           Text
         </p>
       </div>
