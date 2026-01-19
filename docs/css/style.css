@@ -679,26 +679,29 @@ body.page-ar {
   position: fixed !important;
   inset: 0 !important;
 }
-/* AR-Bereich zwischen Header und Footer */
+//* AR läuft IMMER fullscreen hinter UI */
 #ar-root{
   position: fixed;
-  left: 0;
-  right: 0;
-  top: 120px;     /* Headerhöhe */
-  bottom: 120px;  /* Footerhöhe */
-  z-index: 10;
+  inset: 0;
+  width: 100vw;
+  height: 100dvh; /* echtes Handy */
+  z-index: 0;
+  background: #000;
 }
 
-/* A-Frame füllt nur den AR-Container */
+@supports not (height: 100dvh){
+  #ar-root{ height: 100vh; }
+}
+
 #ar-root a-scene{
   position: absolute !important;
   inset: 0;
 }
 
-/* Canvas/Video füllen den Container ohne Stretch-Artefakte */
-#ar-root canvas,
+/* Video + Canvas fullscreen, OHNE Verzerrung, aber ohne Balken (cropt) */
+#ar-root #arjs-video,
 #ar-root video,
-#arjs-video{
+#ar-root canvas{
   position: absolute !important;
   inset: 0;
   width: 100% !important;
@@ -706,18 +709,26 @@ body.page-ar {
   display: block;
 }
 
-/* WICHTIG: kein cover, sonst "Crop/Stretch" */
-#arjs-video,
+/* WICHTIG: cover = keine Balken, kein Stretch (nur Crop) */
+#ar-root #arjs-video,
 #ar-root video{
-  object-fit: contain !important; /* statt cover */
+  object-fit: cover !important;
   object-position: center center !important;
-  background: #ffffff;
+  background: #000;
 }
 
-/* transparenter Render */
 #ar-root canvas{
   background: transparent !important;
 }
+
+/* Header/Footer liegen einfach drüber */
+#main-header, #ar-footer{
+  position: fixed;
+  left: 0; right: 0;
+  z-index: 3000;
+}
+#main-header{ top: 0; }
+#ar-footer{ bottom: 0; }
 
 
 /* ===================================================================
