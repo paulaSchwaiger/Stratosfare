@@ -68,6 +68,14 @@ document.addEventListener("DOMContentLoaded", () => {
       smoothThreshold="2"
       >
 
+      <a-plane
+        position="0 0 0"
+        rotation="-90 0 0"
+        width="1"
+        height="1"
+        material="color: red; opacity: 0.25; transparent: true; side: double;"
+      ></a-plane>
+
       <a-entity id="podest-rig" position="0 0 0" rotation="0 0 0" scale="0.18 0.18 0.18">
         <a-entity
           id="podest-visible"
@@ -94,11 +102,11 @@ document.addEventListener("DOMContentLoaded", () => {
         <a-plane
           id="rocket"
           visible="false"
-          position="0 0.03 0"
+          position="0 0 0"
           rotation="0 0 0"
-          width="1"
-          height="3"
-          material="src: url(sources/Rakete_final.png); transparent: true;"
+          width="1.2"
+          height="3.2"
+          material="src: url(sources/Rakete_final.png); transparent: true;depthTest: true; depthWrite: false; "
         ></a-plane>
 
         <a-entity id="pinGroup-1" visible="true">
@@ -292,48 +300,55 @@ document.addEventListener("DOMContentLoaded", () => {
 //===============================================================================
 
 
-function fitModelTopToMarkerAndHeight(el, desiredHeightMeters = 0.095) {
+function fitPodestToRealDims(el, { height = 0.95, diameter = 1.8 } = {}) {
   const obj = el.getObject3D("mesh");
   if (!obj) return;
 
-  // sicherstellen, dass world matrices aktuell sind
+  // Reset, damit wir nicht "aufaddieren"
+  el.object3D.position.set(0, 0, 0);
+  el.object3D.scale.set(1, 1, 1);
   el.object3D.updateMatrixWorld(true);
 
-  // Box in WORLD space
+  // World bbox
   let box = new THREE.Box3().setFromObject(obj);
-  const size = new THREE.Vector3();
+  let size = new THREE.Vector3();
   box.getSize(size);
+
   if (size.y <= 0) return;
 
-  // 1) Skalieren auf gewünschte Höhe (z.B. 0.095m)
-  const s = desiredHeightMeters / size.y;
+  // Scale so, dass Höhe passt
+  const sH = height / size.y;
+
+  // Scale so, dass Durchmesser (max x/z) passt
+  const base = Math.max(size.x, size.z);
+  const sD = base > 0 ? (diameter / base) : sH;
+
+  // Nimm den größeren der beiden Faktoren (damit es nicht zu klein wird)
+  const s = Math.max(sH, sD);
   el.object3D.scale.multiplyScalar(s);
 
-  // neu berechnen nach scaling
+  // Neu berechnen nach scaling
   el.object3D.updateMatrixWorld(true);
   box = new THREE.Box3().setFromObject(obj);
 
-  // Parent (Marker) zum Umrechnen in marker-local coords
   const parent = el.object3D.parent;
   if (!parent) return;
 
-  // Center in parent-local
+  // Center & top in parent-local
   const centerW = box.getCenter(new THREE.Vector3());
   const centerP = parent.worldToLocal(centerW.clone());
 
-  // Top-Punkt (maxY) ebenfalls in parent-local
   const topW = new THREE.Vector3(centerW.x, box.max.y, centerW.z);
   const topP = parent.worldToLocal(topW.clone());
 
-  // 2) In parent-local verschieben:
-  //    - X/Z so, dass Center auf (0,0) liegt
-  //    - Y so, dass TOP auf y=0 (Marker-Oberfläche) liegt
+  // Zentrieren + TOP auf Marker-Ebene (y=0)
   el.object3D.position.x -= centerP.x;
   el.object3D.position.z -= centerP.z;
   el.object3D.position.y -= topP.y;
 
   el.object3D.updateMatrixWorld(true);
 }
+
 
 //==========================================================================
 //INIT FUNKTION
@@ -351,11 +366,11 @@ function fitModelTopToMarkerAndHeight(el, desiredHeightMeters = 0.095) {
   const podestOcc = document.getElementById("podest-occluder");
 
   podestVisible?.addEventListener("model-loaded", () => {
-    fitModelTopToMarkerAndHeight(podestVisible, 0.095);
+    fitPodestToRealDims(podestVisible, { height: 0.95, diameter: 1.8 });
   });
 
   podestOcc?.addEventListener("model-loaded", () => {
-    fitModelTopToMarkerAndHeight(podestOcc, 0.095);
+    fitPodestToRealDims(podestOcc, { height: 0.95, diameter: 1.8 });
   });
 
   if (podestVisible) {
