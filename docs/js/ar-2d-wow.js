@@ -341,6 +341,10 @@ document.addEventListener("DOMContentLoaded", () => {
   `;
 }
 
+// ------------------------------------------------------------------------------------
+// Funktionen
+// ------------------------------------------------------------------------------------
+
 function setFooterMode(mode) {
  const pinsView = document.getElementById("footer-view-pins");
   const mgView = document.getElementById("footer-view-minigame");
@@ -399,6 +403,10 @@ function showMissionScreen({ title, sub, durationMs = 2600, onDone }) {
 
 
 
+
+// ------------------------------------------------------------------------------------------
+// Init Logik
+// ------------------------------------------------------------------------------------------
 
   function initARLogic() {
     const scene = document.getElementById("ar-scene");
