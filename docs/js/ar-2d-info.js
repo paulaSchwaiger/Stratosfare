@@ -61,32 +61,33 @@ document.addEventListener("DOMContentLoaded", () => {
 
     <!--  MARKER -->
       <a-marker 
-      id="marker-hiro" preset="hiro"
+      id="marker-hiro" preset="hiro" size="0.08"
       smooth="true"
       smoothCount="10"
       smoothTolerance="0.01"
       smoothThreshold="2"
       >
 
-        <!-- Sichtbar zum Ausrichten -->
+      <a-entity id="podest-rig" position="0 0 0" rotation="0 0 0" scale="0.18 0.18 0.18">
         <a-entity
-          id="podest-debug"
-          obj-model="obj: #podest-obj; mtl: #podest-mtl"
-          position="-3.5 -0.2 0"
+          id="podest-visible"
+          obj-model="obj: url(sources/3D/Podest.obj); mtl: url(sources/3D/podest.mtl)"
+          position="0 0 0"
           rotation="0 90 0"
-          scale="0.1 0.1 0.1"
-          material="color: #00ffcc; opacity: 0.6; transparent: true;"
+          scale="1 1 1"
         ></a-entity>
 
-        <!-- Occluder -->
         <a-entity
           id="podest-occluder"
-          obj-model="obj: #podest-obj; mtl: #podest-mtl"
-          position="0 -0.4375 0"
-          rotation="0 0 0"
+          obj-model="obj: url(sources/3D/Podest.obj); mtl: url(sources/3D/podest.mtl)"
+          position="0 0 0"
+          rotation="0 90 0"
           scale="1 1 1"
-          occluder-obj
+          occluder
         ></a-entity>
+      </a-entity>
+
+        
 
         <a-sphere position="0 0 0" radius="0.03" color="red"></a-sphere>
 
@@ -232,44 +233,44 @@ document.addEventListener("DOMContentLoaded", () => {
           ></a-text>
 
         </a-entity>
-<a-entity id="pinGroup-4" visible="false">
+        <a-entity id="pinGroup-4" visible="false">
 
-  <a-plane
-    id="hit-4"
-    class="pin"
-    position="-0.62 0.001 0.35"
-    rotation="-90 0 0"
-    width="0.95"
-    height="0.25"
-    material="opacity: 0.001; transparent: true; side: double; depthWrite: false;"
-  ></a-plane>
+          <a-plane
+            id="hit-4"
+            class="pin"
+            position="-0.62 0.001 0.35"
+            rotation="-90 0 0"
+            width="0.95"
+            height="0.25"
+            material="opacity: 0.001; transparent: true; side: double; depthWrite: false;"
+          ></a-plane>
 
-  <a-sphere
-    id="pin-4"
-    position="-0.35 0.001 0.35"
-    radius="0.04"
-    material="color: #EBFF00; emissive: #EBFF00; emissiveIntensity: 0.9;"
-  ></a-sphere>
+          <a-sphere
+            id="pin-4"
+            position="-0.35 0.001 0.35"
+            radius="0.04"
+            material="color: #EBFF00; emissive: #EBFF00; emissiveIntensity: 0.9;"
+          ></a-sphere>
 
-  <a-plane
-    position="-0.57 0.002 0.35"
-    rotation="-90 0 0"
-    width="0.39"
-    height="0.01"
-    material="color: #EBFF00; emissive: #EBFF00; emissiveIntensity: 0.7; shader: flat; side: double;"
-  ></a-plane>
+          <a-plane
+            position="-0.57 0.002 0.35"
+            rotation="-90 0 0"
+            width="0.39"
+            height="0.01"
+            material="color: #EBFF00; emissive: #EBFF00; emissiveIntensity: 0.7; shader: flat; side: double;"
+          ></a-plane>
 
-  <a-text
-    value="PROJEKTE"
-    position="-0.78 0.015 0.35"
-    rotation="-90 0 0"
-    align="right"
-    width="3.5"
-    color="#EBFF00"
-    side="double"
-  ></a-text>
+          <a-text
+            value="PROJEKTE"
+            position="-0.78 0.015 0.35"
+            rotation="-90 0 0"
+            align="right"
+            width="3.5"
+            color="#EBFF00"
+            side="double"
+          ></a-text>
 
-</a-entity>
+        </a-entity>
 
 
       </a-marker>
@@ -286,6 +287,57 @@ document.addEventListener("DOMContentLoaded", () => {
   `;
 }
 
+//===============================================================================
+//FUNKTIONEN
+//===============================================================================
+
+
+function fitModelTopToMarkerAndHeight(el, desiredHeightMeters = 0.095) {
+  const obj = el.getObject3D("mesh");
+  if (!obj) return;
+
+  // sicherstellen, dass world matrices aktuell sind
+  el.object3D.updateMatrixWorld(true);
+
+  // Box in WORLD space
+  let box = new THREE.Box3().setFromObject(obj);
+  const size = new THREE.Vector3();
+  box.getSize(size);
+  if (size.y <= 0) return;
+
+  // 1) Skalieren auf gewünschte Höhe (z.B. 0.095m)
+  const s = desiredHeightMeters / size.y;
+  el.object3D.scale.multiplyScalar(s);
+
+  // neu berechnen nach scaling
+  el.object3D.updateMatrixWorld(true);
+  box = new THREE.Box3().setFromObject(obj);
+
+  // Parent (Marker) zum Umrechnen in marker-local coords
+  const parent = el.object3D.parent;
+  if (!parent) return;
+
+  // Center in parent-local
+  const centerW = box.getCenter(new THREE.Vector3());
+  const centerP = parent.worldToLocal(centerW.clone());
+
+  // Top-Punkt (maxY) ebenfalls in parent-local
+  const topW = new THREE.Vector3(centerW.x, box.max.y, centerW.z);
+  const topP = parent.worldToLocal(topW.clone());
+
+  // 2) In parent-local verschieben:
+  //    - X/Z so, dass Center auf (0,0) liegt
+  //    - Y so, dass TOP auf y=0 (Marker-Oberfläche) liegt
+  el.object3D.position.x -= centerP.x;
+  el.object3D.position.z -= centerP.z;
+  el.object3D.position.y -= topP.y;
+
+  el.object3D.updateMatrixWorld(true);
+}
+
+//==========================================================================
+//INIT FUNKTION
+//==========================================================================
 
   function initARLogic() {
   const scene = document.getElementById("ar-scene");
@@ -294,44 +346,50 @@ document.addEventListener("DOMContentLoaded", () => {
   const label = document.getElementById("rocket-label");
   const hint = document.getElementById("hint");
 
-const arRoot = document.getElementById("ar-root");
+  const arRoot = document.getElementById("ar-root");
+  const podestVisible = document.getElementById("podest-visible");
+  const podestOcc = document.getElementById("podest-occluder");
 
-const podest = document.getElementById("podest-debug");
-if (podest) {
-  podest.addEventListener("model-loaded", () => console.log("✅ Podest geladen"));
-  podest.addEventListener("model-error", (e) => console.log("❌ Podest Fehler", e.detail));
-}
+  podestVisible?.addEventListener("model-loaded", () => {
+    fitModelTopToMarkerAndHeight(podestVisible, 0.095);
+  });
 
+  podestOcc?.addEventListener("model-loaded", () => {
+    fitModelTopToMarkerAndHeight(podestOcc, 0.095);
+  });
 
-const fixARAspect = () => {
-  if (!scene || !arRoot) return;
-
-  const w = arRoot.clientWidth;
-  const h = arRoot.clientHeight;
-  if (!w || !h) return;
-
-  // Renderer auf Containergröße setzen
-  if (scene.renderer) scene.renderer.setSize(w, h, false);
-
-  // Kamera-Aspect anpassen
-  if (scene.camera) {
-    scene.camera.aspect = w / h;
-    scene.camera.updateProjectionMatrix();
+  if (podestVisible) {
+    podestVisible.addEventListener("model-loaded", () => console.log("✅ Podest geladen"));
+    podestVisible.addEventListener("model-error", (e) => console.log("❌ Podest Fehler", e.detail));
   }
-};
 
-// Sobald die Scene wirklich bereit ist
-if (scene.hasLoaded) {
-  fixARAspect();
-} else {
-  scene.addEventListener("loaded", fixARAspect, { once: true });
-}
+  const fixARAspect = () => {
+    if (!scene || !arRoot) return;
 
-// Bei Resize / Orientation nochmal korrigieren
-window.addEventListener("resize", fixARAspect);
-window.addEventListener("orientationchange", () => setTimeout(fixARAspect, 250));
+    const w = arRoot.clientWidth;
+    const h = arRoot.clientHeight;
+    if (!w || !h) return;
 
+    // Renderer auf Containergröße setzen
+    if (scene.renderer) scene.renderer.setSize(w, h, false);
 
+    // Kamera-Aspect anpassen
+    if (scene.camera) {
+      scene.camera.aspect = w / h;
+      scene.camera.updateProjectionMatrix();
+    }
+  };
+
+  // Sobald die Scene wirklich bereit ist
+  if (scene.hasLoaded) {
+    fixARAspect();
+  } else {
+    scene.addEventListener("loaded", fixARAspect, { once: true });
+  }
+
+  // Bei Resize / Orientation nochmal korrigieren
+  window.addEventListener("resize", fixARAspect);
+  window.addEventListener("orientationchange", () => setTimeout(fixARAspect, 250));
 
   if (!scene || !marker || !rocket) return;
 
