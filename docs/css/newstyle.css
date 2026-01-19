@@ -65,7 +65,7 @@ body {
 /* Hintergrundbild */
 .page-landing {
    min-height: 100%;
-  background-image: url("sources/new.png");
+  background-image: url("/docs/sources/new.png");
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
