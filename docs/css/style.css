@@ -46,7 +46,7 @@ body.page-landing {
 
 body.page-ar {
   overflow: hidden;
-  background: #000;
+  background: #000000;
 }
 
 .hidden {
@@ -924,7 +924,7 @@ html, body {
   width: 100% !important;
   height: 100% !important;
   overflow: hidden !important;
-  background: #000 !important;
+  background: #00000000 !important;
 }
 
 body.page-ar {
@@ -932,42 +932,27 @@ body.page-ar {
   inset: 0 !important;
 }
 
-/* 1) AR-Container fullscreen */
-#ar-scene {
+/* ===== AR Layer Fix (ganz unten) ===== */
+
+/* Video (Kamera) als Background */
+#arjs-video, video {
   position: fixed !important;
   inset: 0 !important;
   width: 100vw !important;
   height: 100dvh !important;
-  z-index: 0 !important;
-  background: transparent !important;
-}
-
-@supports not (height: 100dvh) {
-  #ar-scene { height: 100vh !important; }
-}
-
-/* 2) AR.js Kamera-Video fullscreen + zentriert */
-#arjs-video {
-  position: fixed !important;
-  inset: 0 !important;
-  width: 100vw !important;
-  height: 100dvh !important;
-
   object-fit: cover !important;
   object-position: 50% 50% !important;
-
-  transform: none !important;
-  display: block !important;
   z-index: 0 !important;
-  background: #000 !important;
+  display: block !important;
+  background: #00000000 !important;
 }
 
 @supports not (height: 100dvh) {
-  #arjs-video { height: 100vh !important; }
+  #arjs-video, video { height: 100vh !important; }
 }
 
-/* 3) A-Frame Canvas Layer darüber */
-.a-canvas {
+/* Canvas darüber, MUSS transparent sein */
+.a-canvas, .a-canvas canvas, canvas {
   position: fixed !important;
   inset: 0 !important;
   width: 100vw !important;
@@ -977,12 +962,11 @@ body.page-ar {
 }
 
 @supports not (height: 100dvh) {
-  .a-canvas { height: 100vh !important; }
+  .a-canvas, .a-canvas canvas, canvas { height: 100vh !important; }
 }
 
-/* 4) UI oben drüber */
-#main-header, #ar-footer, #permission-overlay, #loading, .info-overlay {
-  position: fixed !important;
+/* UI immer oben */
+#main-header, #ar-footer, #permission-overlay, .info-overlay, .minigame-overlay, .mission-overlay {
   z-index: 3000 !important;
 }
 
@@ -1003,8 +987,26 @@ body.page-ar {
   translate: 0 0 !important;
 }
 
-#arjs-video { z-index: 0 !important; }
+/* Video nicht mehr als DOM-Layer sichtbar (sonst überdeckt es Canvas auf Android) */
+#arjs-video, video {
+  opacity: 1 !important;
+  pointer-events: none !important;
+}
+
+
+#arjs-video, #ar-root video { z-index: 0 !important; }
+
 .a-canvas, .a-canvas canvas { z-index: 2 !important; background: transparent !important; }
+
+/* Ensure AR canvas renders above the video layer */
+#ar-root {
+  z-index: 2 !important;
+}
+
+#ar-root .a-canvas,
+#ar-root canvas {
+  z-index: 3 !important;
+}
 
 
 

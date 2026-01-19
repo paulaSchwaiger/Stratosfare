@@ -360,37 +360,19 @@ function fitPodestToRealDims(el, { height = 0.95, diameter = 1.8 } = {}) {
   const rocket = document.getElementById("rocket");
   const label = document.getElementById("rocket-label");
   const hint = document.getElementById("hint");
+  
 
   const arRoot = document.getElementById("ar-root");
   const podestVisible = document.getElementById("podest-visible");
   const podestOcc = document.getElementById("podest-occluder");
 
-const debugCanvas = () => {
-  const canvas = scene?.canvas;
-  console.log("canvas?", !!canvas, canvas?.width, canvas?.height);
-
-  if (canvas) {
-    canvas.style.outline = "3px solid lime";              // MUSS sichtbar sein
-    canvas.style.background = "rgba(255,0,0,0.08)";       // leichter Rotfilm
-    canvas.style.zIndex = "5";
-    canvas.style.position = "fixed";
-    canvas.style.inset = "0";
-  }
-
-  const video = document.getElementById("arjs-video");
-  if (video) video.style.zIndex = "0";
-};
-
-if (scene?.hasLoaded) debugCanvas();
-else scene?.addEventListener("loaded", debugCanvas, { once: true });
-
-
+  
   podestVisible?.addEventListener("model-loaded", () => {
-    fitPodestToRealDims(podestVisible, { height: 0.95, diameter: 1.8 });
+    fitPodestToRealDims(podestVisible, { height: 0.095, diameter: 0.18 });
   });
 
   podestOcc?.addEventListener("model-loaded", () => {
-    fitPodestToRealDims(podestOcc, { height: 0.95, diameter: 1.8 });
+    fitPodestToRealDims(podestOcc, { height: 0.095, diameter: 0.18 });
   });
 
   if (podestVisible) {
@@ -464,6 +446,45 @@ else scene?.addEventListener("loaded", afterSceneReady, { once: true });
 
 
   if (!scene || !marker || !rocket) return;
+
+  // ===== Canvas/Video Fix (Handy) =====
+const forceCanvasLayers = () => {
+  let tries = 0;
+
+  const tick = () => {
+    tries++;
+
+    const video =
+      document.getElementById("arjs-video") || document.querySelector("video");
+    const canvas =
+      scene?.canvas ||
+      document.querySelector(".a-canvas canvas") ||
+      document.querySelector("canvas");
+
+    if (video) video.style.zIndex = "0";
+
+    if (canvas) {
+      canvas.style.zIndex = "2";
+      canvas.style.outline = "3px solid lime";            // DEBUG sichtbar
+      canvas.style.background = "rgba(255,0,0,0.06)";     // DEBUG leichter Rotfilm
+
+      // transparent renderer (sonst kann canvas schwarz sein)
+      if (scene?.renderer) scene.renderer.setClearColor(0x000000, 0);
+
+      console.log("✅ Canvas gefunden", canvas.width, canvas.height);
+      return; // fertig
+    }
+
+    if (tries < 60) requestAnimationFrame(tick); // ~1 Sek
+    else console.warn("❌ Canvas nicht gefunden");
+  };
+
+  requestAnimationFrame(tick);
+};
+
+if (scene.hasLoaded) forceCanvasLayers();
+else scene.addEventListener("loaded", forceCanvasLayers, { once: true });
+
 
   // -------------------------------------------------------
   // ANDROID FIX: Touch -> MouseEvents MIT KOORDINATEN
