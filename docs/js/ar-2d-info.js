@@ -378,22 +378,24 @@ function fitPodestToRealDims(el, { height = 0.95, diameter = 1.8 } = {}) {
     podestVisible.addEventListener("model-error", (e) => console.log("❌ Podest Fehler", e.detail));
   }
 
-  const fixARAspect = () => {
-    if (!scene || !arRoot) return;
+  const resizeAR = () => {
+  if (!scene || !arRoot || !scene.renderer) return;
 
-    const w = arRoot.clientWidth;
-    const h = arRoot.clientHeight;
-    if (!w || !h) return;
+  const w = arRoot.clientWidth;
+  const h = arRoot.clientHeight;
+  if (!w || !h) return;
 
-    // Renderer auf Containergröße setzen
-    if (scene.renderer) scene.renderer.setSize(w, h, false);
+  scene.renderer.setPixelRatio(window.devicePixelRatio || 1);
+  scene.renderer.setSize(w, h, true);
 
-    // Kamera-Aspect anpassen
-    if (scene.camera) {
-      scene.camera.aspect = w / h;
-      scene.camera.updateProjectionMatrix();
-    }
-  };
+  if (typeof scene.resize === "function") scene.resize();
+};
+
+if (scene.hasLoaded) resizeAR();
+else scene.addEventListener("loaded", resizeAR, { once: true });
+
+window.addEventListener("resize", resizeAR);
+window.addEventListener("orientationchange", () => setTimeout(resizeAR, 250));
 
   // Sobald die Scene wirklich bereit ist
   if (scene.hasLoaded) {
