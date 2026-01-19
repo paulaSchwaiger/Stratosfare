@@ -365,6 +365,26 @@ function fitPodestToRealDims(el, { height = 0.95, diameter = 1.8 } = {}) {
   const podestVisible = document.getElementById("podest-visible");
   const podestOcc = document.getElementById("podest-occluder");
 
+const debugCanvas = () => {
+  const canvas = scene?.canvas;
+  console.log("canvas?", !!canvas, canvas?.width, canvas?.height);
+
+  if (canvas) {
+    canvas.style.outline = "3px solid lime";              // MUSS sichtbar sein
+    canvas.style.background = "rgba(255,0,0,0.08)";       // leichter Rotfilm
+    canvas.style.zIndex = "5";
+    canvas.style.position = "fixed";
+    canvas.style.inset = "0";
+  }
+
+  const video = document.getElementById("arjs-video");
+  if (video) video.style.zIndex = "0";
+};
+
+if (scene?.hasLoaded) debugCanvas();
+else scene?.addEventListener("loaded", debugCanvas, { once: true });
+
+
   podestVisible?.addEventListener("model-loaded", () => {
     fitPodestToRealDims(podestVisible, { height: 0.95, diameter: 1.8 });
   });
@@ -381,7 +401,7 @@ function fitPodestToRealDims(el, { height = 0.95, diameter = 1.8 } = {}) {
  const resizeAR = () => {
   if (!scene || !scene.renderer) return;
 
-  const w = window.innerWidth;
+  const w = window.visualViewport?.width  || window.innerWidth;
   const h = window.visualViewport?.height || window.innerHeight;
 
   scene.renderer.setPixelRatio(window.devicePixelRatio || 1);
@@ -395,6 +415,52 @@ else scene.addEventListener("loaded", resizeAR, { once: true });
 
 window.addEventListener("resize", resizeAR);
 window.addEventListener("orientationchange", () => setTimeout(resizeAR, 250));
+
+// --- FIX: Video hinten, Canvas vorne + transparenter Renderer ---
+const forceARLayers = () => {
+  const video = document.getElementById("arjs-video");
+  const canvas = scene?.canvas || document.querySelector(".a-canvas canvas") || document.querySelector("canvas");
+
+  if (video) {
+    video.style.position = "fixed";
+    video.style.inset = "0";
+    video.style.width = "100vw";
+    video.style.height = "100vh";
+    video.style.objectFit = "cover";
+    video.style.zIndex = "0";
+  }
+
+  if (canvas) {
+    canvas.style.position = "fixed";
+    canvas.style.inset = "0";
+    canvas.style.width = "100vw";
+    canvas.style.height = "100vh";
+    canvas.style.zIndex = "2";
+    canvas.style.background = "transparent";
+    canvas.style.pointerEvents = "auto";
+  }
+};
+
+const ensureTransparentRenderer = () => {
+  // alpha/clearColor wichtig, sonst "rendert" es, aber du siehst nix
+  if (scene?.renderer) {
+    scene.renderer.setClearColor(0x000000, 0); // transparent
+  }
+};
+
+// wenn scene ready -> mehrfach anwenden (Android setzt gerne später Styles)
+const afterSceneReady = () => {
+  ensureTransparentRenderer();
+  forceARLayers();
+  setTimeout(forceARLayers, 50);
+  setTimeout(forceARLayers, 200);
+  setTimeout(forceARLayers, 600);
+};
+
+if (scene?.hasLoaded) afterSceneReady();
+else scene?.addEventListener("loaded", afterSceneReady, { once: true });
+
+
 
 
   if (!scene || !marker || !rocket) return;

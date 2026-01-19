@@ -15,13 +15,14 @@
 }
 
 
-/* A-Frame Canvas / Szene vollflächig */
+/* A-Frame Canvas / Szene vollflächig 
 a-scene, canvas {
   width: 100% !important;
   height: 100% !important;
-}
+}*/
 
 /* AR.js Video-Element (Webcam) */
+/*
 video {
   position: fixed !important;
   top: 0 !important;
@@ -29,13 +30,12 @@ video {
   width: 100vw !important;
   height: 100vh !important;
 
-  /* Das ist der entscheidende Punkt:
-     - cover = füllt alles, wirkt oft "gezoomt"
-     - contain = zeigt alles, kann letterboxing machen */
+  
   object-fit: cover !important;
 
-  z-index: -1 !important; /* damit UI & canvas drüber liegen */
+  z-index: -1 !important;
 }
+*/
 
 body.page-landing {
   background: #ffffff;
@@ -53,20 +53,24 @@ body.page-ar {
   display: none !important;
 }
 
-/* Z-INDEX SANITY RESET */
-#permission-overlay,
-#loading,
-#ar-footer,
-#main-header {
-  position: relative;
-  z-index: 1000;
+/* Z-INDEX SANITY RESET 
+
+#ar-root,
+#ar-scene,
+#arjs-video,
+.a-canvas {
+  z-index: 0;
 }
 
-#ar-wrapper,
-a-scene,
-a-scene * {
-  z-index: 0 !important;
+#permission-overlay,
+#loading,
+.info-overlay,
+#main-header,
+#ar-footer {
+  position: fixed;   
+  z-index: 3000;
 }
+*/
 
 
 /* ---------------------- HEADER (beide Seiten, Landing bekommt extra Klasse) --------------------- */
@@ -80,7 +84,7 @@ a-scene * {
 }
 
 .page-ar #main-header {
-  position: sticky;
+  position: fixed;
   top: 0;
   left: 0;
   right: 0;
@@ -292,7 +296,7 @@ a-scene * {
   justify-content: center;
 
   padding: 10px;
-  z-index: 2000;
+ /* z-index: 2000;*/
 }
 
 .permission-dialog {
@@ -373,16 +377,17 @@ a-scene * {
   display: none !important;
 }
 
-/* ----------------------- AR-BEREICH (AR-Seite)----------------------------- */
+/* ----------------------- AR-BEREICH (AR-Seite)----------------------------- 
 #ar-root {
   position: fixed;
-  inset: 0;              /* <-- fullscreen */
+  inset: 0;              
   width: 100%;
   height: 100%;
   background: transparent;
-  z-index: 0;            /* AR unter Header/Footer */
+  z-index: 0;            
 }
-
+*/
+/*
 #arjs-video, video {
   position: fixed !important;
   inset: 0 !important;
@@ -398,8 +403,8 @@ canvas {
   inset: 0 !important;
   width: 100vw !important;
   height: 100vh !important;
-}
-
+}*/
+/*
 #ar-root a-scene {
   width: 100%;
   height: 100%;
@@ -418,7 +423,7 @@ canvas {
 }
 
 
-/*
+
 #ar-wrapper {
   position: fixed;
   inset: 0;
@@ -427,11 +432,12 @@ canvas {
 }
 */
 
+/*
 a-scene {
   width: 100%;
   height: 100%;
   background: transparent !important;
-}
+}*/
 
 /* ----------------------- Info Overlay ----------------------------- */
 
@@ -663,72 +669,6 @@ a-scene {
   flex: 0 0 auto;
   white-space: nowrap;
 }
-
-
-/* =====  FULLSCREEN (robust) ===== */
-html, body {
-  margin: 0 !important;
-  padding: 0 !important;
-  width: 100% !important;
-  height: 100% !important;
-  overflow: hidden !important;
-  background: #000 !important;
-}
-
-body.page-ar {
-  position: fixed !important;
-  inset: 0 !important;
-}
-//* AR läuft IMMER fullscreen hinter UI */
-#ar-root{
-  position: fixed;
-  inset: 0;
-  width: 100vw;
-  height: 100dvh; /* echtes Handy */
-  z-index: 0;
-  background: #000;
-}
-
-@supports not (height: 100dvh){
-  #ar-root{ height: 100vh; }
-}
-
-#ar-root a-scene{
-  position: absolute !important;
-  inset: 0;
-}
-
-/* Video + Canvas fullscreen, OHNE Verzerrung, aber ohne Balken (cropt) */
-#ar-root #arjs-video,
-#ar-root video,
-#ar-root canvas{
-  position: absolute !important;
-  inset: 0;
-  width: 100% !important;
-  height: 100% !important;
-  display: block;
-}
-
-/* WICHTIG: cover = keine Balken, kein Stretch (nur Crop) */
-#ar-root #arjs-video,
-#ar-root video{
-  object-fit: cover !important;
-  object-position: center center !important;
-  background: #000;
-}
-
-#ar-root canvas{
-  background: transparent !important;
-}
-
-/* Header/Footer liegen einfach drüber */
-#main-header, #ar-footer{
-  position: fixed;
-  left: 0; right: 0;
-  z-index: 3000;
-}
-#main-header{ top: 0; }
-#ar-footer{ bottom: 0; }
 
 
 /* ===================================================================
@@ -972,3 +912,99 @@ body.page-ar {
 }
 
 .hidden{ display:none !important; }
+
+
+
+
+
+/* =====  FULLSCREEN (robust) ===== */
+html, body {
+  margin: 0 !important;
+  padding: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  overflow: hidden !important;
+  background: #000 !important;
+}
+
+body.page-ar {
+  position: fixed !important;
+  inset: 0 !important;
+}
+
+/* 1) AR-Container fullscreen */
+#ar-scene {
+  position: fixed !important;
+  inset: 0 !important;
+  width: 100vw !important;
+  height: 100dvh !important;
+  z-index: 0 !important;
+  background: transparent !important;
+}
+
+@supports not (height: 100dvh) {
+  #ar-scene { height: 100vh !important; }
+}
+
+/* 2) AR.js Kamera-Video fullscreen + zentriert */
+#arjs-video {
+  position: fixed !important;
+  inset: 0 !important;
+  width: 100vw !important;
+  height: 100dvh !important;
+
+  object-fit: cover !important;
+  object-position: 50% 50% !important;
+
+  transform: none !important;
+  display: block !important;
+  z-index: 0 !important;
+  background: #000 !important;
+}
+
+@supports not (height: 100dvh) {
+  #arjs-video { height: 100vh !important; }
+}
+
+/* 3) A-Frame Canvas Layer darüber */
+.a-canvas {
+  position: fixed !important;
+  inset: 0 !important;
+  width: 100vw !important;
+  height: 100dvh !important;
+  z-index: 1 !important;
+  background: transparent !important;
+}
+
+@supports not (height: 100dvh) {
+  .a-canvas { height: 100vh !important; }
+}
+
+/* 4) UI oben drüber */
+#main-header, #ar-footer, #permission-overlay, #loading, .info-overlay {
+  position: fixed !important;
+  z-index: 3000 !important;
+}
+
+/* Kamera-Video darf NICHT mit negativen Offsets arbeiten */
+#arjs-video {
+  left: 0 !important;
+  top: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+
+  margin: 0 !important;
+  transform: none !important;
+  
+}
+
+/* falls AR.js statt left/margin mit translate arbeitet */
+#arjs-video {
+  translate: 0 0 !important;
+}
+
+#arjs-video { z-index: 0 !important; }
+.a-canvas, .a-canvas canvas { z-index: 2 !important; background: transparent !important; }
+
+
+
