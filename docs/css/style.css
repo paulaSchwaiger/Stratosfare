@@ -15,13 +15,13 @@
 }
 
 
-/* A-Frame Canvas / Szene vollflächig */
+/* A-Frame Canvas / Szene vollflächig 
 a-scene, canvas {
   width: 100% !important;
   height: 100% !important;
-}
+}*/
 
-/* AR.js Video-Element (Webcam) */
+/* AR.js Video-Element (Webcam) 
 video {
   position: fixed !important;
   top: 0 !important;
@@ -29,13 +29,11 @@ video {
   width: 100vw !important;
   height: 100vh !important;
 
-  /* Das ist der entscheidende Punkt:
-     - cover = füllt alles, wirkt oft "gezoomt"
-     - contain = zeigt alles, kann letterboxing machen */
+ 
   object-fit: cover !important;
 
-  z-index: -1 !important; /* damit UI & canvas drüber liegen */
-}
+  z-index: -1 !important; 
+}*/
 
 body.page-landing {
   background: #ffffff;
@@ -53,7 +51,7 @@ body.page-ar {
   display: none !important;
 }
 
-/* Z-INDEX SANITY RESET */
+/* Z-INDEX SANITY RESET 
 #permission-overlay,
 #loading,
 #ar-footer,
@@ -66,7 +64,7 @@ body.page-ar {
 a-scene,
 a-scene * {
   z-index: 0 !important;
-}
+}*/
 
 
 /* ---------------------- HEADER (beide Seiten, Landing bekommt extra Klasse) --------------------- */
@@ -373,14 +371,14 @@ a-scene * {
   display: none !important;
 }
 
-/* ----------------------- AR-BEREICH (AR-Seite)----------------------------- */
+/* ----------------------- AR-BEREICH (AR-Seite)----------------------------- 
 #ar-root {
   position: fixed;
-  inset: 0;              /* <-- fullscreen */
+  inset: 0;             
   width: 100%;
   height: 100%;
   background: transparent;
-  z-index: 0;            /* AR unter Header/Footer */
+  z-index: 0;           
 }
 
 #arjs-video, video {
@@ -416,7 +414,7 @@ canvas {
   height: 100% !important;
   display: block;
 }
-
+*/
 
 /*
 #ar-wrapper {
@@ -425,13 +423,13 @@ canvas {
   background: transparent !important;
   z-index: 0 !important;
 }
-*/
+
 
 a-scene {
   width: 100%;
   height: 100%;
   background: transparent !important;
-}
+}*/
 
 /* ----------------------- Info Overlay ----------------------------- */
 
@@ -680,48 +678,66 @@ body.page-ar {
   inset: 0 !important;
 }
 
-/* Default: vh (stabil in Desktop-Emulation) */
-#ar-root,
-#ar-root a-scene,
-#ar-root canvas,
-#arjs-video,
-video,
-canvas,
-a-scene {
+/* AR-Layer: Video + Canvas müssen deckungsgleich sein */
+#ar-root {
   position: fixed !important;
   inset: 0 !important;
   width: 100vw !important;
-  height: 100vh !important; /* <- fallback */
-  max-width: 100vw !important;
-  max-height: 100vh !important;
-  margin: 0 !important;
-  padding: 0 !important;
-}
-
-/* Upgrade: dvh, wenn Browser es unterstützt (echtes Handy) */
-@supports (height: 100dvh) {
-  #ar-root,
-  #ar-root a-scene,
-  #ar-root canvas,
-  #arjs-video,
-  video,
-  canvas,
-  a-scene {
-    height: 100dvh !important;
-    max-height: 100dvh !important;
-  }
-}
-
-#arjs-video, video {
-  object-fit: cover !important;
-  object-position: center center !important;
-  background: #000 !important;
-  z-index: -1 !important;
-}
-
-canvas, a-scene {
+  height: 100dvh !important;
+  z-index: 0 !important;
   background: transparent !important;
 }
+@supports not (height: 100dvh) {
+  #ar-root { height: 100vh !important; }
+}
+
+/* A-Frame Scene darf NICHT anders skaliert werden als Canvas */
+#ar-scene {
+  position: fixed !important;
+  inset: 0 !important;
+  width: 100vw !important;
+  height: 100dvh !important;
+  background: transparent !important;
+}
+@supports not (height: 100dvh) {
+  #ar-scene { height: 100vh !important; }
+}
+
+/* AR.js Kamera-Video */
+#arjs-video {
+  position: fixed !important;
+  inset: 0 !important;
+  width: 100vw !important;
+  height: 100dvh !important;
+  object-fit: cover !important;       /* Video darf croppen, aber NICHT stretchen */
+  object-position: 50% 50% !important;
+  transform: none !important;
+  z-index: 0 !important;
+  background: #000 !important;
+}
+@supports not (height: 100dvh) {
+  #arjs-video { height: 100vh !important; }
+}
+
+/* A-Frame Canvas oben drüber */
+.a-canvas,
+.a-canvas > canvas {
+  position: fixed !important;
+  inset: 0 !important;
+  width: 100vw !important;
+  height: 100dvh !important;
+  background: transparent !important;
+  z-index: 1 !important;
+}
+@supports not (height: 100dvh) {
+  .a-canvas, .a-canvas > canvas { height: 100vh !important; }
+}
+
+/* UI darüber */
+#main-header, #ar-footer, #permission-overlay, .info-overlay {
+  z-index: 3000 !important;
+}
+
 
 /* ===================================================================
    MINIGAME (Mission 2)
