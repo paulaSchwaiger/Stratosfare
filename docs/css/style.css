@@ -679,49 +679,46 @@ body.page-ar {
   position: fixed !important;
   inset: 0 !important;
 }
+/* AR-Bereich zwischen Header und Footer */
+#ar-root{
+  position: fixed;
+  left: 0;
+  right: 0;
+  top: 120px;     /* Headerhöhe */
+  bottom: 120px;  /* Footerhöhe */
+  z-index: 10;
+}
 
-/* Default: vh (stabil in Desktop-Emulation) */
-#ar-root,
-#ar-root a-scene,
+/* A-Frame füllt nur den AR-Container */
+#ar-root a-scene{
+  position: absolute !important;
+  inset: 0;
+}
+
+/* Canvas/Video füllen den Container ohne Stretch-Artefakte */
 #ar-root canvas,
+#ar-root video,
+#arjs-video{
+  position: absolute !important;
+  inset: 0;
+  width: 100% !important;
+  height: 100% !important;
+  display: block;
+}
+
+/* WICHTIG: kein cover, sonst "Crop/Stretch" */
 #arjs-video,
-video,
-canvas,
-a-scene {
-  position: fixed !important;
-  inset: 0 !important;
-  width: 100vw !important;
-  height: 100vh !important; /* <- fallback */
-  max-width: 100vw !important;
-  max-height: 100vh !important;
-  margin: 0 !important;
-  padding: 0 !important;
-}
-
-/* Upgrade: dvh, wenn Browser es unterstützt (echtes Handy) */
-@supports (height: 100dvh) {
-  #ar-root,
-  #ar-root a-scene,
-  #ar-root canvas,
-  #arjs-video,
-  video,
-  canvas,
-  a-scene {
-    height: 100dvh !important;
-    max-height: 100dvh !important;
-  }
-}
-
-#arjs-video, video {
-  object-fit: cover !important;
+#ar-root video{
+  object-fit: contain !important; /* statt cover */
   object-position: center center !important;
-  background: #000 !important;
-  z-index: -1 !important;
+  background: #ffffff;
 }
 
-canvas, a-scene {
+/* transparenter Render */
+#ar-root canvas{
   background: transparent !important;
 }
+
 
 /* ===================================================================
    MINIGAME (Mission 2)
