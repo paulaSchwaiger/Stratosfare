@@ -1,0 +1,51 @@
+/* Kamera Test specific layout */
+body.kamera-test {
+  background: #000;
+}
+
+body.kamera-test #ar-wrapper {
+  position: fixed;
+  left: 0;
+  right: 0;
+  top: 120px;
+  bottom: 120px;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  z-index: 1;
+}
+
+body.kamera-test #ar-root {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  background: #000;
+  overflow: hidden;
+  border-radius: 0;
+  outline: none;
+}
+
+body.kamera-test #ar-root a-scene,
+body.kamera-test #ar-root canvas,
+body.kamera-test #ar-root video,
+body.kamera-test #arjs-video {
+  position: absolute !important;
+  inset: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+}
+
+body.kamera-test #ar-root video,
+body.kamera-test #arjs-video {
+  object-fit: contain !important;
+  object-position: 50% 50% !important;
+  z-index: 0 !important;
+  opacity: 1 !important;
+}
+
+body.kamera-test #ar-root canvas,
+body.kamera-test .a-canvas,
+body.kamera-test .a-canvas canvas {
+  z-index: 2 !important;
+  background: transparent !important;
+}
