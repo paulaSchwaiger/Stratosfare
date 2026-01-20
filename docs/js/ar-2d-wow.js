@@ -70,25 +70,34 @@ document.addEventListener("DOMContentLoaded", () => {
       smoothThreshold="2"
       >
 
-        <!-- Sichtbar zum Ausrichten -->
+        
+      <a-plane
+        position="0 0 0"
+        rotation="-90 0 0"
+        width="1"
+        height="1"
+        material="color: red; opacity: 0.25; transparent: true; side: double;"
+      ></a-plane>
+
+      <a-entity id="podest-rig" position="0 0 0" rotation="0 0 0" scale="0.18 0.18 0.18">
         <a-entity
-          id="podest-debug"
-          obj-model="obj: #podest-obj; mtl: #podest-mtl"
-          position="-3.5 -2.5 0"
+          id="podest-visible"
+          obj-model="obj: url(sources/3D/Podest.obj); mtl: url(sources/3D/podest.mtl)"
+          position="0 0 0"
           rotation="0 90 0"
-          scale="0.1 0.1 0.1"
-          material="color: #00ffcc; opacity: 0.6; transparent: true;"
+          scale="1 1 1"
         ></a-entity>
 
-        <!-- Occluder -->
         <a-entity
           id="podest-occluder"
-          obj-model="obj: #podest-obj; mtl: #podest-mtl"
-          position="0 -2 0"
-          rotation="0 0 0"
+          obj-model="obj: url(sources/3D/Podest.obj); mtl: url(sources/3D/podest.mtl)"
+          position="0 0 0"
+          rotation="0 90 0"
           scale="1 1 1"
-          occluder-obj
+          occluder
         ></a-entity>
+      </a-entity>
+
 
         <a-sphere position="0 0 0" radius="0.03" color="red"></a-sphere>
 
@@ -401,6 +410,54 @@ function showMissionScreen({ title, sub, durationMs = 2600, onDone }) {
   }, durationMs);
 }
 
+function fitPodestToRealDims(el, { height = 0.95, diameter = 1.8 } = {}) {
+  const obj = el.getObject3D("mesh");
+  if (!obj) return;
+
+  // Reset, damit wir nicht "aufaddieren"
+  el.object3D.position.set(0, 0, 0);
+  el.object3D.scale.set(1, 1, 1);
+  el.object3D.updateMatrixWorld(true);
+
+  // World bbox
+  let box = new THREE.Box3().setFromObject(obj);
+  let size = new THREE.Vector3();
+  box.getSize(size);
+
+  if (size.y <= 0) return;
+
+  // Scale so, dass Höhe passt
+  const sH = height / size.y;
+
+  // Scale so, dass Durchmesser (max x/z) passt
+  const base = Math.max(size.x, size.z);
+  const sD = base > 0 ? (diameter / base) : sH;
+
+  // Nimm den größeren der beiden Faktoren (damit es nicht zu klein wird)
+  const s = Math.max(sH, sD);
+  el.object3D.scale.multiplyScalar(s);
+
+  // Neu berechnen nach scaling
+  el.object3D.updateMatrixWorld(true);
+  box = new THREE.Box3().setFromObject(obj);
+
+  const parent = el.object3D.parent;
+  if (!parent) return;
+
+  // Center & top in parent-local
+  const centerW = box.getCenter(new THREE.Vector3());
+  const centerP = parent.worldToLocal(centerW.clone());
+
+  const topW = new THREE.Vector3(centerW.x, box.max.y, centerW.z);
+  const topP = parent.worldToLocal(topW.clone());
+
+  // Zentrieren + TOP auf Marker-Ebene (y=0)
+  el.object3D.position.x -= centerP.x;
+  el.object3D.position.z -= centerP.z;
+  el.object3D.position.y -= topP.y;
+
+  el.object3D.updateMatrixWorld(true);
+}
 
 
 
@@ -415,6 +472,95 @@ function showMissionScreen({ title, sub, durationMs = 2600, onDone }) {
     const label = document.getElementById("rocket-label");
     const hint = document.getElementById("hint");
     const arRoot = document.getElementById("ar-root");
+    const podestVisible = document.getElementById("podest-visible");
+    const podestOcc = document.getElementById("podest-occluder");
+
+    podestVisible?.addEventListener("model-loaded", () => {
+      fitPodestToRealDims(podestVisible, { height: 0.95, diameter: 1.8 });
+    });
+
+    podestOcc?.addEventListener("model-loaded", () => {
+      fitPodestToRealDims(podestOcc, { height: 0.95, diameter: 1.8 });
+    });
+
+    if (podestVisible) {
+      podestVisible.addEventListener("model-loaded", () => console.log("✅ Podest geladen"));
+      podestVisible.addEventListener("model-error", (e) => console.log("❌ Podest Fehler", e.detail));
+    }
+    // -------------------------------------------------------
+// FIX "GEQUETSCHT": Video + Canvas identisch als COVER fitten
+// (keine Verzerrung, keine Ränder, kann cropen -> ok)
+// -------------------------------------------------------
+const syncARCover = () => {
+  const vv = window.visualViewport;
+  const vw = vv ? vv.width : window.innerWidth;
+  const vh = vv ? vv.height : window.innerHeight;
+  const vLeft = vv ? vv.offsetLeft : 0;
+  const vTop  = vv ? vv.offsetTop  : 0;
+
+  const video = document.getElementById("arjs-video") || document.querySelector("video");
+  const canvasWrap = document.querySelector(".a-canvas");
+  const canvas = scene?.renderer?.domElement || document.querySelector("canvas");
+
+  if (!video || !canvas) return false;
+  if (!video.videoWidth || !video.videoHeight) return false;
+
+  const vidW = video.videoWidth;
+  const vidH = video.videoHeight;
+
+  // COVER: max -> füllt Viewport komplett, crop ok
+  const scale = Math.max(vw / vidW, vh / vidH);
+  const boxW = Math.round(vidW * scale);
+  const boxH = Math.round(vidH * scale);
+
+  const left = Math.round(vLeft + (vw - boxW) / 2);
+  const top  = Math.round(vTop  + (vh - boxH) / 2);
+
+  // gleiche Box auf Video + Canvas (+ optional .a-canvas wrapper)
+  const applyBox = (el) => {
+    if (!el) return;
+    el.style.position = "fixed";
+    el.style.left = `${left}px`;
+    el.style.top = `${top}px`;
+    el.style.width = `${boxW}px`;
+    el.style.height = `${boxH}px`;
+    el.style.transform = "none";
+  };
+
+  applyBox(video);
+  applyBox(canvas);
+  applyBox(canvasWrap);
+
+  // AR.js resize pipeline (wichtig!)
+  const arSystem = scene.systems && (scene.systems.arjs || scene.systems["arjs"]);
+  const src = arSystem && arSystem.arToolkitSource;
+  const ctx = arSystem && arSystem.arToolkitContext;
+
+  if (src && scene.renderer) {
+    src.onResizeElement();
+    src.copyElementSizeTo(scene.renderer.domElement);
+    if (ctx && ctx.arController && ctx.arController.canvas) {
+      src.copyElementSizeTo(ctx.arController.canvas);
+    }
+  }
+
+  return true;
+};
+
+// Starten wenn Video ready ist
+const startARCoverSync = () => {
+  let tries = 0;
+  const t = setInterval(() => {
+    tries++;
+    if (syncARCover() || tries > 120) clearInterval(t);
+  }, 50);
+};
+
+if (scene.hasLoaded) startARCoverSync();
+else scene.addEventListener("loaded", startARCoverSync, { once: true });
+
+window.addEventListener("resize", () => setTimeout(syncARCover, 80));
+window.addEventListener("orientationchange", () => setTimeout(syncARCover, 250));
 
     // ----------------------------
     // Mission Banner (AR Plane)
