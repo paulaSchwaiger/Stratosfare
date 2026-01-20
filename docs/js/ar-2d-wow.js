@@ -50,7 +50,7 @@ document.addEventListener("DOMContentLoaded", () => {
       id="ar-scene"
       embedded
       vr-mode-ui="enabled: false"
-      renderer="antialias: true; alpha: true"
+      renderer="antialias: true; alpha: true; shadow: true"
       arjs="sourceType: webcam; facingMode: environment; debugUIEnabled: false;"
     >
 
@@ -60,6 +60,13 @@ document.addEventListener("DOMContentLoaded", () => {
       <a-asset-item id="podest-mtl" src="sources/3D/Podest.mtl"></a-asset-item>
     </a-assets>
 
+
+    <!-- Lights for shadows -->
+    <a-entity light="type: ambient; intensity: 0.5; color: #fdf6e4"></a-entity>
+    <a-entity
+      light="type: directional; intensity: 0.9; color: #ffffff; castShadow: true"
+      position="1 2 1"
+    ></a-entity>
 
     <!--  MARKER -->
       <a-marker 
@@ -77,6 +84,7 @@ document.addEventListener("DOMContentLoaded", () => {
         width="1"
         height="1"
         material="color: red; opacity: 0.25; transparent: true; side: double;"
+        shadow="receive: true"
       ></a-plane>
 
       <a-entity id="podest-rig" position="0 0 0" rotation="0 0 0" scale="0.18 0.18 0.18">
@@ -104,11 +112,12 @@ document.addEventListener("DOMContentLoaded", () => {
         <a-plane
           id="rocket"
           visible="false"
-          position="0 0.03 0"
+          position="0 1.3 0"
           rotation="0 0 0"
           width="1"
           height="3"
-          material="src: url(sources/Rakete_final.png); transparent: true;"
+          material="src: url(sources/2D/rocket_seq/Rocket_drehen_00000.png); transparent: true; alphaTest: 0.5; shader: flat; side: double:"
+          shadow="cast: true"
         ></a-plane>
 
         <a-entity id="pinGroup-1" visible="false">
@@ -354,6 +363,17 @@ document.addEventListener("DOMContentLoaded", () => {
 // Funktionen
 // ------------------------------------------------------------------------------------
 
+function pad5(n) {
+  return String(n).padStart(5, "0");
+}
+
+function preloadRocketFrames({ folder, prefix, start, end }) {
+  for (let i = start; i <= end; i++) {
+    const img = new Image();
+    img.src = `${folder}/${prefix}${pad5(i)}.png`;
+  }
+}
+
 function setFooterMode(mode) {
  const pinsView = document.getElementById("footer-view-pins");
   const mgView = document.getElementById("footer-view-minigame");
@@ -466,6 +486,12 @@ function fitPodestToRealDims(el, { height = 0.95, diameter = 1.8 } = {}) {
 // ------------------------------------------------------------------------------------------
 
   function initARLogic() {
+   let rocketSeqTimer = null;
+    let rocketSeqFrame = 0;
+    let rocketSeqRunning = false;
+    let rocketFramesPreloaded = false;
+
+   
     const scene = document.getElementById("ar-scene");
     const marker = document.getElementById("marker-hiro");
     const rocket = document.getElementById("rocket");
@@ -584,16 +610,66 @@ window.addEventListener("orientationchange", () => setTimeout(syncARCover, 250))
         setTimeout(() => banner.setAttribute("visible", "false"), ms);
     };
 
-    if (!scene || !marker || !rocket) return;
+    // ===================================================================
+    //  PNG SEQUENCE PLAYER 
+    // ==================================================================
+   // ===== Rocket PNG Sequence =====
+const pad5 = (n) => String(n).padStart(5, "0");
 
-    // -------------------------------------------------------
-    // Podest Debug (optional)
-    // -------------------------------------------------------
-    const podest = document.getElementById("podest-debug");
-    if (podest) {
-        podest.addEventListener("model-loaded", () => console.log("✅ Podest geladen"));
-        podest.addEventListener("model-error", (e) => console.log("❌ Podest Fehler", e.detail));
-    }
+function startRocketSequence(rocketEl, {
+  folder,
+  prefix,
+  start = 0,
+  end = 118,
+  fps = 12,
+}) {
+  if (!rocketEl) return;
+
+  // wenn schon läuft -> nicht doppelt starten
+  if (rocketSeqTimer) return;
+
+  rocketSeqRunning = true;
+  const frameMs = Math.max(16, Math.round(1000 / fps));
+
+  // falls frisch starten soll:
+  if (rocketSeqFrame < start || rocketSeqFrame > end) rocketSeqFrame = start;
+
+  rocketSeqTimer = setInterval(() => {
+    if (!rocketSeqRunning) return; // pausiert bei markerLost
+
+    console.log("frame", frameMs);
+    const file = `${folder}/${prefix}${pad5(rocketSeqFrame)}.png`;
+
+    // "hart" refreshen, damit A-Frame wirklich updated:
+    rocketEl.setAttribute(
+      "material",
+      `src: url(${file}?t=${Date.now()}); transparent: true; shader: flat;`
+    );
+
+    rocketSeqFrame++;
+    if (rocketSeqFrame > end) rocketSeqFrame = start;
+  }, frameMs);
+  rocketSeqFrame += 2;
+}
+
+function pauseRocketSequence() {
+  rocketSeqRunning = false;
+}
+
+function resumeRocketSequence() {
+  rocketSeqRunning = true;
+}
+
+function stopRocketSequence() {
+  rocketSeqRunning = false;
+  if (rocketSeqTimer) clearInterval(rocketSeqTimer);
+  rocketSeqTimer = null;
+}
+
+
+
+
+    if (!scene || !marker || !rocket) return;
 
     // -------------------------------------------------------
     // Aspect Fix
@@ -725,6 +801,22 @@ window.addEventListener("orientationchange", () => setTimeout(syncARCover, 250))
     loadingEl.classList.add("hidden");
     arFooter.classList.remove("hidden");
 
+    if (!rocketFramesPreloaded) {
+      preloadRocketFrames(rocket);
+      rocketFramesPreloaded = true;
+    }
+
+
+    startRocketSequence(rocket, {
+    folder: "sources/2D/rocket_seq",
+    prefix: "Rocket_drehen_",
+    start: 0,
+    end: 118,
+    fps: 12,
+  });
+
+    resumeRocketSequence();
+    
     // ✅ Mission 1 zuerst starten (nur einmal)
    if (!mission1Started) {
     mission1Started = true;
@@ -736,9 +828,11 @@ window.addEventListener("orientationchange", () => setTimeout(syncARCover, 250))
             sub: "Tippe alle Pins an",
             durationMs: 2600,
             onDone: () => {
+
                 setupMission1Pins({
                     onAllPinsDone: () => {
-                    startMission2();
+                      startRocketSequence(rocket, { loop: true });
+                      startMission2();
                     },
                 });
             },
@@ -746,6 +840,7 @@ window.addEventListener("orientationchange", () => setTimeout(syncARCover, 250))
     }
 
     marker.addEventListener("markerLost", () => {
+            pauseRocketSequence();
             rocket.setAttribute("visible", "false");
             label?.setAttribute("visible", "false");
             hint?.setAttribute("visible", "true");
