@@ -305,58 +305,6 @@ body.page-ar {
   background: #000 !important;
 }
 
-/* Dein AR-Container full screen */
-#ar-root {
-  position: fixed !important;
-  inset: 0 !important;
-  width: 100% !important;
-  height: 100% !important;
-  z-index: 0 !important;
-  background: transparent !important;
-  isolation: isolate; /* wichtig: eigenes stacking */
-}
-
-/* Wichtig: NICHT transforms/object-fit etc. erzwingen!
-   Nur z-index/position fürs Layering. */
-#ar-root video {
-  position: fixed !important;
-  inset: 0 !important;
-  z-index: 0 !important;  /* Video unten */
-}
-
-#ar-root .a-canvas,
-#ar-root canvas {
-  position: fixed !important;
-  inset: 0 !important;
-  z-index: 1 !important;  /* Canvas oben */
-  background: transparent !important;
-}
-
-/* Video unter Canvas, beide fullscreen */
-#arjs-video {
-  position: fixed !important;
-  inset: 0 !important;
-  width: 100vw !important;
-  height: 100vh !important;
-  object-fit: cover !important;
-  object-position: 50% 50% !important;
-  z-index: 0 !important;
-}
-
-.a-canvas {
-  position: fixed !important;
-  inset: 0 !important;
-  width: 100vw !important;
-  height: 100vh !important;
-  z-index: 1 !important;
-  background: transparent !important;
-}
-
-/* UI drüber */
-#main-header, #ar-footer, #permission-overlay, .info-overlay {
-  z-index: 3000 !important;
-}
-
 
 /* =========================
    COUNTDOWN / MISSION TEXT (dein Look)
@@ -407,3 +355,60 @@ body.page-ar {
   100% { transform: scale(0.98); opacity: 0; }
 }
 .mission-anim { animation: missionPopHoldFade 2.6s ease-in-out forwards; }
+
+/* ========= AR LAYER FIX (ganz ans Ende!) ========= */
+
+/* Video IMMER hinter allem */
+#arjs-video,
+video#arjs-video {
+  position: fixed !important;
+  inset: 0 !important;
+  width: 100vw !important;
+  height: 100vh !important;
+
+  object-fit: cover !important;
+  object-position: 50% 50% !important;
+
+  /* ganz wichtig: keine Offsets/Transforms */
+  left: 0 !important;
+  top: 0 !important;
+  transform: none !important;
+  margin: 0 !important;
+
+  z-index: 0 !important;
+}
+
+/* Canvas IMMER über Video */
+.a-canvas,
+canvas.a-canvas {
+  position: fixed !important;
+  inset: 0 !important;
+  width: 100vw !important;
+  height: 100vh !important;
+
+  left: 0 !important;
+  top: 0 !important;
+  transform: none !important;
+
+  z-index: 1 !important;
+  background: transparent !important;
+}
+
+/* Scene-Container auch sauber */
+#ar-root,
+#ar-scene {
+  position: fixed !important;
+  inset: 0 !important;
+  width: 100vw !important;
+  height: 100vh !important;
+  z-index: 0 !important;
+}
+
+/* UI drüber */
+#main-header,
+#ar-footer,
+#permission-overlay,
+.info-overlay,
+.minigame-overlay {
+  z-index: 3000 !important;
+}

@@ -488,6 +488,36 @@ if (v) console.log("VIDEO rect", v.getBoundingClientRect());
 
   if (!scene || !marker || !rocket) return;
 
+
+  // --- Fix AR.js video styles (Android / Pixel) ---
+const forceVideoBehindCanvas = () => {
+  const v = document.querySelector("#arjs-video") || document.querySelector("video");
+  if (!v) return;
+
+  v.style.position = "fixed";
+  v.style.left = "0";
+  v.style.top = "0";
+  v.style.width = "100vw";
+  v.style.height = "100vh";
+  v.style.objectFit = "cover";
+  v.style.objectPosition = "50% 50%";
+  v.style.transform = "none";
+  v.style.margin = "0";
+  v.style.zIndex = "0";
+};
+
+// wenn scene ready ist, kurz danach nochmal (AR.js setzt video manchmal später)
+if (scene.hasLoaded) {
+  setTimeout(forceVideoBehindCanvas, 80);
+  setTimeout(forceVideoBehindCanvas, 350);
+} else {
+  scene.addEventListener("loaded", () => {
+    setTimeout(forceVideoBehindCanvas, 80);
+    setTimeout(forceVideoBehindCanvas, 350);
+  }, { once: true });
+}
+
+
   //syncCanvasToVideo(scene);
 
   // -------------------------------------------------------
