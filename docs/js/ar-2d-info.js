@@ -377,50 +377,80 @@ function fitPodestToRealDims(el, { height = 0.95, diameter = 1.8 } = {}) {
     podestVisible.addEventListener("model-loaded", () => console.log("✅ Podest geladen"));
     podestVisible.addEventListener("model-error", (e) => console.log("❌ Podest Fehler", e.detail));
   }
-const setupARResize = (scene) => {
-  const doResize = () => {
-    if (!scene || !scene.renderer) return;
+// -------------------------------------------------------
+// FIX "GEQUETSCHT": Video + Canvas identisch als COVER fitten
+// (keine Verzerrung, keine Ränder, kann cropen -> ok)
+// -------------------------------------------------------
+const syncARCover = () => {
+  const vv = window.visualViewport;
+  const vw = vv ? vv.width : window.innerWidth;
+  const vh = vv ? vv.height : window.innerHeight;
+  const vLeft = vv ? vv.offsetLeft : 0;
+  const vTop  = vv ? vv.offsetTop  : 0;
 
-    const vv = window.visualViewport;
-    const w = vv ? vv.width : window.innerWidth;
-    const h = vv ? vv.height : window.innerHeight;
+  const video = document.getElementById("arjs-video") || document.querySelector("video");
+  const canvasWrap = document.querySelector(".a-canvas");
+  const canvas = scene?.renderer?.domElement || document.querySelector("canvas");
 
-    // A-Frame Renderer anpassen (ohne CSS zu überschreiben)
-    scene.renderer.setPixelRatio(window.devicePixelRatio || 1);
-    scene.renderer.setSize(w, h, false);
+  if (!video || !canvas) return false;
+  if (!video.videoWidth || !video.videoHeight) return false;
 
-    // AR.js resize-pipeline
-    const arSystem = scene.systems && (scene.systems.arjs || scene.systems["arjs"]);
-    const src = arSystem && arSystem.arToolkitSource;
-    const ctx = arSystem && arSystem.arToolkitContext;
+  const vidW = video.videoWidth;
+  const vidH = video.videoHeight;
 
-    if (src) {
-      src.onResizeElement();
-      src.copyElementSizeTo(scene.renderer.domElement);
-      if (ctx && ctx.arController && ctx.arController.canvas) {
-        src.copyElementSizeTo(ctx.arController.canvas);
-      }
-    }
+  // COVER: max -> füllt Viewport komplett, crop ok
+  const scale = Math.max(vw / vidW, vh / vidH);
+  const boxW = Math.round(vidW * scale);
+  const boxH = Math.round(vidH * scale);
+
+  const left = Math.round(vLeft + (vw - boxW) / 2);
+  const top  = Math.round(vTop  + (vh - boxH) / 2);
+
+  // gleiche Box auf Video + Canvas (+ optional .a-canvas wrapper)
+  const applyBox = (el) => {
+    if (!el) return;
+    el.style.position = "fixed";
+    el.style.left = `${left}px`;
+    el.style.top = `${top}px`;
+    el.style.width = `${boxW}px`;
+    el.style.height = `${boxH}px`;
+    el.style.transform = "none";
   };
 
-  // 1) einmal nach loaded
-  if (scene.hasLoaded) doResize();
-  else scene.addEventListener("loaded", doResize, { once: true });
+  applyBox(video);
+  applyBox(canvas);
+  applyBox(canvasWrap);
 
-  // 2) wenn video metadata da ist (super wichtig auf Android)
-  const video = document.getElementById("arjs-video") || document.querySelector("video");
-  if (video) {
-    video.addEventListener("loadedmetadata", () => setTimeout(doResize, 50), { once: true });
-    video.addEventListener("playing", () => setTimeout(doResize, 50), { once: true });
+  // AR.js resize pipeline (wichtig!)
+  const arSystem = scene.systems && (scene.systems.arjs || scene.systems["arjs"]);
+  const src = arSystem && arSystem.arToolkitSource;
+  const ctx = arSystem && arSystem.arToolkitContext;
+
+  if (src && scene.renderer) {
+    src.onResizeElement();
+    src.copyElementSizeTo(scene.renderer.domElement);
+    if (ctx && ctx.arController && ctx.arController.canvas) {
+      src.copyElementSizeTo(ctx.arController.canvas);
+    }
   }
 
-  // 3) bei resize/orientation
-  window.addEventListener("resize", () => setTimeout(doResize, 80));
-  window.addEventListener("orientationchange", () => setTimeout(doResize, 250));
+  return true;
 };
 
-setupARResize(scene);
+// Starten wenn Video ready ist
+const startARCoverSync = () => {
+  let tries = 0;
+  const t = setInterval(() => {
+    tries++;
+    if (syncARCover() || tries > 120) clearInterval(t);
+  }, 50);
+};
 
+if (scene.hasLoaded) startARCoverSync();
+else scene.addEventListener("loaded", startARCoverSync, { once: true });
+
+window.addEventListener("resize", () => setTimeout(syncARCover, 80));
+window.addEventListener("orientationchange", () => setTimeout(syncARCover, 250));
 
   if (!scene || !marker || !rocket) return;
 
