@@ -49,7 +49,14 @@ document.addEventListener("DOMContentLoaded", () => {
       embedded
       vr-mode-ui="enabled: false"
       renderer="antialias: true; alpha: true"
-      arjs="sourceType: webcam; facingMode: environment; debugUIEnabled: false;"
+      arjs="
+      sourceType: webcam; 
+      facingMode: environment; 
+      sourceWidth: 1280;
+      sourceHeight: 720;
+      displayWidth: 1280;
+      displayHeight: 720;
+      debugUIEnabled: false;"
     >
 
     <!--  ASSETS -->
@@ -348,70 +355,55 @@ function fitPodestToRealDims(el, { height = 0.95, diameter = 1.8 } = {}) {
 
   el.object3D.updateMatrixWorld(true);
 }
+function applyLetterboxToAR(scene) {
+  const video = document.getElementById("arjs-video");
+  if (!scene || !video) return;
 
-function syncCanvasToVideo(scene) {
-  if (!scene || !scene.renderer) return;
+  const fit = () => {
+    const vw = video.videoWidth;
+    const vh = video.videoHeight;
+    if (!vw || !vh) return; // noch nicht bereit
 
-  const video =
-    document.getElementById("arjs-video") ||
-    document.querySelector("video");
+    const sw = window.visualViewport?.width || window.innerWidth;
+    const sh = window.visualViewport?.height || window.innerHeight;
 
-  const canvas = scene.renderer.domElement; // das echte WebGL canvas
+    // "contain": vollständig sichtbar, ggf. Balken
+    const scale = Math.min(sw / vw, sh / vh);
+    const dispW = Math.round(vw * scale);
+    const dispH = Math.round(vh * scale);
 
-  if (!video || !canvas) return;
+    // Video zentriert in dieser Größe anzeigen
+    video.style.width = dispW + "px";
+    video.style.height = dispH + "px";
 
-  const apply = () => {
-    const r = video.getBoundingClientRect();
-    if (!r.width || !r.height) return;
+    // Canvas + Renderer auf gleiche Größe
+    const canvas = scene.canvas || document.querySelector("canvas.a-canvas");
+    if (canvas) {
+      canvas.style.width = dispW + "px";
+      canvas.style.height = dispH + "px";
+    }
 
-    // Canvas auf GENAU dieselbe Position/Größe wie das Video setzen
-    canvas.style.position = "fixed";
-    canvas.style.left = `${r.left}px`;
-    canvas.style.top = `${r.top}px`;
-    canvas.style.width = `${r.width}px`;
-    canvas.style.height = `${r.height}px`;
+    if (scene.renderer) {
+      scene.renderer.setPixelRatio(window.devicePixelRatio || 1);
+      scene.renderer.setSize(dispW, dispH, false);
+    }
 
-    // Renderer intern auf Pixelgröße setzen
-    scene.renderer.setPixelRatio(window.devicePixelRatio || 1);
-    scene.renderer.setSize(r.width, r.height, false);
-
-    // Kamera-Aspect passend
     if (scene.camera) {
-      scene.camera.aspect = r.width / r.height;
+      scene.camera.aspect = dispW / dispH;
       scene.camera.updateProjectionMatrix();
     }
-
-    // AR.js Controller Canvas ebenfalls matchen (sonst Squish)
-    const arSystem = scene.systems && (scene.systems.arjs || scene.systems["arjs"]);
-    const src = arSystem && arSystem.arToolkitSource;
-    const ctx = arSystem && arSystem.arToolkitContext;
-
-    if (src) {
-      // sorgt dafür, dass AR.js seine Elemente updated
-      src.onResizeElement();
-      src.copyElementSizeTo(canvas);
-
-      if (ctx && ctx.arController && ctx.arController.canvas) {
-        src.copyElementSizeTo(ctx.arController.canvas);
-      }
-    }
-
-    // DEBUG (kannst du später löschen)
-    console.log("SYNC OK video:", r.width, r.height, "canvas:", canvas.width, canvas.height);
   };
 
-  // Wichtig: erst wenn Video wirklich spielt/Metadata hat
-  const runSoon = () => setTimeout(apply, 60);
+  // sobald das Video echte Dimensions hat
+  if (video.readyState >= 2) fit();
+  else video.addEventListener("loadedmetadata", fit, { once: true });
 
-  video.addEventListener("loadedmetadata", runSoon, { once: true });
-  video.addEventListener("playing", runSoon, { once: true });
-
-  window.addEventListener("resize", runSoon);
-  window.addEventListener("orientationchange", () => setTimeout(apply, 250));
-
-  // initial auch versuchen (falls schon ready)
-  runSoon();
+  // bei Drehung/Resize neu fitten
+  window.addEventListener("resize", () => setTimeout(fit, 50));
+  window.addEventListener("orientationchange", () => setTimeout(fit, 250));
+  window.visualViewport?.addEventListener("resize", () => setTimeout(fit, 50));
 }
+
 
 
 
@@ -442,53 +434,11 @@ function syncCanvasToVideo(scene) {
     podestVisible.addEventListener("model-loaded", () => console.log("✅ Podest geladen"));
     podestVisible.addEventListener("model-error", (e) => console.log("❌ Podest Fehler", e.detail));
   }
-
-const stabilizeAROnAndroid = () => {
-  const video = document.getElementById("arjs-video") || document.querySelector("video");
-  const canvas = scene?.canvas || scene?.renderer?.domElement;
-
-  const w = window.visualViewport?.width || window.innerWidth;
-  const h = window.visualViewport?.height || window.innerHeight;
-
-  // 1) Layering hart setzen (ohne dein CSS zu zerstören)
-  if (video) {
-    video.style.setProperty("z-index", "0", "important");
-  }
-  if (canvas) {
-    canvas.style.setProperty("z-index", "2", "important");
-    canvas.style.setProperty("position", "fixed", "important");
-    canvas.style.setProperty("inset", "0", "important");
-    canvas.style.setProperty("width", w + "px", "important");
-    canvas.style.setProperty("height", h + "px", "important");
-  }
-
-  // 2) Renderer + Kamera Aspect korrekt setzen (gegen "gequetscht")
-  if (scene?.renderer) {
-    scene.renderer.setPixelRatio(window.devicePixelRatio || 1);
-    scene.renderer.setSize(w, h, false);
-  }
-  if (scene?.camera) {
-    scene.camera.aspect = w / h;
-    scene.camera.updateProjectionMatrix();
-  }
-};
-
-// wenn scene wirklich ready ist
 if (scene.hasLoaded) {
-  stabilizeAROnAndroid();
+  applyLetterboxToAR(scene);
 } else {
-  scene.addEventListener("loaded", () => {
-    stabilizeAROnAndroid();
-    // AR.js überschreibt gern NACH dem loaded nochmal -> deshalb 2 Re-Fixes
-    setTimeout(stabilizeAROnAndroid, 200);
-    setTimeout(stabilizeAROnAndroid, 800);
-  }, { once: true });
+  scene.addEventListener("loaded", () => applyLetterboxToAR(scene), { once: true });
 }
-
-// bei rotation/resize nachziehen
-window.addEventListener("resize", () => setTimeout(stabilizeAROnAndroid, 150));
-window.addEventListener("orientationchange", () => setTimeout(stabilizeAROnAndroid, 250));
-
 
   if (!scene || !marker || !rocket) return;
 

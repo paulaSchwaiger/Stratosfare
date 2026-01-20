@@ -363,32 +363,48 @@ html, body {
   height: 100%;
   overflow: hidden;
 }
-
-/* AR layer */
+/* AR Root als Container */
 #ar-root {
-  position: fixed;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  background: transparent;
-  z-index: 1;          /* über Video */
-}
-
-/* Canvas über Video */
-.a-canvas, canvas.a-canvas {
   position: fixed !important;
   inset: 0 !important;
-  z-index: 2 !important;
-  background: transparent !important;
-}
-
-/* Video nur "sichtbar halten" (z-index), NICHT neu layouten */
-#arjs-video, video#arjs-video {
+  overflow: hidden !important;
+  background: #000 !important;
   z-index: 0 !important;
-  /* KEIN object-fit, KEIN transform, KEIN width/height erzwingen */
 }
 
-/* UI oben */
-#main-header, #ar-footer, #permission-overlay, .info-overlay, .minigame-overlay {
+/* AR.js Video */
+#arjs-video,
+video#arjs-video {
+  position: absolute !important;
+  inset: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+
+  object-fit: contain !important;   /* <- WICHTIG */
+  object-position: 50% 50% !important;
+
+  transform: none !important;
+  margin: 0 !important;
+  z-index: 0 !important;
+}
+
+/* A-Frame Canvas über dem Video */
+.a-canvas,
+canvas.a-canvas {
+  position: absolute !important;
+  inset: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+
+  background: transparent !important;
+  z-index: 1 !important;
+}
+
+/* UI oben drüber */
+#main-header,
+#ar-footer,
+#permission-overlay,
+.info-overlay,
+.minigame-overlay {
   z-index: 3000 !important;
 }
