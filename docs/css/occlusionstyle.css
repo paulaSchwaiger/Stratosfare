@@ -332,15 +332,30 @@ body.page-ar {
   background: transparent !important;
 }
 
-/* UI immer drüber */
-#main-header, #ar-footer, #permission-overlay, .info-overlay,
-.countdown-overlay, .mission-overlay, .minigame-overlay {
-  z-index: 3000 !important;
+/* Video unter Canvas, beide fullscreen */
+#arjs-video {
+  position: fixed !important;
+  inset: 0 !important;
+  width: 100vw !important;
+  height: 100vh !important;
+  object-fit: cover !important;
+  object-position: 50% 50% !important;
+  z-index: 0 !important;
 }
 
-/* --- FIX: AR.js Video mittig + keine komischen Offsets --- */
-#arjs-video { object-fit: cover !important; object-position: 50% 50% !important; }
+.a-canvas {
+  position: fixed !important;
+  inset: 0 !important;
+  width: 100vw !important;
+  height: 100vh !important;
+  z-index: 1 !important;
+  background: transparent !important;
+}
 
+/* UI drüber */
+#main-header, #ar-footer, #permission-overlay, .info-overlay {
+  z-index: 3000 !important;
+}
 
 
 /* =========================

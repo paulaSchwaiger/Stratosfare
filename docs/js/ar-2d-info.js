@@ -443,9 +443,52 @@ function syncCanvasToVideo(scene) {
     podestVisible.addEventListener("model-error", (e) => console.log("❌ Podest Fehler", e.detail));
   }
 
+const resizeAR = () => {
+  if (!scene) return;
+
+  const w = window.innerWidth;
+  const h = window.innerHeight;
+
+  // A-Frame renderer/canvas
+  if (scene.renderer) {
+    scene.renderer.setPixelRatio(window.devicePixelRatio || 1);
+    scene.renderer.setSize(w, h, false);
+  }
+
+  // Kamera Aspect
+  if (scene.camera) {
+    scene.camera.aspect = w / h;
+    scene.camera.updateProjectionMatrix();
+  }
+
+  // AR.js Toolkit Resize (WICHTIG!)
+  const arSystem = scene.systems && (scene.systems.arjs || scene.systems["arjs"]);
+  const src = arSystem && arSystem.arToolkitSource;
+  const ctx = arSystem && arSystem.arToolkitContext;
+
+  if (src) {
+    src.onResizeElement();
+    if (scene.renderer && scene.renderer.domElement) {
+      src.copyElementSizeTo(scene.renderer.domElement);
+    }
+    if (ctx && ctx.arController && ctx.arController.canvas) {
+      src.copyElementSizeTo(ctx.arController.canvas);
+    }
+  }
+};
+if (scene.hasLoaded) resizeAR();
+else scene.addEventListener("loaded", () => setTimeout(resizeAR, 80), { once: true });
+
+window.addEventListener("resize", () => setTimeout(resizeAR, 80));
+window.addEventListener("orientationchange", () => setTimeout(resizeAR, 250));
+
+console.log("VW/VH", window.innerWidth, window.innerHeight);
+const v = document.getElementById("arjs-video");
+if (v) console.log("VIDEO rect", v.getBoundingClientRect());
+
   if (!scene || !marker || !rocket) return;
 
-  syncCanvasToVideo(scene);
+  //syncCanvasToVideo(scene);
 
   // -------------------------------------------------------
   // ANDROID FIX: Touch -> MouseEvents MIT KOORDINATEN
