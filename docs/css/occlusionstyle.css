@@ -318,24 +318,35 @@ body.page-ar {
 
 /* Wichtig: NICHT transforms/object-fit etc. erzwingen!
    Nur z-index/position fürs Layering. */
-#ar-root video {
-  position: fixed !important;
-  inset: 0 !important;
-  z-index: 0 !important;  /* Video unten */
+#ar-root video { 
+  z-index: 0 !important; 
 }
 
-#ar-root .a-canvas,
-#ar-root canvas {
-  position: fixed !important;
-  inset: 0 !important;
-  z-index: 1 !important;  /* Canvas oben */
+#ar-root .a-canvas, 
+#ar-root canvas { 
+  z-index: 1 !important; 
   background: transparent !important;
 }
-
 /* UI immer drüber */
 #main-header, #ar-footer, #permission-overlay, .info-overlay,
 .countdown-overlay, .mission-overlay, .minigame-overlay {
   z-index: 3000 !important;
+}
+
+/* --- FIX: AR.js Video mittig + keine komischen Offsets --- */
+#arjs-video, video {
+  left: 50% !important;
+  top: 50% !important;
+  transform: translate(-50%, -50%) !important;
+
+  width: 100vw !important;
+  height: 100vh !important;
+
+  object-fit: cover !important;
+  object-position: 50% 50% !important;
+
+  margin: 0 !important;
+  padding: 0 !important;
 }
 
 
