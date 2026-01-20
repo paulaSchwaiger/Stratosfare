@@ -290,7 +290,7 @@ body {
 ========================= */
 /* ===== AR LAYER FIX (Video hinten, Canvas vorne) ===== */
 
-/* Kein Scroll / keine extra Fläche 
+/* Kein Scroll / keine extra Fläche */
 html, body {
   margin: 0 !important;
   padding: 0 !important;
@@ -304,7 +304,51 @@ body.page-ar {
   overflow: hidden !important;
   background: #000 !important;
 }
-*/
+
+/* Dein AR-Container full screen */
+#ar-root {
+  position: fixed !important;
+  inset: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  z-index: 0 !important;
+  background: transparent !important;
+  isolation: isolate; /* wichtig: eigenes stacking */
+}
+
+/* Wichtig: NICHT transforms/object-fit etc. erzwingen!
+   Nur z-index/position fürs Layering. */
+#ar-root video { 
+  z-index: 0 !important; 
+}
+
+#ar-root .a-canvas, 
+#ar-root canvas { 
+  z-index: 1 !important; 
+  background: transparent !important;
+}
+/* UI immer drüber */
+#main-header, #ar-footer, #permission-overlay, .info-overlay,
+.countdown-overlay, .mission-overlay, .minigame-overlay {
+  z-index: 3000 !important;
+}
+
+/* --- FIX: AR.js Video mittig + keine komischen Offsets --- */
+#arjs-video, video {
+  left: 50% !important;
+  top: 50% !important;
+  transform: translate(-50%, -50%) !important;
+
+  width: 100vw !important;
+  height: 100vh !important;
+
+  object-fit: cover !important;
+  object-position: 50% 50% !important;
+
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
 
 /* =========================
    COUNTDOWN / MISSION TEXT (dein Look)
@@ -355,56 +399,3 @@ body.page-ar {
   100% { transform: scale(0.98); opacity: 0; }
 }
 .mission-anim { animation: missionPopHoldFade 2.6s ease-in-out forwards; }
-
-/* ========= AR LAYER FIX (ganz ans Ende!) ========= */
-html, body {
-  margin: 0;
-  width: 100%;
-  height: 100%;
-  overflow: hidden;
-}
-/* AR Root als Container */
-#ar-root {
-  position: fixed !important;
-  inset: 0 !important;
-  overflow: hidden !important;
-  background: #000 !important;
-  z-index: 0 !important;
-}
-
-/* AR.js Video */
-#arjs-video,
-video#arjs-video {
-  position: absolute !important;
-  inset: 0 !important;
-  width: 100% !important;
-  height: 100% !important;
-
-  object-fit: contain !important;   /* <- WICHTIG */
-  object-position: 50% 50% !important;
-
-  transform: none !important;
-  margin: 0 !important;
-  z-index: 0 !important;
-}
-
-/* A-Frame Canvas über dem Video */
-.a-canvas,
-canvas.a-canvas {
-  position: absolute !important;
-  inset: 0 !important;
-  width: 100% !important;
-  height: 100% !important;
-
-  background: transparent !important;
-  z-index: 1 !important;
-}
-
-/* UI oben drüber */
-#main-header,
-#ar-footer,
-#permission-overlay,
-.info-overlay,
-.minigame-overlay {
-  z-index: 3000 !important;
-}

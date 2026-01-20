@@ -49,14 +49,7 @@ document.addEventListener("DOMContentLoaded", () => {
       embedded
       vr-mode-ui="enabled: false"
       renderer="antialias: true; alpha: true"
-      arjs="
-      sourceType: webcam; 
-      facingMode: environment; 
-      sourceWidth: 1280;
-      sourceHeight: 720;
-      displayWidth: 1280;
-      displayHeight: 720;
-      debugUIEnabled: false;"
+      arjs="sourceType: webcam; facingMode: environment; debugUIEnabled: false;"
     >
 
     <!--  ASSETS -->
@@ -355,56 +348,6 @@ function fitPodestToRealDims(el, { height = 0.95, diameter = 1.8 } = {}) {
 
   el.object3D.updateMatrixWorld(true);
 }
-function applyLetterboxToAR(scene) {
-  const video = document.getElementById("arjs-video");
-  if (!scene || !video) return;
-
-  const fit = () => {
-    const vw = video.videoWidth;
-    const vh = video.videoHeight;
-    if (!vw || !vh) return; // noch nicht bereit
-
-    const sw = window.visualViewport?.width || window.innerWidth;
-    const sh = window.visualViewport?.height || window.innerHeight;
-
-    // "contain": vollständig sichtbar, ggf. Balken
-    const scale = Math.min(sw / vw, sh / vh);
-    const dispW = Math.round(vw * scale);
-    const dispH = Math.round(vh * scale);
-
-    // Video zentriert in dieser Größe anzeigen
-    video.style.width = dispW + "px";
-    video.style.height = dispH + "px";
-
-    // Canvas + Renderer auf gleiche Größe
-    const canvas = scene.canvas || document.querySelector("canvas.a-canvas");
-    if (canvas) {
-      canvas.style.width = dispW + "px";
-      canvas.style.height = dispH + "px";
-    }
-
-    if (scene.renderer) {
-      scene.renderer.setPixelRatio(window.devicePixelRatio || 1);
-      scene.renderer.setSize(dispW, dispH, false);
-    }
-
-    if (scene.camera) {
-      scene.camera.aspect = dispW / dispH;
-      scene.camera.updateProjectionMatrix();
-    }
-  };
-
-  // sobald das Video echte Dimensions hat
-  if (video.readyState >= 2) fit();
-  else video.addEventListener("loadedmetadata", fit, { once: true });
-
-  // bei Drehung/Resize neu fitten
-  window.addEventListener("resize", () => setTimeout(fit, 50));
-  window.addEventListener("orientationchange", () => setTimeout(fit, 250));
-  window.visualViewport?.addEventListener("resize", () => setTimeout(fit, 50));
-}
-
-
 
 
 //==========================================================================
@@ -434,18 +377,82 @@ function applyLetterboxToAR(scene) {
     podestVisible.addEventListener("model-loaded", () => console.log("✅ Podest geladen"));
     podestVisible.addEventListener("model-error", (e) => console.log("❌ Podest Fehler", e.detail));
   }
-if (scene.hasLoaded) {
-  applyLetterboxToAR(scene);
-} else {
-  scene.addEventListener("loaded", () => applyLetterboxToAR(scene), { once: true });
-}
+// -------------------------------------------------------
+// FIX "GEQUETSCHT": Video + Canvas identisch als COVER fitten
+// (keine Verzerrung, keine Ränder, kann cropen -> ok)
+// -------------------------------------------------------
+const syncARCover = () => {
+  const vv = window.visualViewport;
+  const vw = vv ? vv.width : window.innerWidth;
+  const vh = vv ? vv.height : window.innerHeight;
+  const vLeft = vv ? vv.offsetLeft : 0;
+  const vTop  = vv ? vv.offsetTop  : 0;
+
+  const video = document.getElementById("arjs-video") || document.querySelector("video");
+  const canvasWrap = document.querySelector(".a-canvas");
+  const canvas = scene?.renderer?.domElement || document.querySelector("canvas");
+
+  if (!video || !canvas) return false;
+  if (!video.videoWidth || !video.videoHeight) return false;
+
+  const vidW = video.videoWidth;
+  const vidH = video.videoHeight;
+
+  // COVER: max -> füllt Viewport komplett, crop ok
+  const scale = Math.max(vw / vidW, vh / vidH);
+  const boxW = Math.round(vidW * scale);
+  const boxH = Math.round(vidH * scale);
+
+  const left = Math.round(vLeft + (vw - boxW) / 2);
+  const top  = Math.round(vTop  + (vh - boxH) / 2);
+
+  // gleiche Box auf Video + Canvas (+ optional .a-canvas wrapper)
+  const applyBox = (el) => {
+    if (!el) return;
+    el.style.position = "fixed";
+    el.style.left = `${left}px`;
+    el.style.top = `${top}px`;
+    el.style.width = `${boxW}px`;
+    el.style.height = `${boxH}px`;
+    el.style.transform = "none";
+  };
+
+  applyBox(video);
+  applyBox(canvas);
+  applyBox(canvasWrap);
+
+  // AR.js resize pipeline (wichtig!)
+  const arSystem = scene.systems && (scene.systems.arjs || scene.systems["arjs"]);
+  const src = arSystem && arSystem.arToolkitSource;
+  const ctx = arSystem && arSystem.arToolkitContext;
+
+  if (src && scene.renderer) {
+    src.onResizeElement();
+    src.copyElementSizeTo(scene.renderer.domElement);
+    if (ctx && ctx.arController && ctx.arController.canvas) {
+      src.copyElementSizeTo(ctx.arController.canvas);
+    }
+  }
+
+  return true;
+};
+
+// Starten wenn Video ready ist
+const startARCoverSync = () => {
+  let tries = 0;
+  const t = setInterval(() => {
+    tries++;
+    if (syncARCover() || tries > 120) clearInterval(t);
+  }, 50);
+};
+
+if (scene.hasLoaded) startARCoverSync();
+else scene.addEventListener("loaded", startARCoverSync, { once: true });
+
+window.addEventListener("resize", () => setTimeout(syncARCover, 80));
+window.addEventListener("orientationchange", () => setTimeout(syncARCover, 250));
 
   if (!scene || !marker || !rocket) return;
-
-
-
-
-  //syncCanvasToVideo(scene);
 
   // -------------------------------------------------------
   // ANDROID FIX: Touch -> MouseEvents MIT KOORDINATEN
