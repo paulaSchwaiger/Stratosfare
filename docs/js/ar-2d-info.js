@@ -443,79 +443,56 @@ function syncCanvasToVideo(scene) {
     podestVisible.addEventListener("model-error", (e) => console.log("❌ Podest Fehler", e.detail));
   }
 
-const resizeAR = () => {
-  if (!scene) return;
+const stabilizeAROnAndroid = () => {
+  const video = document.getElementById("arjs-video") || document.querySelector("video");
+  const canvas = scene?.canvas || scene?.renderer?.domElement;
 
-  const w = window.innerWidth;
-  const h = window.innerHeight;
+  const w = window.visualViewport?.width || window.innerWidth;
+  const h = window.visualViewport?.height || window.innerHeight;
 
-  // A-Frame renderer/canvas
-  if (scene.renderer) {
+  // 1) Layering hart setzen (ohne dein CSS zu zerstören)
+  if (video) {
+    video.style.setProperty("z-index", "0", "important");
+  }
+  if (canvas) {
+    canvas.style.setProperty("z-index", "2", "important");
+    canvas.style.setProperty("position", "fixed", "important");
+    canvas.style.setProperty("inset", "0", "important");
+    canvas.style.setProperty("width", w + "px", "important");
+    canvas.style.setProperty("height", h + "px", "important");
+  }
+
+  // 2) Renderer + Kamera Aspect korrekt setzen (gegen "gequetscht")
+  if (scene?.renderer) {
     scene.renderer.setPixelRatio(window.devicePixelRatio || 1);
     scene.renderer.setSize(w, h, false);
   }
-
-  // Kamera Aspect
-  if (scene.camera) {
+  if (scene?.camera) {
     scene.camera.aspect = w / h;
     scene.camera.updateProjectionMatrix();
   }
-
-  // AR.js Toolkit Resize (WICHTIG!)
-  const arSystem = scene.systems && (scene.systems.arjs || scene.systems["arjs"]);
-  const src = arSystem && arSystem.arToolkitSource;
-  const ctx = arSystem && arSystem.arToolkitContext;
-
-  if (src) {
-    src.onResizeElement();
-    if (scene.renderer && scene.renderer.domElement) {
-      src.copyElementSizeTo(scene.renderer.domElement);
-    }
-    if (ctx && ctx.arController && ctx.arController.canvas) {
-      src.copyElementSizeTo(ctx.arController.canvas);
-    }
-  }
 };
-if (scene.hasLoaded) resizeAR();
-else scene.addEventListener("loaded", () => setTimeout(resizeAR, 80), { once: true });
 
-window.addEventListener("resize", () => setTimeout(resizeAR, 80));
-window.addEventListener("orientationchange", () => setTimeout(resizeAR, 250));
+// wenn scene wirklich ready ist
+if (scene.hasLoaded) {
+  stabilizeAROnAndroid();
+} else {
+  scene.addEventListener("loaded", () => {
+    stabilizeAROnAndroid();
+    // AR.js überschreibt gern NACH dem loaded nochmal -> deshalb 2 Re-Fixes
+    setTimeout(stabilizeAROnAndroid, 200);
+    setTimeout(stabilizeAROnAndroid, 800);
+  }, { once: true });
+}
 
-console.log("VW/VH", window.innerWidth, window.innerHeight);
-const v = document.getElementById("arjs-video");
-if (v) console.log("VIDEO rect", v.getBoundingClientRect());
+// bei rotation/resize nachziehen
+window.addEventListener("resize", () => setTimeout(stabilizeAROnAndroid, 150));
+window.addEventListener("orientationchange", () => setTimeout(stabilizeAROnAndroid, 250));
+
 
   if (!scene || !marker || !rocket) return;
 
 
-  // --- Fix AR.js video styles (Android / Pixel) ---
-const forceVideoBehindCanvas = () => {
-  const v = document.querySelector("#arjs-video") || document.querySelector("video");
-  if (!v) return;
-
-  v.style.position = "fixed";
-  v.style.left = "0";
-  v.style.top = "0";
-  v.style.width = "100vw";
-  v.style.height = "100vh";
-  v.style.objectFit = "cover";
-  v.style.objectPosition = "50% 50%";
-  v.style.transform = "none";
-  v.style.margin = "0";
-  v.style.zIndex = "0";
-};
-
-// wenn scene ready ist, kurz danach nochmal (AR.js setzt video manchmal später)
-if (scene.hasLoaded) {
-  setTimeout(forceVideoBehindCanvas, 80);
-  setTimeout(forceVideoBehindCanvas, 350);
-} else {
-  scene.addEventListener("loaded", () => {
-    setTimeout(forceVideoBehindCanvas, 80);
-    setTimeout(forceVideoBehindCanvas, 350);
-  }, { once: true });
-}
 
 
   //syncCanvasToVideo(scene);
