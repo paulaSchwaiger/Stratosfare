@@ -290,7 +290,7 @@ body {
 ========================= */
 /* ===== AR LAYER FIX (Video hinten, Canvas vorne) ===== */
 
-/* Kein Scroll / keine extra Fläche */
+/* Kein Scroll / keine extra Fläche 
 html, body {
   margin: 0 !important;
   padding: 0 !important;
@@ -304,7 +304,7 @@ body.page-ar {
   overflow: hidden !important;
   background: #000 !important;
 }
-
+*/
 
 /* =========================
    COUNTDOWN / MISSION TEXT (dein Look)
@@ -357,58 +357,38 @@ body.page-ar {
 .mission-anim { animation: missionPopHoldFade 2.6s ease-in-out forwards; }
 
 /* ========= AR LAYER FIX (ganz ans Ende!) ========= */
-
-/* Video IMMER hinter allem */
-#arjs-video,
-video#arjs-video {
-  position: fixed !important;
-  inset: 0 !important;
-  width: 100vw !important;
-  height: 100vh !important;
-
-  object-fit: cover !important;
-  object-position: 50% 50% !important;
-
-  /* ganz wichtig: keine Offsets/Transforms */
-  left: 0 !important;
-  top: 0 !important;
-  transform: none !important;
-  margin: 0 !important;
-
-  z-index: 0 !important;
+html, body {
+  margin: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
 }
 
-/* Canvas IMMER über Video */
-.canvas,
-canvas.a-canvas {
+/* AR layer */
+#ar-root {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  background: transparent;
+  z-index: 1;          /* über Video */
+}
+
+/* Canvas über Video */
+.a-canvas, canvas.a-canvas {
   position: fixed !important;
   inset: 0 !important;
-  width: 100vw !important;
-  height: 100vh !important;
-
-  left: 0 !important;
-  top: 0 !important;
-  transform: none !important;
-
   z-index: 2 !important;
   background: transparent !important;
 }
 
-/* Scene-Container auch sauber */
-#ar-root,
-#ar-scene {
-  position: fixed !important;
-  inset: 0 !important;
-  width: 100vw !important;
-  height: 100vh !important;
-  z-index: 1 !important;
+/* Video nur "sichtbar halten" (z-index), NICHT neu layouten */
+#arjs-video, video#arjs-video {
+  z-index: 0 !important;
+  /* KEIN object-fit, KEIN transform, KEIN width/height erzwingen */
 }
 
-/* UI drüber */
-#main-header,
-#ar-footer,
-#permission-overlay,
-.info-overlay,
-.minigame-overlay {
+/* UI oben */
+#main-header, #ar-footer, #permission-overlay, .info-overlay, .minigame-overlay {
   z-index: 3000 !important;
 }
