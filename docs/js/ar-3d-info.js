@@ -788,83 +788,21 @@ const startCountdown = (seconds = 3, onDone) => {
   openedPinIndex = null;
 };
 
-  // -----------------------------
-  // TAP GRID (8x4) -> löst Pins aus
-  // -----------------------------
-  const setupTapGrid = () => {
-    const rows = 8;
-    const cols = 4;
-    const tapGrid = document.getElementById("tapGrid");
-    if (!tapGrid) return;
+ // TapGrid initialisieren (reusable)
+const tg = window.TapGrid?.init({
+  scene,
+  marker,
+  hitTargets,
+  getUnlockedStep: () => unlockedStep
+});
 
-    // Falls initARLogic mehrfach laufen könnte: Grid leeren
-    tapGrid.innerHTML = "";
+// Wenn TapGrid einen Pin feuert -> dein Overlay öffnen
+window.addEventListener("pinselected", (e) => {
+  const index = e.detail.index;
+  const step = index + 1;
+  if (step <= unlockedStep) openInfoByIndex(index);
+});
 
-    // 24 Zellen erzeugen
-    for (let i = 0; i < rows * cols; i++) {
-      const btn = document.createElement("button");
-      btn.type = "button";
-      btn.className = "tapCell";
-      btn.dataset.index = String(i);
-      tapGrid.appendChild(btn);
-    }
-
-    const activateCell = (row, col, pinId) => {
-      const idx = row * cols + col;
-      const cell = tapGrid.children[idx];
-      if (!cell) return;
-      cell.classList.add("active");
-      cell.dataset.pin = pinId; // "pin1".."pin4"
-    };
-
-    const activateBlock = (r1, c1, r2, c2, pinId) => {
-        for (let r = r1; r <= r2; r++) {
-            for (let c = c1; c <= c2; c++) {
-            activateCell(r, c, pinId);
-            }
-        }
-    };
-
-    // Pin 1: oben rechts
-    activateBlock(0, 2, 1, 3, "pin1");
-
-    // Pin 2: mitte oben links
-    activateBlock(2, 0, 3, 1, "pin2");
-
-    // Pin 3: mitte unten rechts
-    activateBlock(4, 2, 5, 3, "pin3");
-
-    // Pin 4: unten links
-    activateBlock(6, 0, 7, 1, "pin4");
-
-    
-    const triggerPin = (pinId) => {
-      const index = parseInt(pinId.replace("pin",""), 10) - 1; // pin1->0
-      if (Number.isNaN(index)) return;
-
-      const step = index + 1;
-      if (step <= unlockedStep) {
-        openInfoByIndex(index);
-      } else {
-        console.log("PIN LOCKED", step, "(unlockedStep =", unlockedStep, ")");
-      }
-    };
-
-    tapGrid.addEventListener("touchstart", (e) => {
-      const cell = e.target.closest(".tapCell.active");
-      if (!cell) return;
-      e.preventDefault();
-      triggerPin(cell.dataset.pin);
-    }, { passive: false });
-
-    tapGrid.addEventListener("click", (e) => {
-      const cell = e.target.closest(".tapCell.active");
-      if (!cell) return;
-      triggerPin(cell.dataset.pin);
-    });
-  };
-
-  setupTapGrid();
 
 
   // Schließen per X + Backdrop
