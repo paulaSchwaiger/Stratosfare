@@ -143,7 +143,7 @@ body {
 #permission-overlay {
   position: fixed;
   inset: 0;
-  z-index: 3500; /* über allem */
+  z-index: 35000; /* über allem */
   background: rgba(15, 23, 42, 0.9);
   backdrop-filter: blur(8px);
 
@@ -233,7 +233,7 @@ body {
 .info-overlay {
   position: fixed;
   inset: 0;
-  z-index: 2000; /* über AR, Footer, Header */
+  z-index: 20000; /* über AR, Footer, Header */
   background: rgba(0, 0, 0, 0.16);
   backdrop-filter: blur(8px);
   display: flex;
@@ -353,7 +353,7 @@ body.page-ar {
   background: transparent !important;
 }
 /* UI immer drüber */
-#main-header, #ar-footer, #permission-overlay, .info-overlay,
+#main-header, #ar-footer, 
 .countdown-overlay, .mission-overlay, .minigame-overlay {
   z-index: 3000 !important;
 }
@@ -424,3 +424,30 @@ body.page-ar {
   100% { transform: scale(0.98); opacity: 0; }
 }
 .mission-anim { animation: missionPopHoldFade 2.6s ease-in-out forwards; }
+
+#tapGrid{
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: grid;
+  grid-template-rows: repeat(8, 1fr);
+  grid-template-columns: repeat(4, 1fr);
+  pointer-events: auto; /* Grid selbst blockt nichts */
+}
+
+/* Zellen */
+.tapCell{
+  pointer-events: none;               /* dead space */
+  background: rgba(0,0,0,0.04);       /* Raster leicht sichtbar */
+  border: 1px solid rgba(0,0,0,0.15); /* Grid-Linien */
+  padding: 0;
+  margin: 0;
+}
+
+/* nur aktive sind tappbar */
+.tapCell.active{
+  pointer-events: auto;
+  background: rgba(255,0,0,0.12);
+  border: 2px solid rgba(255,0,0,0.6);
+}
+
