@@ -116,7 +116,7 @@ document.addEventListener("DOMContentLoaded", () => {
           rotation="0 0 0"
           width="1"
           height="3"
-          material="src: url(sources/2D/rocket_seq/Rocket_drehen_00000.png); transparent: true; alphaTest: 0.5; shader: flat; side: double:"
+          material="src: url(sources/2D/rocket_seq/Rocket_drehen_00000.png); transparent: true; alphaTest: 0.5; shader: flat; side: double;"
           shadow="cast: true"
         ></a-plane>
 
@@ -670,6 +670,7 @@ function stopRocketSequence() {
 
 
     if (!scene || !marker || !rocket) return;
+    const isGltfRocket = !!rocket.getAttribute("gltf-model");
 
     // -------------------------------------------------------
     // Aspect Fix
@@ -801,21 +802,22 @@ function stopRocketSequence() {
     loadingEl.classList.add("hidden");
     arFooter.classList.remove("hidden");
 
-    if (!rocketFramesPreloaded) {
-      preloadRocketFrames(rocket);
-      rocketFramesPreloaded = true;
+    if (!isGltfRocket) {
+      if (!rocketFramesPreloaded) {
+        preloadRocketFrames(rocket);
+        rocketFramesPreloaded = true;
+      }
+
+      startRocketSequence(rocket, {
+        folder: "sources/2D/rocket_seq",
+        prefix: "Rocket_drehen_",
+        start: 0,
+        end: 118,
+        fps: 12,
+      });
+
+      resumeRocketSequence();
     }
-
-
-    startRocketSequence(rocket, {
-    folder: "sources/2D/rocket_seq",
-    prefix: "Rocket_drehen_",
-    start: 0,
-    end: 118,
-    fps: 12,
-  });
-
-    resumeRocketSequence();
     
     // ✅ Mission 1 zuerst starten (nur einmal)
    if (!mission1Started) {
@@ -831,7 +833,7 @@ function stopRocketSequence() {
 
                 setupMission1Pins({
                     onAllPinsDone: () => {
-                      startRocketSequence(rocket, { loop: true });
+                      if (!isGltfRocket) startRocketSequence(rocket, { loop: true });
                       startMission2();
                     },
                 });
@@ -840,7 +842,7 @@ function stopRocketSequence() {
     }
 
     marker.addEventListener("markerLost", () => {
-            pauseRocketSequence();
+            if (!isGltfRocket) pauseRocketSequence();
             rocket.setAttribute("visible", "false");
             label?.setAttribute("visible", "false");
             hint?.setAttribute("visible", "true");

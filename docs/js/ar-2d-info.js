@@ -102,11 +102,11 @@ document.addEventListener("DOMContentLoaded", () => {
         <a-plane
           id="rocket"
           visible="false"
-          position="0 0 0"
+          position="0 2.8 0"
           rotation="0 0 0"
-          width="1.2"
-          height="3.2"
-          material="src: url(sources/Rakete_final.png); transparent: true;depthTest: true; depthWrite: false; "
+          width="3.2"
+          height="6.2"
+          material="src: url(sources/2D/rocket_launch_info/rocket_launch_info_00000.png); transparent: true;depthTest: true; depthWrite: false; side: double; shader: flat;"
         ></a-plane>
 
         <a-entity id="pinGroup-1" visible="true">
@@ -296,9 +296,8 @@ document.addEventListener("DOMContentLoaded", () => {
 }
 
 //===============================================================================
-//FUNKTIONEN
+//FUNKTIONEN (Podest an DImensionen anpassen; Png Sequenz)
 //===============================================================================
-
 
 function fitPodestToRealDims(el, { height = 0.95, diameter = 1.8 } = {}) {
   const obj = el.getObject3D("mesh");
@@ -348,6 +347,85 @@ function fitPodestToRealDims(el, { height = 0.95, diameter = 1.8 } = {}) {
 
   el.object3D.updateMatrixWorld(true);
 }
+
+const pad5 = (n) => String(n).padStart(5, "0");
+
+function preloadPngSequence({ folder, prefix, start, end, ext = "png" }) {
+  for (let i = start; i <= end; i++) {
+    const img = new Image();
+    img.src = `${folder}/${prefix}${pad5(i)}.${ext}`;
+  }
+}
+
+
+function playPngSequenceOnPlaneSafe(planeEl, {
+  folder,
+  prefix,
+  start = 0,
+  end = 118,
+  fps = 18,
+  ext = "png",
+  loop = false,
+  onDone,
+}) {
+  if (!planeEl) return { stop() {} };
+
+  let frame = start;
+  let running = true;
+
+  const frameMs = 1000 / fps;
+  let last = performance.now();
+
+  const setFrameSafe = (f) => {
+    const url = `${folder}/${prefix}${pad5(f)}.${ext}`;
+
+    const img = new Image();
+    img.onload = () => {
+      if (!running) return;
+      planeEl.setAttribute("material", "src", `url(${url})`);
+    };
+    img.onerror = () => {
+      console.warn("FRAME NOT FOUND:", url); // <- wenn du das siehst: Pfad/Name!
+    };
+    img.src = url;
+  };
+
+  // Material einmal “richtig” setzen (wichtig für Alpha)
+  planeEl.setAttribute("material", "transparent", true);
+  planeEl.setAttribute("material", "shader", "flat");
+  planeEl.setAttribute("material", "alphaTest", 0.01);
+  planeEl.setAttribute("material", "depthWrite", false);
+  planeEl.setAttribute("visible", "true");
+
+  setFrameSafe(frame);
+
+  const tick = (now) => {
+    if (!running) return;
+
+    const dt = now - last;
+    if (dt >= frameMs) {
+      last = now - (dt % frameMs);
+
+      frame++;
+      if (frame > end) {
+        if (loop) frame = start;
+        else {
+          running = false;
+          onDone && onDone();
+          return;
+        }
+      }
+      setFrameSafe(frame);
+    }
+
+    requestAnimationFrame(tick);
+  };
+
+  requestAnimationFrame(tick);
+
+  return { stop() { running = false; } };
+}
+
 
 
 //==========================================================================
@@ -454,6 +532,14 @@ window.addEventListener("orientationchange", () => setTimeout(syncARCover, 250))
 
   if (!scene || !marker || !rocket) return;
 
+  preloadPngSequence({
+    folder: "sources/2D/rocket_launch_info",
+    prefix: "rocket_launch_info_",
+    start: 0,
+    end: 190,
+  });
+
+
   // -------------------------------------------------------
   // ANDROID FIX: Touch -> MouseEvents MIT KOORDINATEN
   // (rayOrigin: mouse braucht clientX/clientY!)
@@ -538,6 +624,9 @@ window.addEventListener("orientationchange", () => setTimeout(syncARCover, 250))
     rocket.setAttribute("visible", "false");
     label?.setAttribute("visible", "false");
     hint?.setAttribute("visible", "true");
+
+    launchSeqCtrl?.stop?.();
+   launchSeqCtrl = null;
   });
 
   // -----------------------------
@@ -673,9 +762,6 @@ const startCountdown = (seconds = 3, onDone) => {
   setTimeout(tick, STEP_DURATION);
 };
 
-
-
-
   startBtn?.addEventListener("click", (e) => {
     if (completedPins < 4) {
       e.preventDefault();
@@ -687,50 +773,42 @@ const startCountdown = (seconds = 3, onDone) => {
 
     //  Countdown starten
     startCountdown(3, () => {
-      launchRocket();
+
+       playLaunchSequenceAndGo();
+
     });
   });
 
-  /*-------------------------------------------
-  ROCKET LAUNCH (vorläufig)
-  ---------------------------------------------*/
-  const launchRocket = () => {
+  /* ---------------------------------------
+  PNG SEQUENZ
+  -----------------------------------------*/
+
+  let launchSeqCtrl = null;
+
+function playLaunchSequenceAndGo() {
   const rocket = document.getElementById("rocket");
   if (!rocket) return;
 
-    // Kurzes Zittern / Aufladen
-    rocket.setAttribute(
-      "animation__shake",
-      "property: position; dur: 90; dir: alternate; loop: 14; easing: easeInOutSine; to: 0 0 0.03"
-    );
+  // sicher sichtbar
+  rocket.setAttribute("visible", "true");
+  rocket.setAttribute("material", "opacity", 1);
 
-    // Leichtes Abheben
-    setTimeout(() => {
-      rocket.setAttribute(
-        "animation__lift",
-        "property: position; dur: 900; easing: easeOutQuad; to: 0 0 -0.35"
-      );
-    }, 900);
+  // Sequenz abspielen
+  launchSeqCtrl?.stop?.();
+  launchSeqCtrl = playPngSequenceOnPlaneSafe(rocket, {
+    folder: "sources/2D/rocket_launch_info",
+    prefix: "rocket_launch_info_",
+    start: 0,
+    end: 190,
+    fps: 18,          // wenn’s ruckelt: 18–22
+    loop: false,
+    onDone: () => {
+      window.location.href = "mehrErfahren.html";
+    },
+  });
+}
 
-    //  3. Boost nach oben + verschwinden
-    setTimeout(() => {
-      rocket.setAttribute(
-        "animation__boost",
-        "property: position; dur: 1200; easing: easeInQuad; to: 0 0 -2.5"
-      );
-
-      rocket.setAttribute(
-        "animation__fade",
-        "property: material.opacity; dur: 600; to: 0"
-      );
-    }, 1800);
-
-    setTimeout(() => {
-    window.location.href = "mehrErfahren.html";
-  }, 3100);
-  };
-
-  /* ---------------------------------------
+/* ---------------------------------------
   INFO OVERLAY + PINS
   -----------------------------------------*/
 
@@ -787,7 +865,6 @@ const startCountdown = (seconds = 3, onDone) => {
 
   openedPinIndex = null;
 };
-
 
   // Schließen per X + Backdrop
   closeBtn?.addEventListener("click", closeInfo);
