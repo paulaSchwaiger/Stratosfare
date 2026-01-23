@@ -56,6 +56,17 @@ document.addEventListener("DOMContentLoaded", () => {
     <a-assets>
       <a-asset-item id="podest-obj" src="sources/3D/Podest.obj"></a-asset-item>
       <a-asset-item id="podest-mtl" src="sources/3D/Podest.mtl"></a-asset-item>
+      <img id="rocketFrame0" src="sources/2D/rocket_launch_info/rocket_launch_info_00000.png">
+      <video
+        id="rocketVid"
+        src="sources/2D/rocket_launch_info/rocket_launch_info.webm"
+        preload="auto"
+        playsinline
+        webkit-playsinline
+        muted
+        crossorigin="anonymous"
+      ></video>
+        
     </a-assets>
 
 
@@ -95,12 +106,21 @@ document.addEventListener("DOMContentLoaded", () => {
         ></a-entity>
       </a-entity>
 
-        
-
         <a-sphere position="0 0 0" radius="0.03" color="red"></a-sphere>
 
-        <a-plane
+         <a-plane
           id="rocket"
+          visible="false"
+          position="0 2.9 0"
+          rotation="0 0 0"
+          width="3.2"
+          height="6"
+          material="shader: flat; src: #rocketFrame0; transparent: true; "
+        ></a-plane>
+
+        <!--
+        <a-plane
+          id="oldrocket"
           visible="false"
           position="0 2.8 0"
           rotation="0 0 0"
@@ -108,6 +128,7 @@ document.addEventListener("DOMContentLoaded", () => {
           height="6.2"
           material="src: url(sources/2D/rocket_launch_info/rocket_launch_info_00000.png); transparent: true;depthTest: true; depthWrite: false; side: double; shader: flat;"
         ></a-plane>
+        -->
 
         <a-entity id="pinGroup-1" visible="true">
         <!-- HITBOX als BOX (viel besser klickbar als plane) -->
@@ -455,6 +476,9 @@ function playPngSequenceOnPlaneSafe(planeEl, {
     podestVisible.addEventListener("model-loaded", () => console.log("✅ Podest geladen"));
     podestVisible.addEventListener("model-error", (e) => console.log("❌ Podest Fehler", e.detail));
   }
+
+  
+  
 // -------------------------------------------------------
 // FIX "GEQUETSCHT": Video + Canvas identisch als COVER fitten
 // (keine Verzerrung, keine Ränder, kann cropen -> ok)
@@ -603,22 +627,39 @@ window.addEventListener("orientationchange", () => setTimeout(syncARCover, 250))
   // -----------------------------------------------------
   // Marker Verhalten
   // -----------------------------------------------------
+ 
+  const rocketVid = document.getElementById("rocketVid");
+
+  if (rocketVid && !rocketVid.dataset.boundEnded) {
+    rocketVid.dataset.boundEnded = "1";
+
+    rocketVid.addEventListener("ended", () => {
+      window.location.href = "mehrErfahren.html";
+  });
+}
+
+
+  let markerVisible = false;
+  
   marker.addEventListener("markerFound", () => {
     rocket.setAttribute("visible", "true");
     label?.setAttribute("visible", "true");
     hint?.setAttribute("visible", "false");
 
-    // Bewegung erst jetzt starten (optional)
-    /*
-    rocket.setAttribute(
-      "animation",
-      "property: position; dir: alternate; dur: 2000; easing: easeInOutSine; loop: true; to: 0 0.7 0"
-    );
-    */
-
     loadingEl.classList.add("hidden");
     arFooter.classList.remove("hidden");
+
+    markerVisible = true;
+
+    
+
+    // ✅ nur vorbereiten, NICHT abspielen
+    if (rocketVid) {
+      rocketVid.pause();
+      rocketVid.currentTime = 0;
+    }
   });
+
 
   marker.addEventListener("markerLost", () => {
     rocket.setAttribute("visible", "false");
@@ -626,7 +667,16 @@ window.addEventListener("orientationchange", () => setTimeout(syncARCover, 250))
     hint?.setAttribute("visible", "true");
 
     launchSeqCtrl?.stop?.();
-   launchSeqCtrl = null;
+    launchSeqCtrl = null;
+
+     markerVisible = false;
+
+    
+    // optional: stoppen, damit beim Wiederfinden nicht irgendwo weiterläuft
+    if (rocketVid) {
+      rocketVid.pause();
+      rocketVid.currentTime = 0;
+    }
   });
 
   // -----------------------------
@@ -762,22 +812,50 @@ const startCountdown = (seconds = 3, onDone) => {
   setTimeout(tick, STEP_DURATION);
 };
 
-  startBtn?.addEventListener("click", (e) => {
-    if (completedPins < 4) {
-      e.preventDefault();
-      return;
+
+
+async function unlockVideoOnce() {
+  if (!rocketVid || rocketVid.dataset.unlocked === "1") return;
+
+  rocketVid.muted = true;
+  rocketVid.playsInline = true;
+
+  try {
+    await rocketVid.play();      // ✅ User-Gesture
+    rocketVid.pause();
+    rocketVid.currentTime = 0;
+    rocketVid.dataset.unlocked = "1";
+  } catch (e) {
+    console.log("unlock failed", e);
+  }
+}
+
+function showVideoTexture() {
+  // wechselt die Plane-Textur von PNG -> Video
+  rocket.setAttribute("material", "src", "#rocketVid");
+}
+
+startBtn?.addEventListener("click", async (e) => {
+  if (completedPins < 4) { e.preventDefault(); return; }
+
+  // ✅ unlock im Klick!
+  await unlockVideoOnce();
+
+  // Optional: schon mal auf Video umschalten, aber noch pausiert lassen
+  showVideoTexture();
+  rocketVid.pause();
+  rocketVid.currentTime = 0;
+
+  startCountdown(3, async () => {
+    try {
+      rocketVid.currentTime = 0;
+      await rocketVid.play();
+    } catch (err) {
+      console.log("play blocked", err);
     }
-
-    //  Pins, Labels, Hitboxen, Overlay deaktivieren
-    disableARInteraction();
-
-    //  Countdown starten
-    startCountdown(3, () => {
-
-       playLaunchSequenceAndGo();
-
-    });
   });
+});
+
 
   /* ---------------------------------------
   PNG SEQUENZ
@@ -866,42 +944,26 @@ function playLaunchSequenceAndGo() {
   openedPinIndex = null;
 };
 
+// TapGrid initialisieren 
+const tg = window.TapGrid?.init({
+  scene,
+  marker,
+  hitTargets,
+  getUnlockedStep: () => unlockedStep
+});
+
+// Wenn TapGrid einen Pin feuert -> dein Overlay öffnen
+window.addEventListener("pinselected", (e) => {
+  const index = e.detail.index;
+  const step = index + 1;
+  if (step <= unlockedStep) openInfoByIndex(index);
+});
+
   // Schließen per X + Backdrop
   closeBtn?.addEventListener("click", closeInfo);
   overlay?.addEventListener("click", (e) => {
     if (e.target === overlay) closeInfo();
   });
-
-  // Hover Feedback + Klick-Handler
- /*
-  const bindPin = (pin, index) => {
-    if (!pin) return;
-
-    pin.addEventListener("mouseenter", () => {
-      pin.setAttribute("scale", "1.2 1.2 1.2");
-      pin.setAttribute("material", "emissiveIntensity", 1.4);
-    });
-
-    pin.addEventListener("mouseleave", () => {
-      pin.setAttribute("scale", "1 1 1");
-      pin.setAttribute("material", "emissiveIntensity", 0.7);
-    });
-
-    pin.addEventListener("click", () => {
-      const step = index + 1;
-
-      // nur freigeschaltete Pins reagieren
-      if (step <= unlockedStep) {
-        console.log("PIN CLICK", step);
-        openInfoByIndex(index);
-      } else {
-        console.log("PIN LOCKED", step, "(unlockedStep =", unlockedStep, ")");
-      }
-    });
-  };
-
-  pins.forEach((pin, idx) => bindPin(pin, idx));
-  */
 
 // Hover/Klick wird an der HITBOX gebunden
 // --- Hol dir Kamera + Canvas (A-Frame) ---

@@ -96,14 +96,14 @@ body {
   top: 0; left: 0;
   width: 100%;
   height: 8px;
-  background: rgba(235, 255, 0, 0.1);
+  background: rgba(0, 217, 255, 0.1);
   z-index: 1;
 }
 
 #ar-footer .footer-progress-bar {
   height: 100%;
   width: 0%;
-  background: #EBFF00;
+  background: #00DCB5;
   transition: width 0.3s ease;
 }
 
@@ -118,14 +118,18 @@ body {
 
   padding: 14px 16px;
   border-radius: 999px;
-  border: 2px solid #EBFF00;
-  color: #EBFF00;
+  border: 2px solid #ffffff;
+  color: #ffffff;
 
   background: rgba(0,0,0,0.25);
   backdrop-filter: blur(6px);
 }
 
-.footer-cta:active { transform: scale(0.99); }
+.footer-cta:active { 
+    transform: scale(0.99); 
+    border: 2px solid #00DCB5;
+    color: #00DCB5;
+}
 
 .footer-cta.is-disabled {
   opacity: 0.45;
@@ -170,7 +174,7 @@ body {
   margin: 8px 0 10px;
   font-size: 1.25rem;
     letter-spacing: 0.02em;
-  color: #EBFF00;
+  color: #00DCB5;
 }
 
 .permission-dialog p {
@@ -210,9 +214,9 @@ body {
 
 .btn-primary {
   background: #eaff0000;
-  border: 1px solid #EBFF00;
-  color: #EBFF00;
-  box-shadow: 0 10px 10px rgba(235, 255, 0, 0.2);
+  border: 1px solid #00DCB5;
+  color: #00DCB5;
+  box-shadow: 0 10px 10px rgba(0, 220, 181, 0.2);
 }
 
 #loading {
@@ -355,7 +359,7 @@ body.page-ar {
 /* UI immer drüber */
 #main-header, #ar-footer, 
 .countdown-overlay, .mission-overlay, .minigame-overlay {
-  z-index: 3000 !important;
+  z-index: 30000 !important;
 }
 
 /* --- FIX: AR.js Video mittig + keine komischen Offsets --- */
@@ -439,7 +443,7 @@ body.page-ar {
 .tapCell{
   pointer-events: none;               /* dead space */
   background: rgba(0,0,0,0.04);       /* Raster leicht sichtbar */
-  border: 1px solid rgba(0,0,0,0.15); /* Grid-Linien */
+  border: 1px solid rgba(0,0,0,0.0); /* Grid-Linien */
   padding: 0;
   margin: 0;
 }
@@ -447,7 +451,7 @@ body.page-ar {
 /* nur aktive sind tappbar */
 .tapCell.active{
   pointer-events: auto;
-  background: rgba(255,0,0,0.12);
-  border: 2px solid rgba(255,0,0,0.6);
+  background: rgba(0,220,181,0.12);
+ /* border: 2px solid #00DCB5;*/
 }
 

@@ -788,7 +788,7 @@ const startCountdown = (seconds = 3, onDone) => {
   openedPinIndex = null;
 };
 
- // TapGrid initialisieren (reusable)
+ // TapGrid initialisieren 
 const tg = window.TapGrid?.init({
   scene,
   marker,
