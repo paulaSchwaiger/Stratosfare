@@ -106,16 +106,15 @@ document.addEventListener("DOMContentLoaded", () => {
         ></a-entity>
       </a-entity>
 
-        <a-sphere position="0 0 0" radius="0.03" color="red"></a-sphere>
 
          <a-plane
           id="rocket"
           visible="false"
-          position="0 2.9 0"
+          position="0 4.6 0"
           rotation="0 0 0"
           width="3.2"
-          height="6"
-          material="shader: flat; src: #rocketFrame0; transparent: true; "
+          height="9.2"
+          material="shader: flat; src: #rocketFrame0; transparent: true; side: double;"
         ></a-plane>
 
         <!--
@@ -140,7 +139,7 @@ document.addEventListener("DOMContentLoaded", () => {
             width="1.6"
             height="0.45"
             depth="0.3"
-            material="opacity: 0.7; color: #EBFF00; side: double; depthWrite: false; depthTest: false;"
+            material="opacity: 0.001; transparent: true; side: double; depthWrite: false;"
           ></a-box>
 
 
