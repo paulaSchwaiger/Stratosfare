@@ -395,7 +395,7 @@ body.page-ar {
 
 .countdown-number,
 .mission-title {
-  font-size: 6rem;
+  font-size: 4rem;
   font-weight: 800;
   letter-spacing: 0.08em;
   color: #EBFF00;
@@ -451,7 +451,7 @@ body.page-ar {
 /* nur aktive sind tappbar */
 .tapCell.active{
   pointer-events: auto;
-  /*background: rgba(0,220,181,0.12);
-    border: 2px solid #00DCB5;*/
+  background: rgba(0,220,181,0.12);
+   /* border: 2px solid #00DCB5;*/
 }
 

@@ -58,6 +58,27 @@ document.addEventListener("DOMContentLoaded", () => {
     <a-assets>
       <a-asset-item id="podest-obj" src="sources/3D/Podest.obj"></a-asset-item>
       <a-asset-item id="podest-mtl" src="sources/3D/Podest.mtl"></a-asset-item>
+       <video id="rocketDrehVid"
+         src="sources/2D/rocket_seq/Rocket_drehen.webm"
+         loop
+         muted
+         playsinline
+         webkit-playsinline
+         preload="auto"
+         crossorigin="anonymous"></video>
+
+        <video id="rocketLaunchVid"
+              src="sources/2D/rocket_launch_info/rocket_launch_info.webm"
+              muted
+              playsinline
+              webkit-playsinline
+              preload="auto"
+              crossorigin="anonymous"></video>
+
+        <!-- Countdown PNG -->
+        <img id="rocketCountdownImg"
+            src="sources/2D/rocket_launch_info/rocket_launch_info_00000.png"
+            crossorigin="anonymous">
     </a-assets>
 
 
@@ -112,11 +133,11 @@ document.addEventListener("DOMContentLoaded", () => {
         <a-plane
           id="rocket"
           visible="false"
-          position="0 1.3 0"
+          position="0 -2 0"
           rotation="0 0 0"
-          width="1"
-          height="3"
-          material="src: url(sources/2D/rocket_seq/Rocket_drehen_00000.png); transparent: true; alphaTest: 0.5; shader: flat; side: double;"
+          width="3.2"
+          height="9.2"
+          material="src: #rocketDrehVid; transparent: true; alphaTest: 0.5; shader: flat; side: double;"
           shadow="cast: true"
         ></a-plane>
 
@@ -486,12 +507,7 @@ function fitPodestToRealDims(el, { height = 0.95, diameter = 1.8 } = {}) {
 // ------------------------------------------------------------------------------------------
 
   function initARLogic() {
-   let rocketSeqTimer = null;
-    let rocketSeqFrame = 0;
-    let rocketSeqRunning = false;
-    let rocketFramesPreloaded = false;
-
-   
+     
     const scene = document.getElementById("ar-scene");
     const marker = document.getElementById("marker-hiro");
     const rocket = document.getElementById("rocket");
@@ -501,6 +517,91 @@ function fitPodestToRealDims(el, { height = 0.95, diameter = 1.8 } = {}) {
     const podestVisible = document.getElementById("podest-visible");
     const podestOcc = document.getElementById("podest-occluder");
 
+    // --- Rocket media assets aus <a-assets> ---
+    const rocketIdleVid   = document.getElementById("rocketDrehVid");
+    const rocketLaunchVid = document.getElementById("rocketLaunchVid");
+    const rocketCountdownImg = document.getElementById("rocketCountdownImg");
+
+    // Beginn Animation
+    const ROCKET_IN_POS  = "0 -2 0";  // im Podest (Start)
+    const ROCKET_OUT_POS = "0 4.2 0";  // oben raus (Ziel)
+
+    const revealRocketFromPodest = () => {
+      if (!rocket) return;
+
+      // sicherstellen, dass sie erstmal "drin" steht
+      rocket.setAttribute("position", ROCKET_IN_POS);
+
+      // falls schon mal animiert wurde: reset
+      rocket.removeAttribute("animation__rise");
+      rocket.removeAttribute("animation__pop");
+
+      // optional: kleiner Pop über Scale
+      rocket.setAttribute("scale", "0.95 0.95 0.95");
+      rocket.setAttribute(
+        "animation__pop",
+        "property: scale; dur: 260; easing: easeOutBack; to: 1 1 1"
+      );
+
+      // “rausfahren”
+      rocket.setAttribute(
+        "animation__rise",
+        `property: position; dur: 5000; easing: easeOutCubic; to: ${ROCKET_OUT_POS}`
+      );
+    };
+
+
+    // Helper: plane material src wechseln
+    const setRocketSrc = (selector) => {
+      if (!rocket) return;
+      rocket.setAttribute("material", "shader", "flat");
+      rocket.setAttribute("material", "transparent", true);
+      rocket.setAttribute("material", "side", "double");
+      rocket.setAttribute("material", "src", selector);
+    };
+
+    const safePlay = async (vid) => {
+      if (!vid) return;
+      try { await vid.play(); } catch(e) {}
+    };
+
+    // Zustände:
+    const showIdleLoop = async () => {
+      setRocketSrc("#rocketDrehVid");
+      if (rocketLaunchVid) {
+         rocketLaunchVid.pause(); 
+         rocketIdleVid.playbackRate = 0.5; 
+         rocketLaunchVid.currentTime = 0; }
+      if (rocketIdleVid)   { rocketIdleVid.currentTime = 0; await safePlay(rocketIdleVid); }
+    };
+
+    const showCountdownPNG = () => {
+      rocketIdleVid?.pause();
+      rocketLaunchVid?.pause();
+      if (rocketIdleVid) rocketIdleVid.currentTime = 0;
+      if (rocketLaunchVid) rocketLaunchVid.currentTime = 0;
+      setRocketSrc("#rocketCountdownImg");
+    };
+
+    const playLaunchOnce = async (onDone) => {
+      rocketIdleVid?.pause();
+      if (rocketIdleVid) rocketIdleVid.currentTime = 0;
+
+      setRocketSrc("#rocketLaunchVid");
+
+      if (!rocketLaunchVid) { onDone && onDone(); return; }
+
+      rocketLaunchVid.currentTime = 0;
+      await safePlay(rocketLaunchVid);
+
+      const ended = () => {
+        rocketLaunchVid.removeEventListener("ended", ended);
+        onDone && onDone();
+      };
+      rocketLaunchVid.addEventListener("ended", ended);
+    };
+
+    //Podest laden
     podestVisible?.addEventListener("model-loaded", () => {
       fitPodestToRealDims(podestVisible, { height: 0.95, diameter: 1.8 });
     });
@@ -514,79 +615,79 @@ function fitPodestToRealDims(el, { height = 0.95, diameter = 1.8 } = {}) {
       podestVisible.addEventListener("model-error", (e) => console.log("❌ Podest Fehler", e.detail));
     }
     // -------------------------------------------------------
-// FIX "GEQUETSCHT": Video + Canvas identisch als COVER fitten
-// (keine Verzerrung, keine Ränder, kann cropen -> ok)
-// -------------------------------------------------------
-const syncARCover = () => {
-  const vv = window.visualViewport;
-  const vw = vv ? vv.width : window.innerWidth;
-  const vh = vv ? vv.height : window.innerHeight;
-  const vLeft = vv ? vv.offsetLeft : 0;
-  const vTop  = vv ? vv.offsetTop  : 0;
+    // FIX "GEQUETSCHT": Video + Canvas identisch als COVER fitten
+    // (keine Verzerrung, keine Ränder, kann cropen -> ok)
+    // -------------------------------------------------------
+    const syncARCover = () => {
+      const vv = window.visualViewport;
+      const vw = vv ? vv.width : window.innerWidth;
+      const vh = vv ? vv.height : window.innerHeight;
+      const vLeft = vv ? vv.offsetLeft : 0;
+      const vTop  = vv ? vv.offsetTop  : 0;
 
-  const video = document.getElementById("arjs-video") || document.querySelector("video");
-  const canvasWrap = document.querySelector(".a-canvas");
-  const canvas = scene?.renderer?.domElement || document.querySelector("canvas");
+      const video = document.getElementById("arjs-video") || document.querySelector("video");
+      const canvasWrap = document.querySelector(".a-canvas");
+      const canvas = scene?.renderer?.domElement || document.querySelector("canvas");
 
-  if (!video || !canvas) return false;
-  if (!video.videoWidth || !video.videoHeight) return false;
+      if (!video || !canvas) return false;
+      if (!video.videoWidth || !video.videoHeight) return false;
 
-  const vidW = video.videoWidth;
-  const vidH = video.videoHeight;
+      const vidW = video.videoWidth;
+      const vidH = video.videoHeight;
 
-  // COVER: max -> füllt Viewport komplett, crop ok
-  const scale = Math.max(vw / vidW, vh / vidH);
-  const boxW = Math.round(vidW * scale);
-  const boxH = Math.round(vidH * scale);
+      // COVER: max -> füllt Viewport komplett, crop ok
+      const scale = Math.max(vw / vidW, vh / vidH);
+      const boxW = Math.round(vidW * scale);
+      const boxH = Math.round(vidH * scale);
 
-  const left = Math.round(vLeft + (vw - boxW) / 2);
-  const top  = Math.round(vTop  + (vh - boxH) / 2);
+      const left = Math.round(vLeft + (vw - boxW) / 2);
+      const top  = Math.round(vTop  + (vh - boxH) / 2);
 
-  // gleiche Box auf Video + Canvas (+ optional .a-canvas wrapper)
-  const applyBox = (el) => {
-    if (!el) return;
-    el.style.position = "fixed";
-    el.style.left = `${left}px`;
-    el.style.top = `${top}px`;
-    el.style.width = `${boxW}px`;
-    el.style.height = `${boxH}px`;
-    el.style.transform = "none";
-  };
+      // gleiche Box auf Video + Canvas (+ optional .a-canvas wrapper)
+      const applyBox = (el) => {
+        if (!el) return;
+        el.style.position = "fixed";
+        el.style.left = `${left}px`;
+        el.style.top = `${top}px`;
+        el.style.width = `${boxW}px`;
+        el.style.height = `${boxH}px`;
+        el.style.transform = "none";
+      };
 
-  applyBox(video);
-  applyBox(canvas);
-  applyBox(canvasWrap);
+      applyBox(video);
+      applyBox(canvas);
+      applyBox(canvasWrap);
 
-  // AR.js resize pipeline (wichtig!)
-  const arSystem = scene.systems && (scene.systems.arjs || scene.systems["arjs"]);
-  const src = arSystem && arSystem.arToolkitSource;
-  const ctx = arSystem && arSystem.arToolkitContext;
+      // AR.js resize pipeline (wichtig!)
+      const arSystem = scene.systems && (scene.systems.arjs || scene.systems["arjs"]);
+      const src = arSystem && arSystem.arToolkitSource;
+      const ctx = arSystem && arSystem.arToolkitContext;
 
-  if (src && scene.renderer) {
-    src.onResizeElement();
-    src.copyElementSizeTo(scene.renderer.domElement);
-    if (ctx && ctx.arController && ctx.arController.canvas) {
-      src.copyElementSizeTo(ctx.arController.canvas);
-    }
-  }
+      if (src && scene.renderer) {
+        src.onResizeElement();
+        src.copyElementSizeTo(scene.renderer.domElement);
+        if (ctx && ctx.arController && ctx.arController.canvas) {
+          src.copyElementSizeTo(ctx.arController.canvas);
+        }
+      }
 
-  return true;
-};
+      return true;
+    };
 
-// Starten wenn Video ready ist
-const startARCoverSync = () => {
-  let tries = 0;
-  const t = setInterval(() => {
-    tries++;
-    if (syncARCover() || tries > 120) clearInterval(t);
-  }, 50);
-};
+    // Starten wenn Video ready ist
+    const startARCoverSync = () => {
+      let tries = 0;
+      const t = setInterval(() => {
+        tries++;
+        if (syncARCover() || tries > 120) clearInterval(t);
+      }, 50);
+    };
 
-if (scene.hasLoaded) startARCoverSync();
-else scene.addEventListener("loaded", startARCoverSync, { once: true });
+    if (scene.hasLoaded) startARCoverSync();
+    else scene.addEventListener("loaded", startARCoverSync, { once: true });
 
-window.addEventListener("resize", () => setTimeout(syncARCover, 80));
-window.addEventListener("orientationchange", () => setTimeout(syncARCover, 250));
+    window.addEventListener("resize", () => setTimeout(syncARCover, 80));
+    window.addEventListener("orientationchange", () => setTimeout(syncARCover, 250));
 
     // ----------------------------
     // Mission Banner (AR Plane)
@@ -610,65 +711,7 @@ window.addEventListener("orientationchange", () => setTimeout(syncARCover, 250))
         setTimeout(() => banner.setAttribute("visible", "false"), ms);
     };
 
-    // ===================================================================
-    //  PNG SEQUENCE PLAYER 
-    // ==================================================================
-   // ===== Rocket PNG Sequence =====
-const pad5 = (n) => String(n).padStart(5, "0");
-
-function startRocketSequence(rocketEl, {
-  folder,
-  prefix,
-  start = 0,
-  end = 118,
-  fps = 12,
-}) {
-  if (!rocketEl) return;
-
-  // wenn schon läuft -> nicht doppelt starten
-  if (rocketSeqTimer) return;
-
-  rocketSeqRunning = true;
-  const frameMs = Math.max(16, Math.round(1000 / fps));
-
-  // falls frisch starten soll:
-  if (rocketSeqFrame < start || rocketSeqFrame > end) rocketSeqFrame = start;
-
-  rocketSeqTimer = setInterval(() => {
-    if (!rocketSeqRunning) return; // pausiert bei markerLost
-
-    console.log("frame", frameMs);
-    const file = `${folder}/${prefix}${pad5(rocketSeqFrame)}.png`;
-
-    // "hart" refreshen, damit A-Frame wirklich updated:
-    rocketEl.setAttribute(
-      "material",
-      `src: url(${file}?t=${Date.now()}); transparent: true; shader: flat;`
-    );
-
-    rocketSeqFrame++;
-    if (rocketSeqFrame > end) rocketSeqFrame = start;
-  }, frameMs);
-  rocketSeqFrame += 2;
-}
-
-function pauseRocketSequence() {
-  rocketSeqRunning = false;
-}
-
-function resumeRocketSequence() {
-  rocketSeqRunning = true;
-}
-
-function stopRocketSequence() {
-  rocketSeqRunning = false;
-  if (rocketSeqTimer) clearInterval(rocketSeqTimer);
-  rocketSeqTimer = null;
-}
-
-
-
-
+  
     if (!scene || !marker || !rocket) return;
     const isGltfRocket = !!rocket.getAttribute("gltf-model");
 
@@ -787,69 +830,68 @@ function stopRocketSequence() {
     }
 
     // Launch Button (wenn Mission 2 geschafft)
-    document.getElementById("launch-btn")?.addEventListener("click", () => {
-    launchRocket();
-    });
+    const launchRocket = () => {
+      // 1) Countdown-Phase: PNG anzeigen
+      showCountdownPNG();
+
+      // 2) Countdown starten (du hast startCountdown schon irgendwo)
+      startCountdown(3, () => {
+        // 3) Nach Countdown: Launch-Animation abspielen
+        playLaunchOnce(() => {
+          window.location.href = "mehrErfahren.html";
+        });
+      });
+    };
+
 
     // -------------------------------------------------------
     // Marker Verhalten
     // -------------------------------------------------------
-    marker.addEventListener("markerFound", () => {
-    rocket.setAttribute("visible", "true");
-    label?.setAttribute("visible", "true");
-    hint?.setAttribute("visible", "false");
+      marker.addEventListener("markerFound", () => {
+        rocket.setAttribute("visible", "true");
+        label?.setAttribute("visible", "true");
+        hint?.setAttribute("visible", "false");
 
-    loadingEl.classList.add("hidden");
-    arFooter.classList.remove("hidden");
+        loadingEl.classList.add("hidden");
+        arFooter.classList.remove("hidden");
 
-    if (!isGltfRocket) {
-      if (!rocketFramesPreloaded) {
-        preloadRocketFrames(rocket);
-        rocketFramesPreloaded = true;
-      }
+        showIdleLoop();
+        
+        // ✅ Mission 1 zuerst starten (nur einmal)
+        if (!mission1Started) {
+          mission1Started = true;
 
-      startRocketSequence(rocket, {
-        folder: "sources/2D/rocket_seq",
-        prefix: "Rocket_drehen_",
-        start: 0,
-        end: 118,
-        fps: 12,
-      });
+          setFooterMode("pins");
 
-      resumeRocketSequence();
-    }
-    
-    // ✅ Mission 1 zuerst starten (nur einmal)
-   if (!mission1Started) {
-    mission1Started = true;
-
-    setFooterMode("pins");
-
-        showMissionScreen({
-            title: "MISSION 1",
-            sub: "Tippe alle Pins an",
-            durationMs: 2600,
-            onDone: () => {
+          showMissionScreen({
+              title: "MISSION 1",
+              sub: "Tippe alle Pins an",
+              durationMs: 2600,
+              onDone: () => {
+                
+                showIdleLoop();              
+                revealRocketFromPodest();  
 
                 setupMission1Pins({
-                    onAllPinsDone: () => {
-                      if (!isGltfRocket) startRocketSequence(rocket, { loop: true });
-                      startMission2();
-                    },
+                  onAllPinsDone: () => {
+                    if (!isGltfRocket) startRocketSequence(rocket, { loop: true });
+                    startMission2();
+                  },
                 });
-            },
-        });
-    }
+              },
+          });
+        }
+      });
 
-    marker.addEventListener("markerLost", () => {
-            if (!isGltfRocket) pauseRocketSequence();
-            rocket.setAttribute("visible", "false");
-            label?.setAttribute("visible", "false");
-            hint?.setAttribute("visible", "true");
-        });
+      marker.addEventListener("markerLost", () => {
+              
+        rocket.setAttribute("visible", "false");
+        label?.setAttribute("visible", "false");
+        hint?.setAttribute("visible", "true");
 
-    });
-
+        rocketIdleVid?.pause();
+        rocketLaunchVid?.pause();
+      });
     
     }
 
@@ -865,6 +907,8 @@ function stopRocketSequence() {
   const titleEl = document.getElementById("info-title");
   const textEl = document.getElementById("info-text2");
   const closeBtn = document.getElementById("info-close");
+  const scene = document.getElementById("ar-scene");
+  const marker = document.getElementById("marker-hiro");
 
   // ---- Pins / HitTargets ----
   const pinGroups = [
@@ -950,6 +994,20 @@ function stopRocketSequence() {
         }
      };
 
+  // TapGrid initialisieren 
+  const tg = window.TapGrid?.init({
+    scene,
+    marker,
+    hitTargets,
+    getUnlockedStep: () => 4
+  });
+
+  if (!window.__mission1PinselectedBound) {
+    window.__mission1PinselectedBound = true;
+    window.addEventListener("pinselected", (e) => {
+      openInfoByIndex(e.detail.index);
+  });
+}
 
   // ---- Mission 1 Initialisierung: ALLES sichtbar + klickbar ----
   pinGroups.forEach((g) => setVisible(g, true));
@@ -978,7 +1036,7 @@ function stopRocketSequence() {
   });
 
   // ---- ✅ Zuverlässiger Pick: Canvas click + Raycaster intersectedEls ----
-  const scene = document.getElementById("ar-scene");
+  
   const cam = document.getElementById("cam");
 
   const setupCanvasPick = () => {
