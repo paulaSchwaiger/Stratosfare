@@ -56,7 +56,15 @@
     </div>
 
     <!-- Loading für die AR-Szene -->
-    <div id="loading" class="hidden">AR-Szene wird geladen…</div>
+    <div id="loading" class="hidden">
+      <div class="loading-text">Inhalte werden geladen...</div>
+
+      <div class="loading-videoWrap">
+        <video id="loading-webm" class="loading-webm" muted playsinline autoplay loop preload="auto">
+          <source src="sources/2D/rocket_loading/rocket_loading.webm" type="video/webm">
+        </video>
+      </div>
+    </div>
 
     <!-- AR-Bereich -->
     <div id="ar-wrapper">

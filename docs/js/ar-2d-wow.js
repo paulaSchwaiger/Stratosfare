@@ -65,20 +65,30 @@ document.addEventListener("DOMContentLoaded", () => {
          playsinline
          webkit-playsinline
          preload="auto"
-         crossorigin="anonymous"></video>
+         crossorigin="anonymous"
+        ></video>
 
         <video id="rocketLaunchVid"
-              src="sources/2D/rocket_launch_info/rocket_launch_info.webm"
-              muted
-              playsinline
-              webkit-playsinline
-              preload="auto"
-              crossorigin="anonymous"></video>
+          src="sources/2D/rocket_launch_info/rocket_launch_info.webm"
+          muted
+          playsinline
+          webkit-playsinline
+          preload="auto"
+          crossorigin="anonymous"             
+        ></video>
 
         <!-- Countdown PNG -->
         <img id="rocketCountdownImg"
             src="sources/2D/rocket_launch_info/rocket_launch_info_00000.png"
             crossorigin="anonymous">
+
+        <video
+          id="smokeVid"
+          src="sources/2D/rocket_launch_wow/rauch_2D_wow.webm"
+          preload="auto"
+          muted
+          playsinline
+        ></video>
     </a-assets>
 
 
@@ -128,7 +138,7 @@ document.addEventListener("DOMContentLoaded", () => {
       </a-entity>
 
 
-        <a-sphere position="0 0 0" radius="0.03" color="red"></a-sphere>
+        
 
         <a-plane
           id="rocket"
@@ -139,6 +149,27 @@ document.addEventListener("DOMContentLoaded", () => {
           height="9.2"
           material="src: #rocketDrehVid; transparent: true; alphaTest: 0.5; shader: flat; side: double;"
           shadow="cast: true"
+        ></a-plane>
+
+        <a-plane
+          id="smoke-back"
+          visible="false"
+          position="0 0.35 -5"
+          rotation="0 0 0"
+          width="3.2"
+          height="3.2"
+          material="shader: flat; src: #smokeVid; transparent: true; alphaTest: 0.01; depthWrite: false; side: double;"
+        ></a-plane>
+
+        <!-- Rauch vorne -->
+        <a-plane
+          id="smoke-front"
+          visible="false"
+          position="0 0.35 5"
+          rotation="0 0 0"
+          width="3.2"
+          height="3.2"
+          material="shader: flat; src: #smokeVid; transparent: true; alphaTest: 0.01; depthWrite: false; side: double;"
         ></a-plane>
 
         <a-entity id="pinGroup-1" visible="false">
@@ -502,6 +533,8 @@ function fitPodestToRealDims(el, { height = 0.95, diameter = 1.8 } = {}) {
 
 
 
+
+
 // ------------------------------------------------------------------------------------------
 // Init Logik
 // ------------------------------------------------------------------------------------------
@@ -521,6 +554,10 @@ function fitPodestToRealDims(el, { height = 0.95, diameter = 1.8 } = {}) {
     const rocketIdleVid   = document.getElementById("rocketDrehVid");
     const rocketLaunchVid = document.getElementById("rocketLaunchVid");
     const rocketCountdownImg = document.getElementById("rocketCountdownImg");
+    const smokeVid = document.getElementById("smokeVid");  
+    const launchVid = document.getElementById("RocketLaunchVid")
+
+    let vidsUnlocked = false;
 
     // Beginn Animation
     const ROCKET_IN_POS  = "0 -2 0";  // im Podest (Start)
@@ -600,6 +637,49 @@ function fitPodestToRealDims(el, { height = 0.95, diameter = 1.8 } = {}) {
       };
       rocketLaunchVid.addEventListener("ended", ended);
     };
+
+    // -----------------------------
+    // iOS/Android Autoplay-Policy Fix
+    // -----------------------------
+    const unlockVid = async (vid) => {
+      if (!vid) return;
+      try {
+        // muss muted sein, sonst blocken viele Browser
+        vid.muted = true;
+        vid.playsInline = true;
+
+        // kurzer Play->Pause “Unlock”
+        const p = vid.play();
+        if (p && typeof p.then === "function") await p;
+        vid.pause();
+        vid.currentTime = 0;
+      } catch (e) {
+        console.warn("unlockVid blocked:", e);
+      }
+    };
+
+    const unlockAllVidsOnce = async () => {
+      if (vidsUnlocked) return;
+      vidsUnlocked = true;
+      await unlockVid(smokeVid);
+      await unlockVid(launchVid); // optional (nur wenn playLaunchOnce ein Video ist)
+    };
+
+    // -----------------------------
+    // Smoke Play
+    // -----------------------------
+    const playSmokeOnce = () => {
+      if (!smokeVid) return;
+
+      smokeVid.pause();
+      smokeVid.currentTime = 0;
+
+      const p = smokeVid.play();
+      if (p && typeof p.catch === "function") {
+        p.catch((e) => console.warn("smoke play blocked:", e));
+      }
+    };
+
 
     //Podest laden
     podestVisible?.addEventListener("model-loaded", () => {
@@ -829,16 +909,64 @@ function fitPodestToRealDims(el, { height = 0.95, diameter = 1.8 } = {}) {
         });
     }
 
+    /*------------------------------------- 
+COUNTDOWN
+---------------------------------------*/
+
+const countdownOverlay = document.getElementById("countdown-overlay");
+const countdownNumber = document.getElementById("countdown-number");
+
+const startCountdown = (seconds = 3, onDone) => {
+  if (!countdownOverlay || !countdownNumber) return;
+
+  const STEP_DURATION = 1100; 
+  const END_DURATION = 800;
+
+  let n = seconds;
+
+  const showNumber = (val) => {
+    countdownNumber.textContent = String(val);
+    countdownNumber.classList.remove("pop");
+    void countdownNumber.offsetWidth; // restart animation
+    countdownNumber.classList.add("pop");
+  };
+
+  countdownOverlay.classList.remove("hidden");
+  showNumber(n);
+
+  const tick = () => {
+    n -= 1;
+
+    if (n <= 0) {
+      showNumber("START");
+      setTimeout(() => {
+        countdownOverlay.classList.add("hidden");
+        onDone && onDone();
+      }, END_DURATION);
+      return;
+    }
+
+    showNumber(n);
+    setTimeout(tick, STEP_DURATION);
+  };
+
+  setTimeout(tick, STEP_DURATION);
+};
+
+
+
+    // Rocket launch
+    const launchBtn = document.getElementById("launch-btn");
+
     // Launch Button (wenn Mission 2 geschafft)
-    const launchRocket = () => {
+    const launchRocket = async () => {
       // 1) Countdown-Phase: PNG anzeigen
       showCountdownPNG();
 
-      // 2) Countdown starten (du hast startCountdown schon irgendwo)
       startCountdown(3, () => {
-        // 3) Nach Countdown: Launch-Animation abspielen
+        playSmokeOnce();
         playLaunchOnce(() => {
-          window.location.href = "mehrErfahren.html";
+        window.location.href = "mehrErfahren.html";
         });
       });
     };
@@ -874,8 +1002,17 @@ function fitPodestToRealDims(el, { height = 0.95, diameter = 1.8 } = {}) {
 
                 setupMission1Pins({
                   onAllPinsDone: () => {
-                    if (!isGltfRocket) startRocketSequence(rocket, { loop: true });
+                    if (!isGltfRocket) showIdleLoop(); ;
                     startMission2();
+
+                    launchBtn?.addEventListener("click", async (e) => {
+                      e.preventDefault();
+
+                      // ✅ unlock einmalig bei erstem Klick
+                      await unlockAllVidsOnce();
+
+                      launchRocket();
+                    });
                   },
                 });
               },
