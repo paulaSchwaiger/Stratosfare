@@ -85,9 +85,12 @@ document.addEventListener("DOMContentLoaded", () => {
         <video
           id="smokeVid"
           src="sources/2D/rocket_launch_wow/rauch_2D_wow.webm"
-          preload="auto"
-          muted
-          playsinline
+           autoplay
+            loop
+            muted
+            playsinline
+            webkit-playsinline
+            crossorigin="anonymous" 
         ></video>
     </a-assets>
 
@@ -154,22 +157,33 @@ document.addEventListener("DOMContentLoaded", () => {
         <a-plane
           id="smoke-back"
           visible="false"
-          position="0 0.35 -5"
+          position="0 3 -1"
           rotation="0 0 0"
-          width="3.2"
-          height="3.2"
+          width="10"
+          height="10"
           material="shader: flat; src: #smokeVid; transparent: true; alphaTest: 0.01; depthWrite: false; side: double;"
         ></a-plane>
 
-        <!-- Rauch vorne -->
+         <a-plane
+          id="smoke-middle"
+          visible="false"
+          position="0 4.5 0.01"
+          rotation="0 0 0"
+          width="10"
+          height="10"
+          material="shader: flat; src: #smokeVid; transparent: true; alphaTest: 0.01; depthWrite: false; side: double;"
+        ></a-plane>
+
+       <!-- SMOKE FRONT (Debug: erstmal rot) -->
         <a-plane
           id="smoke-front"
           visible="false"
-          position="0 0.35 5"
+          position="0 3 1.25"
           rotation="0 0 0"
-          width="3.2"
-          height="3.2"
-          material="shader: flat; src: #smokeVid; transparent: true; alphaTest: 0.01; depthWrite: false; side: double;"
+          width="10"
+          height="10"
+          material="shader: flat; src: #smokeVid; transparent: true; side: double; depthWrite: false; depthTest: false;  alphaTest: 0.01;"
+         
         ></a-plane>
 
         <a-entity id="pinGroup-1" visible="false">
@@ -668,17 +682,37 @@ function fitPodestToRealDims(el, { height = 0.95, diameter = 1.8 } = {}) {
     // -----------------------------
     // Smoke Play
     // -----------------------------
-    const playSmokeOnce = () => {
-      if (!smokeVid) return;
+  function playSmokeAll({ durationMs = 3000 } = {}) {
+  const vid = document.getElementById("smokeVid");
+  const front = document.getElementById("smoke-front");
+  const mid = document.getElementById("smoke-middle");
+  const back = document.getElementById("smoke-back");
 
-      smokeVid.pause();
-      smokeVid.currentTime = 0;
+  console.log("🔥 playSmokeAll", { vid: !!vid, front: !!front, mid: !!mid, back: !!back });
+  if (!vid || !front || !mid || !back) return;
 
-      const p = smokeVid.play();
-      if (p && typeof p.catch === "function") {
-        p.catch((e) => console.warn("smoke play blocked:", e));
-      }
-    };
+  // Planes sichtbar
+  [front, mid, back].forEach((p) => {
+    p.setAttribute("visible", "true");
+    if (p.object3D) p.object3D.visible = true;
+  });
+
+  // Video reset + play
+  try { vid.pause(); } catch {}
+  try { vid.currentTime = 0; } catch {}
+  vid.muted = true;
+
+  const p = vid.play();
+  if (p?.catch) p.catch((e) => console.warn("❌ smoke play blocked:", e));
+
+  // nach Dauer wieder aus
+  window.setTimeout(() => {
+    [front, mid, back].forEach((p) => {
+      p.setAttribute("visible", "false");
+      if (p.object3D) p.object3D.visible = false;
+    });
+  }, durationMs);
+}
 
 
     //Podest laden
@@ -962,9 +996,11 @@ const startCountdown = (seconds = 3, onDone) => {
     const launchRocket = async () => {
       // 1) Countdown-Phase: PNG anzeigen
       showCountdownPNG();
+      ;
 
       startCountdown(3, () => {
-        playSmokeOnce();
+
+        playSmokeAll({ durationMs: 5000 });
         playLaunchOnce(() => {
         window.location.href = "mehrErfahren.html";
         });
@@ -999,6 +1035,7 @@ const startCountdown = (seconds = 3, onDone) => {
                 
                 showIdleLoop();              
                 revealRocketFromPodest();  
+                playSmokeAll({ durationMs: 5000 });
 
                 setupMission1Pins({
                   onAllPinsDone: () => {
