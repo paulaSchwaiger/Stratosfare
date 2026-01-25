@@ -29,9 +29,12 @@
           />
         </a>
       </div>
+        <!-- Language switch button -->
+      <button id="langBtn" class="lang-btn" type="button">DE</button>
 
       <button class="menu-toggle" aria-label="Open Menu">
-        <span href="index.html">Home</span>
+        <span class="lang-en">Home</span>
+        <span class="lang-de" style="display:none;">Startseite</span>
         <span></span>
         <span></span>
       </button>
@@ -41,10 +44,20 @@
       <section class="landing-intro">
         <h1 class="landing-title">BOOSTING.INNOVATION.TOGETHER.</h1>
         <p class="landing-subtext">
+          <span class="lang-en">
            Welcome aboard. <br>Choose a version and start your mission.
           Take your time to explore the environment and interact with the systems.
           With each step, you get closer to completing your mission.<br> <br>
           Good luck!
+            </span>
+
+           <span class="lang-de" style="display:none;">
+             Willkommen an Bord.<br>
+             Wähle eine Version und starte deine Mission.
+             Nimm dir Zeit, die Umgebung zu erkunden und mit den Systemen zu interagieren.
+             Mit jedem Schritt kommst du dem Erfüllen deiner Mission näher.<br><br>
+             Viel Erfolg!
+           </span>
         </p>
       </section>
 
@@ -79,7 +92,33 @@
       </section>
     </main>
 
+    <script>
+      <script>
+  let currentLang = "en";
 
+  document.getElementById("langBtn").addEventListener("click", () => {
+    currentLang = currentLang === "en" ? "de" : "en";
+
+    document.querySelectorAll(".lang-en").forEach(el => {
+      el.style.display = currentLang === "en" ? "" : "none";
+    });
+
+    document.querySelectorAll(".lang-de").forEach(el => {
+      el.style.display = currentLang === "de" ? "" : "none";
+    });
+
+    document.getElementById("langBtn").textContent = currentLang === "en" ? "DE" : "EN";
+    document.documentElement.lang = currentLang;
+
+    // ✅ Add these two lines right here:
+    document.title = currentLang === "en" ? "Stratosfare - Home" : "Stratosfare - Startseite";
+
+    document.querySelector(".menu-toggle").setAttribute(
+      "aria-label",
+      currentLang === "en" ? "Open Menu" : "Menü öffnen"
+    );
+  });
+</script>
     <!-- Flowbite JS -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/flowbite/2.2.1/flowbite.min.js"></script>
   </body>
