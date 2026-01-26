@@ -56,6 +56,11 @@ document.addEventListener("DOMContentLoaded", () => {
     <a-assets>
       <a-asset-item id="podest-obj" src="sources/3D/Podest.obj"></a-asset-item>
       <a-asset-item id="podest-mtl" src="sources/3D/Podest.mtl"></a-asset-item>
+
+      <video id="fxFireSmoke"
+      src="sources/3D/rauch_3D_info/rauch_3D.webm"
+      muted playsinline webkit-playsinline preload="auto"
+      crossorigin="anonymous"></video>
     </a-assets>
 
 
@@ -95,10 +100,6 @@ document.addEventListener("DOMContentLoaded", () => {
         ></a-entity>
       </a-entity>
 
-        
-
-        <a-sphere position="0 0 0" radius="0.03" color="red"></a-sphere>
-
         <a-entity
           id="rocket"
           visible="false"
@@ -106,8 +107,22 @@ document.addEventListener("DOMContentLoaded", () => {
           position="0 0 0"
           rotation="0 0 0"
           scale="10 10 10"
-          animation="property: rotation; to: 0 360 0; loop: true; dur: 15000; easing: linear"
-        ></a-entity>
+          animation="property: rotation; to: 0 360 0; loop: true; dur: 15000; easing: linear" >
+
+          <a-entity id="fx-group" position="0 -0.12 0" visible="false">
+            <a-plane width="0.8" height="0.8"
+              material="src:#fxFireSmoke; transparent:true; shader:flat; side:double; depthWrite:false;">
+            </a-plane>
+
+            <a-plane width="0.8" height="0.8" rotation="0 60 0"
+              material="src:#fxFireSmoke; transparent:true; shader:flat; side:double; depthWrite:false;">
+            </a-plane>
+
+            <a-plane width="0.8" height="0.8" rotation="0 120 0"
+              material="src:#fxFireSmoke; transparent:true; shader:flat; side:double; depthWrite:false;">
+            </a-plane>
+          </a-entity>
+        </a-entity>
 
         <a-entity id="pinGroup-1" visible="true">
         <!-- HITBOX als BOX (viel besser klickbar als plane) -->
@@ -364,6 +379,10 @@ function fitPodestToRealDims(el, { height = 0.95, diameter = 1.8 } = {}) {
   const arRoot = document.getElementById("ar-root");
   const podestVisible = document.getElementById("podest-visible");
   const podestOcc = document.getElementById("podest-occluder");
+  const fxGroup = document.getElementById("fx-group");
+  const fxVid = document.getElementById("fxFireSmoke");
+  
+
 
   podestVisible?.addEventListener("model-loaded", () => {
     fitPodestToRealDims(podestVisible, { height: 0.95, diameter: 1.8 });
@@ -521,6 +540,9 @@ window.addEventListener("orientationchange", () => setTimeout(syncARCover, 250))
     rocket.setAttribute("visible", "true");
     label?.setAttribute("visible", "true");
     hint?.setAttribute("visible", "false");
+
+     fxGroup?.setAttribute("visible", "false");
+    if (fxVid) { fxVid.pause(); fxVid.currentTime = 0; }
 
     // Bewegung erst jetzt starten (optional)
     /*
@@ -687,7 +709,11 @@ const startCountdown = (seconds = 3, onDone) => {
 
     //  Countdown starten
     startCountdown(3, () => {
-      launchRocket();
+      playFxOnce();
+      launchRocket3D();
+      setTimeout(() => {
+        window.location.href = "mehrErfahren.html";
+      }, 8000);
     });
   });
 
@@ -729,6 +755,59 @@ const startCountdown = (seconds = 3, onDone) => {
     window.location.href = "mehrErfahren.html";
   }, 3100);
   };
+
+
+  /* ---------------------------------------
+  Rauch play
+  -----------------------------------------*/
+  const playFxOnce = () => {
+  if (!fxGroup || !fxVid) return;
+
+  fxGroup.setAttribute("visible", "true");
+
+  // optional: kleine "Expansion" statt Drift (weil es ja an der Rakete klebt)
+  fxGroup.removeAttribute("animation__puff");
+  fxGroup.setAttribute("scale", "0.9 0.9 0.9");
+  fxGroup.setAttribute(
+    "animation__puff",
+    "property: scale; dur: 250; easing: easeOutBack; to: 1 1 1"
+  );
+
+  fxVid.currentTime = 0;
+  fxVid.play().catch(()=>{});
+
+  fxVid.onended = () => fxGroup.setAttribute("visible", "false");
+};
+
+const launchRocket3D = () => {
+  if (!rocket) return;
+
+  rocket.removeAttribute("animation__shake");
+  rocket.removeAttribute("animation__lift");
+  rocket.removeAttribute("animation__boost");
+
+  rocket.setAttribute("position", "0 0 0");
+
+  rocket.setAttribute(
+    "animation__shake",
+    "property: position; dur: 90; dir: alternate; loop: 12; easing: easeInOutSine; to: 0 0 0.02"
+  );
+
+  setTimeout(() => {
+    rocket.setAttribute(
+      "animation__lift",
+      "property: position; dur: 900; easing: easeOutQuad; to: 0 0.2 0"
+    );
+  }, 700);
+
+  setTimeout(() => {
+    rocket.setAttribute(
+      "animation__boost",
+      "property: position; dur: 1400; easing: easeInQuad; to: 0 1.8 0"
+    );
+  }, 1500);
+};
+
 
   /* ---------------------------------------
   INFO OVERLAY + PINS
