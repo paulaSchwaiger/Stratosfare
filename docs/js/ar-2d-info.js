@@ -32,9 +32,121 @@ AFRAME.registerComponent("occluder-obj", {
     tick();
   },
 });
+let currentLang = localStorage.getItem("lang") || "de";
+
+const i18n = {
+
+  de: {
+    permissionTitle: "Kamera Erlaubnis",
+    permissionText:
+      "Für die AR-Darstellung greift diese Anwendung auf die Kamera deines Geräts zu. Das Kamerabild wird nur lokal im Browser verarbeitet und nicht gespeichert.",
+    allowBtn: "Zustimmen & starten",
+    denyBtn: "Zurück",
+    loadingText: "AR-Objekte werden geladen",
+    footerBtn: "RAKETE STARTEN",
+     pinTitle1: "MISSION & VISION",
+  pinText1: "Jede Mission beginnt mit dem Mut, Neues zu denken. Stratosfare bringt Innovation in Bewegung und gibt Ideen eine Richtung.",
+
+  pinTitle2: "NETZWERK & PARTNERSCHAFTEN",
+  pinText2: "Große Missionen gelingen nie allein. Wenn Unternehmen, Start-ups und Forschung zusammenkommen, entsteht echte Aufbruchsstimmung.",
+
+  pinTitle3: "TEAM & ARBEITSWEISE",
+  pinText3: "Hinter jedem Start steht ein engagiertes Team. Mit Erfahrung, Neugier und Vertrauen begleitet es Innovation bis zum Abheben.",
+
+  pinTitle4: "PROJEKTE",
+  pinText4: "Ideen heben ab, wenn man sie teilt. In gemeinsamen Projekten werden Visionen getestet, geschärft und umgesetzt.",
+
+    li1: "Nur zur Erkennung des AR-Markers (z. B. HIRO).",
+    li2: "Keine Übertragung an einen Server.",
+    li3: "Ohne Kamerazugriff kann die Anwendung nicht genutzt werden.",
+
+  },
+  en: {
+    permissionTitle: "Camera Permission",
+    permissionText:
+      "This AR experience needs access to your camera. The camera image is processed locally in your browser and is not stored.",
+    allowBtn: "Allow & start",
+    denyBtn: "Back",
+    loadingText: "Loading AR objects",
+    footerBtn: "START ROCKET",
+      pinTitle1: "MISSION & VISION",
+  pinText1: "Every mission begins with the courage to think differently. Stratosfare sets innovation in motion and gives ideas direction.",
+
+  pinTitle2: "NETWORK & PARTNERSHIPS",
+  pinText2: "Big missions never succeed alone. When companies, startups and research come together, real momentum is created.",
+
+  pinTitle3: "TEAM & WORKFLOW",
+  pinText3: "Behind every launch is a committed team. With experience and curiosity, they guide innovation from idea to takeoff.",
+
+  pinTitle4: "PROJECTS",
+  pinText4: "Ideas take off when shared. Joint projects test, sharpen and bring visions to life.",
+    li1: "Only used to detect the AR marker (e.g. HIRO).",
+    li2: "No data is sent to a server.",
+    li3: "Without camera access the experience cannot run.",
+  },
+};
+
+function apply2DTranslations() {
+  const dict = i18n[currentLang];
+
+  // Permission overlay texts
+  const title = document.getElementById("permission-title");
+  const text = document.getElementById("permission-text");
+  if (title) title.textContent = dict.permissionTitle;
+  if (text) text.textContent = dict.permissionText;
+
+  // Buttons
+  const allow = document.getElementById("allow-btn");
+  const deny = document.getElementById("deny-btn");
+  if (allow) allow.textContent = dict.allowBtn;
+  if (deny) deny.textContent = dict.denyBtn;
+
+  // Loading
+  const loading = document.getElementById("loading");
+  if (loading) loading.textContent = dict.loadingText;
+
+  // Footer CTA
+  const footerBtn = document.querySelector("#ar-footer .footer-cta");
+  if (footerBtn) footerBtn.textContent = dict.footerBtn;
+
+  // Lang button label
+  const langBtn = document.getElementById("langBtn");
+  if (langBtn) langBtn.textContent = currentLang === "de" ? "EN" : "DE";
+
+  // Permission list items (make these safe)
+  const li1 = document.getElementById("permission-li1");
+  const li2 = document.getElementById("permission-li2");
+  const li3 = document.getElementById("permission-li3");
+  if (li1) li1.textContent = dict.li1;
+  if (li2) li2.textContent = dict.li2;
+  if (li3) li3.textContent = dict.li3;
+
+  // ✅ A-Frame pin labels (inside the AR scene)
+  const l1 = document.getElementById("pinLabel1");
+  const l2 = document.getElementById("pinLabel2");
+  const l3 = document.getElementById("pinLabel3");
+  const l4 = document.getElementById("pinLabel4");
+
+  if (l1) l1.setAttribute("value", dict.pinLabel1);
+  if (l2) l2.setAttribute("value", dict.pinLabel2);
+  if (l3) l3.setAttribute("value", dict.pinLabel3);
+  if (l4) l4.setAttribute("value", dict.pinLabel4);
+}
+
+function toggleLang() {
+  currentLang = currentLang === "de" ? "en" : "de";
+  localStorage.setItem("lang", currentLang);
+  document.documentElement.lang = currentLang;
+  apply2DTranslations();
+  if (openedPinIndex !== null) openInfoByIndex(openedPinIndex);
+
+}
 
 
 document.addEventListener("DOMContentLoaded", () => {
+  apply2DTranslations();
+  document.getElementById("langBtn")?.addEventListener("click", toggleLang);
+
   const permissionOverlay = document.getElementById("permission-overlay");
   const allowBtn = document.getElementById("allow-btn");
   const denyBtn = document.getElementById("deny-btn");
@@ -163,6 +275,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
           <!-- Titel -->
           <a-text
+            id="pinLabel1"
             value="MISSION"
             position="0.78 2.015 0.35"
             rotation="0 0 0"
@@ -207,6 +320,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
           <!-- TITEL (auch flach, leicht höher) -->
           <a-text
+           id="pinLabel2"
             value="GESCHÄFTSMODELL"
             position="-0.78 1.485 0.35"
             rotation="0 0 0"
@@ -253,6 +367,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
           <!-- Titel -->
           <a-text
+            id="pinLabel3"
             value="TEAM & ARBEITSWEISE"
             position="0.78 1 0.35"
             rotation="0 0 0"
@@ -292,6 +407,7 @@ document.addEventListener("DOMContentLoaded", () => {
           ></a-plane>
 
           <a-text
+            id="pinLabel4"
             value="PROJEKTE"
             position="-0.78 0.015 0.35"
             rotation="0 0 0"
@@ -726,19 +842,12 @@ const disableARInteraction = () => {
 };
 
   const progressBarEl = document.querySelector("#ar-footer .footer-progress-bar");
-
   const pinContent = [
-    {
-      title: "MISSION & VISION",
-      text: "Jede Mission beginnt mit dem Mut, Neues zu denken. Stratosfare bringt Innovation in Bewegung und gibt Ideen eine Richtung.", },
-    { title: "NETZWERK & PARTNERSCHAFTEN", 
-      text: "Große Missionen gelingen nie allein. Wenn Unternehmen, Start-ups und Forschung zusammenkommen, entsteht echte Aufbruchsstimmung." },
-    { title: "TEAM & ARBEITSWEISE", 
-      text: "Hinter jedem Start steht ein engagiertes Team. Mit Erfahrung, Neugier und Vertrauen begleitet es Innovation bis zum Abheben." },
-    { title: "PROJEKTE", 
-      text: "Ideen heben ab, wenn man sie teilt. In gemeinsamen Projekten werden Visionen getestet, geschärft und umgesetzt." },
-  ];
-
+  { titleKey: "pinTitle1", textKey: "pinText1" },
+  { titleKey: "pinTitle2", textKey: "pinText2" },
+  { titleKey: "pinTitle3", textKey: "pinText3" },
+  { titleKey: "pinTitle4", textKey: "pinText4" },
+];
   // robust: Sichtbarkeit wirklich setzen
   const setVisible = (el, visible) => {
     if (!el) return;
@@ -908,8 +1017,9 @@ function playLaunchSequenceAndGo() {
     if (!overlay || !titleEl || !textEl) return;
 
     const c = pinContent[index] || { title: "Info", text: "" };
-    titleEl.textContent = c.title;
-    textEl.textContent = c.text;
+    titleEl.textContent = i18n[currentLang][c.titleKey];
+textEl.textContent  = i18n[currentLang][c.textKey];
+
 
     overlay.classList.remove("hidden");
     openedPinIndex = index;
@@ -1053,6 +1163,7 @@ else scene.addEventListener("loaded", setupCanvasPick, { once: true });
       loadingEl.classList.remove("hidden");
 
       arRoot.innerHTML = createARScene();
+      apply2DTranslations(); // ✅ pins exist now, so update them
 
       const scene = document.getElementById("ar-scene");
       if (scene?.hasLoaded) initARLogic();

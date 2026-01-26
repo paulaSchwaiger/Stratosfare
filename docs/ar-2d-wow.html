@@ -3,15 +3,14 @@
   <head>
     <meta charset="utf-8" />
     <title>Stratosfare - Version 2</title>
-    <link rel="icon" type="image/x-icon" href="/docs/sources/stratosfare-triangle.png">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <link rel="icon" type="image/x-icon" href="/docs/sources/stratosfare-triangle.png" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
 
     <link rel="stylesheet" href="css/occlusionstyle.css" />
- 
+
     <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
     <script src="https://cdn.jsdelivr.net/gh/AR-js-org/AR.js@3.4.5/aframe/build/aframe-ar.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/aframe-extras@6.1.1/dist/aframe-extras.loaders.min.js"></script>
-    
   </head>
 
   <body class="page-ar">
@@ -24,6 +23,9 @@
           class="logo-img"
         />
       </div>
+
+      <!-- ✅ Language button added -->
+      <button id="langBtn" class="lang-btn" type="button">EN</button>
 
       <button class="menu-toggle" aria-label="Menü öffnen">
         <span></span>
@@ -60,8 +62,19 @@
       <div class="loading-text">Inhalte werden geladen...</div>
 
       <div class="loading-videoWrap">
-        <video id="loading-webm" class="loading-webm" muted playsinline autoplay loop preload="auto">
-          <source src="sources/2D/rocket_loading/rocket_loading.webm" type="video/webm">
+        <video
+          id="loading-webm"
+          class="loading-webm"
+          muted
+          playsinline
+          autoplay
+          loop
+          preload="auto"
+        >
+          <source
+            src="sources/2D/rocket_loading/rocket_loading.webm"
+            type="video/webm"
+          />
         </video>
       </div>
     </div>
@@ -83,25 +96,35 @@
 
     <!--  MINIGAME -->
     <div id="minigame-overlay" class="minigame-overlay hidden">
+      <div id="minigame-countdown" class="minigame-countdown hidden">
+        <div
+          id="minigame-countdown-number"
+          class="minigame-countdown-number"
+        ></div>
+      </div>
 
-    <div id="minigame-countdown" class="minigame-countdown hidden">
-      <div id="minigame-countdown-number" class="minigame-countdown-number"></div>
+      <!-- Center Area -->
+      <section class="minigame-stage">
+        <div class="minigame-progress">
+          <div
+            id="minigame-progress-bar"
+            class="minigame-progress-bar"
+          ></div>
+        </div>
+
+        <div class="minigame-time" id="minigame-time">5.0s</div>
+
+        <!-- ✅ default German, JS will switch automatically -->
+        <div
+          id="tap-box"
+          class="tap-box is-disabled"
+          role="button"
+          aria-label="Tippe hier"
+        >
+          <div class="tap-box-text">Tippe hier</div>
+        </div>
+      </section>
     </div>
-
-    <!-- Center Area -->
-    <section class="minigame-stage">
-      <div class="minigame-progress">
-        <div id="minigame-progress-bar" class="minigame-progress-bar"></div>
-      </div>
-
-      <div class="minigame-time" id="minigame-time">5.0s</div>
-
-      <div id="tap-box" class="tap-box is-disabled" role="button" aria-label="Tap here">
-        <div class="tap-box-text">Tap here</div>
-      </div>
-    </section>
-  </div>
-
 
     <!-- Countdown -->
     <div id="countdown-overlay" class="countdown-overlay hidden">
@@ -109,15 +132,20 @@
     </div>
 
     <!-- Info Overlay -->
-    <div id="info-overlay" class="info-overlay hidden" role="dialog" aria-modal="true">
+    <div
+      id="info-overlay"
+      class="info-overlay hidden"
+      role="dialog"
+      aria-modal="true"
+    >
       <div class="info-card">
-        <button id="info-close" class="info-close" aria-label="Overlay schließen">×</button>
+        <button id="info-close" class="info-close" aria-label="Overlay schließen">
+          ×
+        </button>
 
         <img id="info-icon" class="info-icon" src="" alt="" />
         <h3 id="info-subtitle" class="info-subtitle"></h3>
-        <p id="info-text2" class="info-text2">
-          Text
-        </p>
+        <p id="info-text2" class="info-text2">Text</p>
       </div>
     </div>
 
@@ -152,7 +180,7 @@
     </footer>
 
     <!-- AR-Logik -->
-     <script src="js/tap-grid.js" defer></script>
+    <script src="js/tap-grid.js" defer></script>
     <script src="js/ar-2d-wow.js"></script>
   </body>
 </html>
