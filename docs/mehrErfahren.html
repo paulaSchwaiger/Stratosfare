@@ -2,7 +2,8 @@
 <html lang="de">
   <head>
     <meta charset="utf-8" />
-    <title>Stratosfare AR: Mehr Erfahren</title>
+    <title>Stratosfare AR: Learn More</title>
+
 
     <script src="https://cdn.tailwindcss.com"></script>
    <link rel="stylesheet" href="css/newstyle.css" />
@@ -15,7 +16,7 @@
           href="https://stratosfare.de"
           target="_blank"
           rel="noopener noreferrer"
-          aria-label="Zur Stratosfare Website"
+          aria-label="Go to the Stratosfare Website"
         >
           <img
             src="sources/stratosfare-logo.svg"
@@ -24,8 +25,9 @@
           />
         </a>
       </div>
+      <button id="langBtn" class="lang-btn" type="button">EN</button>
 
-      <button class="menu-toggle" aria-label="Menü öffnen">
+      <button class="menu-toggle" aria-label="Open Menu">
         <span></span>
         <span></span>
         <span></span>
@@ -34,20 +36,82 @@
 
      <main id="start-screen" class="landing-main">
       <section class="landing-intro">
-        <h1 class="landing-title">MISSION ABGESCHLOSSEN</h1>
+        <h1 class="landing-title">
+          <span class="lang-en" style="display:none;">MISSION COMPLETED</span>
+          <span class="lang-de">MISSION ABGESCHLOSSEN</span>
+
+        </h1>
+
         <p class="landing-subtext">
-        Die Systeme sind aktiviert und der Start ist gelungen.
-        Doch die Reise endet hier nicht. Weitere Missionen und Innovationen warten darauf, entdeckt zu werden.
-        <br>Zukunft entsteht dort, wo Neugier auf neue Ideen trifft.
+          <span class="lang-en" style="display:none;">
+            The systems are activated and the launch was successful.
+            But the journey doesn`t end here. More missions and innovations are waiting to be discovered.
+            <br>The future is created where curiosity meets new ideas.
+          </span>
+          <span class="lang-de" >
+            Die Systeme sind aktiviert und der Start ist gelungen.
+            Doch die Reise endet hier nicht. Weitere Missionen und Innovationen warten darauf, entdeckt zu werden.
+            <br>Zukunft entsteht dort, wo Neugier auf neue Ideen trifft.
+          </span>
         </p>
+
       </section>
 
       <div class="cta-stack">
-        <a href="https://stratosfare.de" class="btn-cta">MEHR ERFAHREN</a>
-        <a href="index.html" class="btn-cta secondary">ZURÜCK</a>
+        <a href="https://stratosfare.de" class="btn-cta">
+          <span class="lang-en" style="display:none;">LEARN MORE</span>
+          <span class="lang-de">MEHR ERFAHREN</span>
+
+        </a>
+        <a href="index.html" class="btn-cta secondary">
+          <span class="lang-en" style="display:none;">BACK TO START</span>
+          <span class="lang-de">ZURÜCK</span>
+        </a>
+
      </div>
 
     </main>
+<script>
+  let currentLang = localStorage.getItem("lang") || "de";
+
+  function applyLang(lang) {
+    currentLang = lang;
+    localStorage.setItem("lang", currentLang);
+    document.documentElement.lang = currentLang;
+
+    document.querySelectorAll(".lang-en").forEach(el => {
+      el.style.display = currentLang === "en" ? "" : "none";
+    });
+
+    document.querySelectorAll(".lang-de").forEach(el => {
+      el.style.display = currentLang === "de" ? "" : "none";
+    });
+
+    document.getElementById("langBtn").textContent =
+      currentLang === "de" ? "EN" : "DE";
+
+    document.title =
+      currentLang === "en"
+        ? "Stratosfare AR: Learn More"
+        : "Stratosfare AR: Mehr Erfahren";
+
+    document.querySelector(".menu-toggle").setAttribute(
+      "aria-label",
+      currentLang === "en" ? "Open Menu" : "Menü öffnen"
+    );
+
+    document.querySelector('a[aria-label]').setAttribute(
+      "aria-label",
+      currentLang === "en" ? "Go to the Stratosfare Website" : "Zur Stratosfare Website"
+    );
+  }
+
+  applyLang(currentLang);
+
+  document.getElementById("langBtn").addEventListener("click", () => {
+    applyLang(currentLang === "de" ? "en" : "de");
+  });
+</script>
 
     <!-- Flowbite JS -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/flowbite/2.2.1/flowbite.min.js"></script>
