@@ -148,7 +148,7 @@ document.addEventListener("DOMContentLoaded", () => {
           visible="false"
           position="0 -2 0"
           rotation="0 0 0"
-          width="3.2"
+          width="2"
           height="9.2"
           material="src: #rocketDrehVid; transparent: true; alphaTest: 0.5; shader: flat; side: double;"
           shadow="cast: true"
@@ -157,37 +157,38 @@ document.addEventListener("DOMContentLoaded", () => {
         <a-plane
           id="smoke-back"
           visible="false"
-          position="0 3 -1"
+          position="0 6 -1"
           rotation="0 0 0"
-          width="10"
-          height="10"
+          width="15"
+          height="15"
           material="shader: flat; src: #smokeVid; transparent: true; alphaTest: 0.01; depthWrite: false; side: double;"
         ></a-plane>
 
          <a-plane
           id="smoke-middle"
           visible="false"
-          position="0 4.5 0.01"
+          position="0 5 0.01"
           rotation="0 0 0"
-          width="10"
+          width="5"
           height="10"
           material="shader: flat; src: #smokeVid; transparent: true; alphaTest: 0.01; depthWrite: false; side: double;"
+          shadow="cast: true"
         ></a-plane>
 
-       <!-- SMOKE FRONT (Debug: erstmal rot) -->
         <a-plane
           id="smoke-front"
           visible="false"
-          position="0 3 1.25"
+          position="0 13 1"
           rotation="0 0 0"
-          width="10"
-          height="10"
+          width="20"
+          height="30"
           material="shader: flat; src: #smokeVid; transparent: true; side: double; depthWrite: false; depthTest: false;  alphaTest: 0.01;"
+          shadow="cast: true"
          
         ></a-plane>
 
-        <a-entity id="pinGroup-1" visible="false">
-        <!-- HITBOX als BOX (viel besser klickbar als plane) -->
+        <a-entity id="pinGroup-1" visible="false" look-at="[camera]">>
+        
           <a-box
             id="hit-1"
             class="pin"
@@ -196,7 +197,7 @@ document.addEventListener("DOMContentLoaded", () => {
             width="1.6"
             height="0.45"
             depth="0.3"
-            material="opacity: 0.7; color: #EBFF00; side: double; depthWrite: false; depthTest: false;"
+            material="opacity: 0.001; transparent: true; side: double; depthWrite: false;"
           ></a-box>
 
 
@@ -204,7 +205,7 @@ document.addEventListener("DOMContentLoaded", () => {
           <a-sphere
             id="pin-1"  
             position="0.35 2.001 0.35"
-            radius="0.06"
+            radius="0.04"
             material="color: #EBFF00; emissive: #EBFF00; emissiveIntensity: 0.9;"
           ></a-sphere>
 
@@ -231,7 +232,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
         </a-entity>
 
-        <a-entity id="pinGroup-2" visible="false">
+        <a-entity id="pinGroup-2" visible="false" look-at="[camera]">
 
           <!-- HITBOX -->
           <a-plane
@@ -239,9 +240,10 @@ document.addEventListener("DOMContentLoaded", () => {
             class="pin"
             position="-0.62 1.499 0.35"
             rotation="-90 0 0"
-            width="0.95"
-            height="0.25"
-            material="opacity: 0.001; transparent: true; side: double; depthWrite: false;"
+            width="1.6"
+            height="0.45"
+            depth="0.3"
+            material="opacity: 0.001; color: #EBFF00; side: double; depthWrite: false;"
           ></a-plane>
 
           <!-- PIN -->
@@ -263,7 +265,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
           <!-- TITEL (auch flach, leicht höher) -->
           <a-text
-            value="GESCHÄFTSMODELL"
+            value="NETZWERK"
             position="-0.78 1.485 0.35"
             rotation="0 0 0"
             align="right"
@@ -282,8 +284,9 @@ document.addEventListener("DOMContentLoaded", () => {
             class="pin"
             position="0.62 1 0.35"
             rotation="0 0 0"
-            width="0.75"
-            height="0.18"
+            width="1.6"
+            height="0.45"
+            depth="0.3"
             material="opacity: 0; transparent: true; side: double; depthWrite: false;"
           ></a-plane>
 
@@ -318,44 +321,46 @@ document.addEventListener("DOMContentLoaded", () => {
           ></a-text>
 
         </a-entity>
-        <a-entity id="pinGroup-4" visible="false">
+        <a-entity id="pinGroup-4" visible="false" position="0 0.5 0">
 
-        <a-plane
+          <a-plane
             id="hit-4"
             class="pin"
             position="-0.62 0.001 0.35"
             rotation="-90 0 0"
-            width="0.95"
-            height="0.25"
+            width="1.6"
+            height="0.45"
+            depth="0.3"
             material="opacity: 0.001; transparent: true; side: double; depthWrite: false;"
-        ></a-plane>
+          ></a-plane>
 
-        <a-sphere
+          <a-sphere
             id="pin-4"
             position="-0.35 0.001 0.35"
             radius="0.04"
             material="color: #EBFF00; emissive: #EBFF00; emissiveIntensity: 0.9;"
-        ></a-sphere>
+          ></a-sphere>
 
-        <a-plane
+          <a-plane
             position="-0.57 0.002 0.35"
             rotation="-90 0 0"
             width="0.39"
             height="0.01"
             material="color: #EBFF00; emissive: #EBFF00; emissiveIntensity: 0.7; shader: flat; side: double;"
-        ></a-plane>
+          ></a-plane>
 
-        <a-text
+          <a-text
             value="PROJEKTE"
             position="-0.78 0.015 0.35"
-            rotation="-90 0 0"
+            rotation="0 0 0"
             align="right"
             width="3.5"
             color="#EBFF00"
             side="double"
-        ></a-text>
+          ></a-text>
 
         </a-entity>
+
 
         <a-entity
             id="rocket-toast"
@@ -600,6 +605,67 @@ function fitPodestToRealDims(el, { height = 0.95, diameter = 1.8 } = {}) {
         `property: position; dur: 5000; easing: easeOutCubic; to: ${ROCKET_OUT_POS}`
       );
     };
+
+//=========================================
+    // PIN GROUPS 
+    //=====================================
+    
+    const enablePinsAndTapGrid = () => {
+  const pinGroups = [
+    document.getElementById("pinGroup-1"),
+    document.getElementById("pinGroup-2"),
+    document.getElementById("pinGroup-3"),
+    document.getElementById("pinGroup-4"),
+  ];
+
+  const hitTargets = [
+    document.getElementById("hit-1"),
+    document.getElementById("hit-2"),
+    document.getElementById("hit-3"),
+    document.getElementById("hit-4"),
+  ];
+
+  // Pins sichtbar machen (z.B. nur den ersten, wenn du unlock-st)
+  pinGroups.forEach((g, i) => {
+    if (!g) return;
+    g.setAttribute("visible", i === 0 ? "true" : "false");
+    if (g.object3D) g.object3D.visible = (i === 0);
+  });
+
+  // HitTargets klickbar machen (Raycaster targets)
+  hitTargets.forEach((h) => h?.classList.add("pin"));
+
+  // TapGrid einschalten (falls du es nutzt)
+  const gridEl = document.getElementById("tapGrid");
+  if (gridEl) {
+    gridEl.style.display = "";
+    gridEl.style.pointerEvents = "auto";
+  }
+};
+
+
+    const hidePinsAndDisableHit = () => {
+  // PinGroups verstecken
+  ["1","2","3","4"].forEach(n => {
+    const g = document.getElementById(`pinGroup-${n}`);
+    if (!g) return;
+    g.setAttribute("visible", "false");
+    if (g.object3D) g.object3D.visible = false;
+  });
+
+  // HitTargets aus Raycaster raus
+  ["1","2","3","4"].forEach(n => {
+    document.getElementById(`hit-${n}`)?.classList.remove("pin");
+  });
+
+  // TapGrid deaktivieren
+  const gridEl = document.getElementById("tapGrid");
+  if (gridEl) {
+    gridEl.style.pointerEvents = "none";
+    gridEl.style.display = "none";
+  }
+};
+
 
 
     // Helper: plane material src wechseln
@@ -919,7 +985,7 @@ function fitPodestToRealDims(el, { height = 0.95, diameter = 1.8 } = {}) {
         if (mission2Started) return;
         mission2Started = true;
 
-        showMissionBanner("MISSION 2", "Lade die Rakete auf");
+        //showMissionBanner("MISSION 2", "Lade die Rakete auf");
         setFooterMode("minigame");
 
         showMissionScreen({
@@ -1021,6 +1087,7 @@ const startCountdown = (seconds = 3, onDone) => {
 
         showIdleLoop();
         
+        
         // ✅ Mission 1 zuerst starten (nur einmal)
         if (!mission1Started) {
           mission1Started = true;
@@ -1037,6 +1104,9 @@ const startCountdown = (seconds = 3, onDone) => {
                 revealRocketFromPodest();  
                 playSmokeAll({ durationMs: 5000 });
 
+                  // Wenn Rocket fertig “raus” -> Pins an
+                  //rocket.addEventListener("animationcomplete__rise", enablePinsAndTapGrid, { once: true });
+
                 setupMission1Pins({
                   onAllPinsDone: () => {
                     if (!isGltfRocket) showIdleLoop(); ;
@@ -1049,6 +1119,7 @@ const startCountdown = (seconds = 3, onDone) => {
                       await unlockAllVidsOnce();
 
                       launchRocket();
+                      playSmokeAll({ durationMs: 5000 });
                     });
                   },
                 });
@@ -1182,10 +1253,9 @@ const startCountdown = (seconds = 3, onDone) => {
       openInfoByIndex(e.detail.index);
   });
 }
-
-  // ---- Mission 1 Initialisierung: ALLES sichtbar + klickbar ----
+// ---- Mission 1 Initialisierung: ALLES sichtbar + klickbar ----
   pinGroups.forEach((g) => setVisible(g, true));
-  hitTargets.forEach((h) => h?.classList.add("pin")); // wichtig für raycaster="objects: .pin"
+   hitTargets.forEach((h) => h?.classList.add("pin")); // wichtig für raycaster="objects: .pin"
 
   if (startBtn) startBtn.textContent = "MISSION 2 STARTEN";
   setProgress();      // startet bei 0%
