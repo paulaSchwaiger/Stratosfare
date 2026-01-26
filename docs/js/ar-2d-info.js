@@ -59,7 +59,7 @@ document.addEventListener("DOMContentLoaded", () => {
       <img id="rocketFrame0" src="sources/2D/rocket_launch_info/rocket_launch_info_00000.png">
       <video
         id="rocketVid"
-        src="sources/2D/rocket_launch_info/rocket_launch_info.webm"
+        src="sources/2D/rocket_launch_info/Rocket launch.webm"
         preload="auto"
         playsinline
         webkit-playsinline
@@ -110,7 +110,7 @@ document.addEventListener("DOMContentLoaded", () => {
          <a-plane
           id="rocket"
           visible="false"
-          position="0 4.6 0"
+          position="0.2 4.6 0"
           rotation="0 0 0"
           width="3.2"
           height="9.2"
@@ -129,7 +129,7 @@ document.addEventListener("DOMContentLoaded", () => {
         ></a-plane>
         -->
 
-        <a-entity id="pinGroup-1" visible="true">
+        <a-entity id="pinGroup-1" visible="true" look-at="[camera]">>
         <!-- HITBOX als BOX (viel besser klickbar als plane) -->
           <a-box
             id="hit-1"
@@ -147,7 +147,7 @@ document.addEventListener("DOMContentLoaded", () => {
           <a-sphere
             id="pin-1"  
             position="0.35 2.001 0.35"
-            radius="0.06"
+            radius="0.04"
             material="color: #EBFF00; emissive: #EBFF00; emissiveIntensity: 0.9;"
           ></a-sphere>
 
@@ -174,7 +174,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
         </a-entity>
 
-        <a-entity id="pinGroup-2" visible="false">
+        <a-entity id="pinGroup-2" visible="false" look-at="[camera]">
 
           <!-- HITBOX -->
           <a-plane
@@ -182,9 +182,10 @@ document.addEventListener("DOMContentLoaded", () => {
             class="pin"
             position="-0.62 1.499 0.35"
             rotation="-90 0 0"
-            width="0.95"
-            height="0.25"
-            material="opacity: 0.001; transparent: true; side: double; depthWrite: false;"
+            width="1.6"
+            height="0.45"
+            depth="0.3"
+            material="opacity: 0.001; color: #EBFF00; side: double; depthWrite: false;"
           ></a-plane>
 
           <!-- PIN -->
@@ -225,8 +226,9 @@ document.addEventListener("DOMContentLoaded", () => {
             class="pin"
             position="0.62 1 0.35"
             rotation="0 0 0"
-            width="0.75"
-            height="0.18"
+            width="1.6"
+            height="0.45"
+            depth="0.3"
             material="opacity: 0; transparent: true; side: double; depthWrite: false;"
           ></a-plane>
 
@@ -261,15 +263,16 @@ document.addEventListener("DOMContentLoaded", () => {
           ></a-text>
 
         </a-entity>
-        <a-entity id="pinGroup-4" visible="false">
+        <a-entity id="pinGroup-4" visible="false" position="0 0.5 0">
 
           <a-plane
             id="hit-4"
             class="pin"
             position="-0.62 0.001 0.35"
             rotation="-90 0 0"
-            width="0.95"
-            height="0.25"
+            width="1.6"
+            height="0.45"
+            depth="0.3"
             material="opacity: 0.001; transparent: true; side: double; depthWrite: false;"
           ></a-plane>
 
@@ -291,7 +294,7 @@ document.addEventListener("DOMContentLoaded", () => {
           <a-text
             value="PROJEKTE"
             position="-0.78 0.015 0.35"
-            rotation="-90 0 0"
+            rotation="0 0 0"
             align="right"
             width="3.5"
             color="#EBFF00"
@@ -717,6 +720,9 @@ const disableARInteraction = () => {
     if (!hit) return;
     hit.classList.remove("pin"); // wichtig: raycaster="objects: .pin"
   });
+
+  const scene = document.getElementById("ar-scene");
+  if (scene?.canvas) scene.canvas.style.cursor = "default";
 };
 
   const progressBarEl = document.querySelector("#ar-footer .footer-progress-bar");
@@ -845,7 +851,16 @@ startBtn?.addEventListener("click", async (e) => {
   rocketVid.pause();
   rocketVid.currentTime = 0;
 
-  startCountdown(3, async () => {
+  document.getElementById("info-overlay")?.classList.add("hidden");
+  const gridEl = document.getElementById("tapGrid"); // oder wie dein Grid-Root heißt
+    if (gridEl) {
+      gridEl.style.pointerEvents = "none"; // keine Klicks mehr
+      gridEl.style.display = "none";       // optional: komplett unsichtbar
+  }
+
+  disableARInteraction();
+
+  startCountdown(3, async () => {   
     try {
       rocketVid.currentTime = 0;
       await rocketVid.play();
