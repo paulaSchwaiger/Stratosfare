@@ -60,7 +60,7 @@ document.addEventListener("DOMContentLoaded", () => {
       <a-asset-item id="podest-mtl" src="sources/3D/Podest.mtl"></a-asset-item>
 
         <video
-          id="smokeVid"
+          id="fxVid"
           src="sources/3D/rauch_3D_info/rauch_3D.webm"
            preload="auto"
             loop
@@ -124,38 +124,52 @@ document.addEventListener("DOMContentLoaded", () => {
           id="rocket"
           visible="false"
           gltf-model="sources/3D/Rocket.glb"
-          position="0 0 0"
+          position="0 -3 0"
           rotation="0 0 0"
           scale="10 10 10"
           animation="property: rotation; to: 0 360 0; loop: true; dur: 15000; easing: linear" >
 
-            < <a-entity id="smokeRig" position="0 0.2 0">
-                <!-- Plane 1 -->
-                <a-plane
-                  class="smoke3d"
-                  position="0 0 0"
-                  rotation="0 0 0"
-                  width="1.4"
-                  height="2.2"
-                 material="shader: flat; src: #smokeVid; transparent: true; depthWrite: false; alphaTest: 0.01; blending: additive;"
-                ></a-plane>
+            
+                 <a-entity id="fx-group"
+                      visible="false"
+                      position="0 -0.12 0"
+                      rotation="0 0 0"
+                      scale="0.55 0.55 0.55">
 
-                <!-- Plane 2 (Kreuz) -->
-                <a-plane
-                  class="smoke3d"
-                  position="0 0 0"
-                  rotation="0 90 0"
-                  width="1.4"
-                  height="2.2"
-                  material="shader: flat; src: #smokeVid; transparent: true; depthWrite: false; alphaTest: 0.01; blending: additive;"
-                ></a-plane>
-              </a-entity>
+                      <a-video id="fx-1"
+                        src="#fxVid"
+                        position="0 0 0"
+                        rotation="0 180 0"
+                        width="1" height="1"
+                        material="shader: flat; side: double; transparent: true; opacity: 1; depthWrite: false; depthTest: false;"
+                        additive-blend>
+                      </a-video>
 
-        ></a-entity>
+                      <a-video id="fx-2"
+                        src="#fxVid"
+                        position="0 0 0"
+                        rotation="0 240 0"
+                        width="1" height="1"
+                        material="shader: flat; side: double; transparent: true; opacity: 1; depthWrite: false; depthTest: false;"
+                        additive-blend>
+                      </a-video>
+
+                      <a-video id="fx-3"
+                        src="#fxVid"
+                        position="0 0 0"
+                        rotation="0 300 0"
+                        width="1" height="1"
+                        material="shader: flat; side: double; transparent: true; opacity: 1; depthWrite: false; depthTest: false;"
+                        additive-blend>
+                      </a-video>
+
+                    </a-entity>
+
+        </a-entity>
 
         
 
-       <a-entity id="pinGroup-1" visible="false" look-at="[camera]">>
+       <a-entity id="pinGroup-1" visible="false" >
         <!-- HITBOX als BOX (viel besser klickbar als plane) -->
           <a-box
             id="hit-1"
@@ -201,7 +215,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
         </a-entity>
 
-        <a-entity id="pinGroup-2" visible="false" look-at="[camera]">
+        <a-entity id="pinGroup-2" visible="false" >
 
           <!-- HITBOX -->
           <a-plane
@@ -247,7 +261,7 @@ document.addEventListener("DOMContentLoaded", () => {
         </a-entity>
 
 
-        <a-entity id="pinGroup-3" visible="true">
+        <a-entity id="pinGroup-3" visible="false">
         <!-- Hitbox -->
           <a-plane
             id="hit-3"
@@ -512,6 +526,38 @@ function fitPodestToRealDims(el, { height = 0.95, diameter = 1.8 } = {}) {
   el.object3D.updateMatrixWorld(true);
 }
 
+function vibrateLaunchFade({
+  totalMs = 2500,     // Gesamtdauer der Vibration
+  startMs = 70,       // “medium” Pulsdauer
+  endMs = 18,         // “soft” Pulsdauer
+  intervalMs = 180,   // Abstand zwischen Pulsen
+  pauseMs = 60,       // Pause nach jedem Puls
+} = {}) {
+  if (!("vibrate" in navigator)) return;
+
+  const start = performance.now();
+
+  const tick = (t) => {
+    const elapsed = t - start;
+    const p = Math.min(1, elapsed / totalMs); // 0..1
+
+    // linear von startMs -> endMs
+    const pulse = Math.round(startMs + (endMs - startMs) * p);
+
+    // Sicherheits-Guard: zu kleine Werte fühlen sich wie “nix” an
+    const pulseClamped = Math.max(10, pulse);
+
+    navigator.vibrate([pulseClamped, pauseMs]);
+
+    if (elapsed < totalMs) {
+      setTimeout(() => requestAnimationFrame(tick), intervalMs);
+    } else {
+      navigator.vibrate(0); // stop
+    }
+  };
+
+  requestAnimationFrame(tick);
+}
 
 
 
@@ -531,39 +577,28 @@ function fitPodestToRealDims(el, { height = 0.95, diameter = 1.8 } = {}) {
     const podestVisible = document.getElementById("podest-visible");
     const podestOcc = document.getElementById("podest-occluder");
 
-    const fxGroup = document.getElementById("smokeRig");
-    const fxVid = document.getElementById("SmokeVid");
+    const fxGroup = document.getElementById("fx-group");
+    const fxVid = document.getElementById("fxVid");
 
-    // Beginn Animation
-    const ROCKET_IN_POS  = "0 -3 0";  // im Podest (Start)
-    const ROCKET_OUT_POS = "0 0 0";  // oben raus (Ziel)
+   const revealRocketFromPodest = () => {
+  if (!rocket) return;
 
-    const revealRocketFromPodest = () => {
-      if (!rocket) return;
+  rocket.setAttribute("visible", "true");
 
-      // sicherstellen, dass sie erstmal "drin" steht
-      rocket.setAttribute("position", ROCKET_IN_POS);
+  // Start: noch “im Podest” (musst du nur einmal passend wählen)
+  rocket.setAttribute("position", "0 -3 0");  // <- wirkt wie im Podest
 
-      // falls schon mal animiert wurde: reset
-      rocket.removeAttribute("animation__rise");
-      rocket.removeAttribute("animation__pop");
+  rocket.removeAttribute("animation__reveal");
+  rocket.setAttribute(
+    "animation__reveal",
+    "property: position; dur: 1500; easing: easeOutCubic; to: 0 0 0"
+  );
+};
 
-      // optional: kleiner Pop über Scale
-      rocket.setAttribute("scale", "0.95 0.95 0.95");
-      rocket.setAttribute(
-        "animation__pop",
-        "property: scale; dur: 260; easing: easeOutBack; to: 1 1 1"
-      );
-
-      // “rausfahren”
-      rocket.setAttribute(
-        "animation__rise",
-        `property: position; dur: 5000; easing: easeOutCubic; to: ${ROCKET_OUT_POS}`
-      );
-    };
-
-
-   
+rocket.addEventListener("animationcomplete__reveal", () => {
+  // hier Pins/TapGrid aktivieren
+}, { once: true });
+ 
 
     // -----------------------------
     // iOS/Android Autoplay-Policy Fix
@@ -588,32 +623,33 @@ function fitPodestToRealDims(el, { height = 0.95, diameter = 1.8 } = {}) {
     const unlockAllVidsOnce = async () => {
       if (vidsUnlocked) return;
       vidsUnlocked = true;
-      await unlockVid(smokeVid);
+      await unlockVid(fxVid);
       await unlockVid(launchVid); // optional (nur wenn playLaunchOnce ein Video ist)
     };
 
     // -----------------------------
     // Smoke Play
     // -----------------------------
-  const playFxOnce = () => {
+ 
+const playFX = async () => {
   if (!fxGroup || !fxVid) return;
 
   fxGroup.setAttribute("visible", "true");
 
-  // optional: kleiner "puff"
-  fxGroup.removeAttribute("animation__puff");
-  fxGroup.setAttribute("scale", "0.9 0.9 0.9");
-  fxGroup.setAttribute(
-    "animation__puff",
-    "property: scale; dur: 250; easing: easeOutBack; to: 1 1 1"
-  );
-
+  fxVid.pause();
   fxVid.currentTime = 0;
-  fxVid.play().catch(()=>{});
+  fxVid.loop = true;
+  fxVid.muted = true;
 
-  fxVid.onended = () => fxGroup.setAttribute("visible", "false");
+  try { await fxVid.play(); } catch (e) { console.log("fx play failed", e); }
 };
 
+const stopFX = () => {
+  if (!fxGroup || !fxVid) return;
+  fxVid.pause();
+  fxVid.currentTime = 0;
+  fxGroup.setAttribute("visible", "false");
+};
 
     //Podest laden
     podestVisible?.addEventListener("model-loaded", () => {
@@ -811,7 +847,7 @@ function fitPodestToRealDims(el, { height = 0.95, diameter = 1.8 } = {}) {
 
 
     function playSmoke() {
-  const vid = document.getElementById("smokeVid");
+  const vid = document.getElementById("fxVid");
   const plane = document.getElementById("smoke-front");
 
   console.log("🔥 playSmoke", { vid: !!vid, plane: !!plane, ready: vid?.readyState });
@@ -844,7 +880,7 @@ function fitPodestToRealDims(el, { height = 0.95, diameter = 1.8 } = {}) {
         if (mission2Started) return;
         mission2Started = true;
 
-        showMissionBanner("MISSION 2", "Lade die Rakete auf");
+        //showMissionBanner("MISSION 2", "Lade die Rakete auf");
         setFooterMode("minigame");
 
         showMissionScreen({
@@ -983,7 +1019,7 @@ const launchRocket3D = () => {
                 
                               
                 revealRocketFromPodest();  
-                playSmoke();
+               // playSmoke();
                 
 
                 setupMission1Pins({
@@ -991,8 +1027,15 @@ const launchRocket3D = () => {
                     //rocket noch drehen
                     startMission2();
 
-                    launchBtn?.addEventListener("click", () => {
-                        playFxOnce();
+                    document.getElementById("launch-btn")?.addEventListener("click", async () => {
+                      vibrateLaunchFade({
+                        totalMs: 3200,   // ungefähr so lang wie deine Launch-Animation
+                        startMs: 75,
+                        endMs: 15,
+                        intervalMs: 170,
+                        pauseMs: 70,
+                      });  
+                      await playFX(); 
                         launchRocket3D();
 
                         // optional: weiterleiten nach Ende
@@ -1014,9 +1057,7 @@ const launchRocket3D = () => {
         label?.setAttribute("visible", "false");
         hint?.setAttribute("visible", "true");
 
-        fxVid?.pause();
-        if (fxVid) fxVid.currentTime = 0;
-        fxGroup?.setAttribute("visible", "false");
+        stopFX();
       });
     
     }
