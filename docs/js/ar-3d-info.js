@@ -33,6 +33,43 @@ AFRAME.registerComponent("occluder-obj", {
   },
 });
 
+AFRAME.registerComponent("place-at-model-bottom", {
+  schema: {
+    target: { type: "selector" },       // z.B. #rocket-video-plane oder #fx-group
+    offsetY: { type: "number", default: -0.02 }, // leicht unterhalb
+    offsetZ: { type: "number", default: 0.0 },   // falls du nach hinten/vorne willst
+    offsetX: { type: "number", default: 0.0 },
+  },
+  init() {
+    const el = this.el;
+    const apply = () => {
+      const mesh = el.getObject3D("mesh");
+      const target = this.data.target;
+      if (!mesh || !target) return;
+
+      // World bbox vom Modell
+      const box = new THREE.Box3().setFromObject(mesh);
+      const center = box.getCenter(new THREE.Vector3());
+      const bottomWorld = new THREE.Vector3(center.x, box.min.y, center.z);
+
+      // in lokale Rocket-Koordinaten umrechnen
+      el.object3D.worldToLocal(bottomWorld);
+
+      target.object3D.position.set(
+        bottomWorld.x + this.data.offsetX,
+        bottomWorld.y + this.data.offsetY,
+        bottomWorld.z + this.data.offsetZ
+      );
+    };
+
+    el.addEventListener("model-loaded", () => {
+      // 1 Frame später, damit world matrices stimmen
+      requestAnimationFrame(apply);
+    });
+  },
+});
+
+
 
 document.addEventListener("DOMContentLoaded", () => {
   const permissionOverlay = document.getElementById("permission-overlay");
@@ -57,8 +94,8 @@ document.addEventListener("DOMContentLoaded", () => {
       <a-asset-item id="podest-obj" src="sources/3D/Podest.obj"></a-asset-item>
       <a-asset-item id="podest-mtl" src="sources/3D/Podest.mtl"></a-asset-item>
 
-      <video id="fxFireSmoke"
-      src="sources/3D/rauch_3D_info/rauch_3D.webm"
+      <video id="feuerVid"
+      src="sources/3D/rauch_3D_info/3d_info.webm"
       muted playsinline webkit-playsinline preload="auto"
       crossorigin="anonymous"></video>
     </a-assets>
@@ -107,24 +144,27 @@ document.addEventListener("DOMContentLoaded", () => {
           position="0 0 0"
           rotation="0 0 0"
           scale="10 10 10"
-          animation="property: rotation; to: 0 360 0; loop: true; dur: 15000; easing: linear" >
+          animation="property: rotation; to: 0 360 0; loop: true; dur: 15000; easing: linear" 
+           place-at-model-bottom="target: #rocket-video-plane; offsetY: -0.02; offsetZ: 0;">
 
-          <a-entity id="fx-group" position="0 -0.12 0" visible="false">
-            <a-plane width="0.8" height="0.8"
-              material="src:#fxFireSmoke; transparent:true; shader:flat; side:double; depthWrite:false;">
-            </a-plane>
+          <a-entity id="fx-group" position="0 0 0" scale="0 0 0" visible="false">
+            <a-sphere radius="0.02" color="red"></a-sphere>
 
-            <a-plane width="0.8" height="0.8" rotation="0 60 0"
-              material="src:#fxFireSmoke; transparent:true; shader:flat; side:double; depthWrite:false;">
-            </a-plane>
-
-            <a-plane width="0.8" height="0.8" rotation="0 120 0"
-              material="src:#fxFireSmoke; transparent:true; shader:flat; side:double; depthWrite:false;">
-            </a-plane>
+           <a-video
+              id="smoke-front"
+              visible="false"
+              position="0 0 0.05"
+              rotation="0 180 0"
+              width="0.25"
+              height="0.35"
+              src="#feuerVid"
+              transparent="true"
+              material="shader: flat; side: double; depthWrite: false; depthTest: false;"
+            ></a-video>
           </a-entity>
         </a-entity>
 
-        <a-entity id="pinGroup-1" visible="true">
+       <a-entity id="pinGroup-1" visible="true">
         <!-- HITBOX als BOX (viel besser klickbar als plane) -->
           <a-box
             id="hit-1"
@@ -134,7 +174,7 @@ document.addEventListener("DOMContentLoaded", () => {
             width="1.6"
             height="0.45"
             depth="0.3"
-            material="opacity: 0.7; color: #EBFF00; side: double; depthWrite: false; depthTest: false;"
+            material="opacity: 0.001; transparent: true; side: double; depthWrite: false;"
           ></a-box>
 
 
@@ -142,7 +182,7 @@ document.addEventListener("DOMContentLoaded", () => {
           <a-sphere
             id="pin-1"  
             position="0.35 2.001 0.35"
-            radius="0.06"
+            radius="0.04"
             material="color: #EBFF00; emissive: #EBFF00; emissiveIntensity: 0.9;"
           ></a-sphere>
 
@@ -177,8 +217,9 @@ document.addEventListener("DOMContentLoaded", () => {
             class="pin"
             position="-0.62 1.499 0.35"
             rotation="-90 0 0"
-            width="0.95"
-            height="0.25"
+            width="1.6"
+            height="0.45"
+            depth="0.3"
             material="opacity: 0.001; transparent: true; side: double; depthWrite: false;"
           ></a-plane>
 
@@ -220,8 +261,9 @@ document.addEventListener("DOMContentLoaded", () => {
             class="pin"
             position="0.62 1 0.35"
             rotation="0 0 0"
-            width="0.75"
-            height="0.18"
+            width="1.6"
+            height="0.45"
+            depth="0.3"
             material="opacity: 0; transparent: true; side: double; depthWrite: false;"
           ></a-plane>
 
@@ -256,15 +298,16 @@ document.addEventListener("DOMContentLoaded", () => {
           ></a-text>
 
         </a-entity>
-        <a-entity id="pinGroup-4" visible="false">
+        <a-entity id="pinGroup-4" visible="false" position="0 0.5 0">
 
           <a-plane
             id="hit-4"
             class="pin"
             position="-0.62 0.001 0.35"
             rotation="-90 0 0"
-            width="0.95"
-            height="0.25"
+            width="1.6"
+            height="0.45"
+            depth="0.3"
             material="opacity: 0.001; transparent: true; side: double; depthWrite: false;"
           ></a-plane>
 
@@ -286,7 +329,7 @@ document.addEventListener("DOMContentLoaded", () => {
           <a-text
             value="PROJEKTE"
             position="-0.78 0.015 0.35"
-            rotation="-90 0 0"
+            rotation="0 0 0"
             align="right"
             width="3.5"
             color="#EBFF00"
@@ -379,10 +422,28 @@ function fitPodestToRealDims(el, { height = 0.95, diameter = 1.8 } = {}) {
   const arRoot = document.getElementById("ar-root");
   const podestVisible = document.getElementById("podest-visible");
   const podestOcc = document.getElementById("podest-occluder");
-  const fxGroup = document.getElementById("fx-group");
-  const fxVid = document.getElementById("fxFireSmoke");
-  
 
+  const fxGroup = document.getElementById("fx-group");
+  const rocketVid = document.getElementById("feuerVid");
+  const smokePlane = document.getElementById("smoke-front"); 
+
+
+async function showVideoOnPlane() {
+  if (!rocketVid || !smokePlane) return;
+
+  fxGroup?.setAttribute("visible", "true");
+  smokePlane.setAttribute("visible", "true");   // <- das ist wichtig
+
+  rocketVid.currentTime = 0;
+  rocketVid.loop = true;
+  rocketVid.muted = true;
+
+  try {
+    await rocketVid.play();
+  } catch (e) {
+    console.log("play failed", e);
+  }
+}
 
   podestVisible?.addEventListener("model-loaded", () => {
     fitPodestToRealDims(podestVisible, { height: 0.95, diameter: 1.8 });
@@ -541,8 +602,8 @@ window.addEventListener("orientationchange", () => setTimeout(syncARCover, 250))
     label?.setAttribute("visible", "true");
     hint?.setAttribute("visible", "false");
 
-     fxGroup?.setAttribute("visible", "false");
-    if (fxVid) { fxVid.pause(); fxVid.currentTime = 0; }
+   //  rocketVidPlane?.setAttribute("visible", "false");
+    //if (rocketVid) { rocketVid.pause(); rocketVid.currentTime = 0; }
 
     // Bewegung erst jetzt starten (optional)
     /*
@@ -699,6 +760,8 @@ const startCountdown = (seconds = 3, onDone) => {
 
 
   startBtn?.addEventListener("click", (e) => {
+    showVideoOnPlane();
+
     if (completedPins < 4) {
       e.preventDefault();
       return;
@@ -709,7 +772,7 @@ const startCountdown = (seconds = 3, onDone) => {
 
     //  Countdown starten
     startCountdown(3, () => {
-      playFxOnce();
+      //playRocketVid();
       launchRocket3D();
       setTimeout(() => {
         window.location.href = "mehrErfahren.html";
@@ -760,24 +823,20 @@ const startCountdown = (seconds = 3, onDone) => {
   /* ---------------------------------------
   Rauch play
   -----------------------------------------*/
-  const playFxOnce = () => {
-  if (!fxGroup || !fxVid) return;
+  const playRocketVid = async () => {
+    if (!rocketVid || !fxGroup) return;
+    fxGroup.setAttribute("visible", "true");
+    rocketVid.currentTime = 0;
+    try { await rocketVid.play(); } catch (e) {}
+  };
 
-  fxGroup.setAttribute("visible", "true");
+  const stopRocketVid = () => {
+    if (!rocketVid || !fxGroup) return;
+    rocketVid.pause();
+    rocketVid.currentTime = 0;
+    fxGroup.setAttribute("visible", "false");
+  };
 
-  // optional: kleine "Expansion" statt Drift (weil es ja an der Rakete klebt)
-  fxGroup.removeAttribute("animation__puff");
-  fxGroup.setAttribute("scale", "0.9 0.9 0.9");
-  fxGroup.setAttribute(
-    "animation__puff",
-    "property: scale; dur: 250; easing: easeOutBack; to: 1 1 1"
-  );
-
-  fxVid.currentTime = 0;
-  fxVid.play().catch(()=>{});
-
-  fxVid.onended = () => fxGroup.setAttribute("visible", "false");
-};
 
 const launchRocket3D = () => {
   if (!rocket) return;

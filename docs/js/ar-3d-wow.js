@@ -60,9 +60,9 @@ document.addEventListener("DOMContentLoaded", () => {
       <a-asset-item id="podest-mtl" src="sources/3D/Podest.mtl"></a-asset-item>
 
         <video
-          id="fxFireSmoke"
-          src="sources/3D/rauch_launch_info/rauch_3D.webm"
-           autoplay
+          id="smokeVid"
+          src="sources/3D/rauch_3D_info/rauch_3D.webm"
+           preload="auto"
             loop
             muted
             playsinline
@@ -129,25 +129,33 @@ document.addEventListener("DOMContentLoaded", () => {
           scale="10 10 10"
           animation="property: rotation; to: 0 360 0; loop: true; dur: 15000; easing: linear" >
 
-            <a-entity id="fx-group" position="0 -0.12 0" visible="false">
-                <a-plane width="0.8" height="0.8"
-                    material="src:#fxFireSmoke; transparent:true; shader:flat; side:double; depthWrite:false;">
-                </a-plane>
+            < <a-entity id="smokeRig" position="0 0.2 0">
+                <!-- Plane 1 -->
+                <a-plane
+                  class="smoke3d"
+                  position="0 0 0"
+                  rotation="0 0 0"
+                  width="1.4"
+                  height="2.2"
+                 material="shader: flat; src: #smokeVid; transparent: true; depthWrite: false; alphaTest: 0.01; blending: additive;"
+                ></a-plane>
 
-                <a-plane width="0.8" height="0.8" rotation="0 60 0"
-                    material="src:#fxFireSmoke; transparent:true; shader:flat; side:double; depthWrite:false;">
-                </a-plane>
-
-                <a-plane width="0.8" height="0.8" rotation="0 120 0"
-                    material="src:#fxFireSmoke; transparent:true; shader:flat; side:double; depthWrite:false;">
-                </a-plane>
-             </a-entity>
+                <!-- Plane 2 (Kreuz) -->
+                <a-plane
+                  class="smoke3d"
+                  position="0 0 0"
+                  rotation="0 90 0"
+                  width="1.4"
+                  height="2.2"
+                  material="shader: flat; src: #smokeVid; transparent: true; depthWrite: false; alphaTest: 0.01; blending: additive;"
+                ></a-plane>
+              </a-entity>
 
         ></a-entity>
 
         
 
-        <a-entity id="pinGroup-1" visible="false">
+       <a-entity id="pinGroup-1" visible="false" look-at="[camera]">>
         <!-- HITBOX als BOX (viel besser klickbar als plane) -->
           <a-box
             id="hit-1"
@@ -157,7 +165,7 @@ document.addEventListener("DOMContentLoaded", () => {
             width="1.6"
             height="0.45"
             depth="0.3"
-            material="opacity: 0.7; color: #EBFF00; side: double; depthWrite: false; depthTest: false;"
+            material="opacity: 0.001; transparent: true; side: double; depthWrite: false;"
           ></a-box>
 
 
@@ -165,7 +173,7 @@ document.addEventListener("DOMContentLoaded", () => {
           <a-sphere
             id="pin-1"  
             position="0.35 2.001 0.35"
-            radius="0.06"
+            radius="0.04"
             material="color: #EBFF00; emissive: #EBFF00; emissiveIntensity: 0.9;"
           ></a-sphere>
 
@@ -181,6 +189,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
           <!-- Titel -->
           <a-text
+            id="pinLabel1"
             value="MISSION"
             position="0.78 2.015 0.35"
             rotation="0 0 0"
@@ -192,7 +201,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
         </a-entity>
 
-        <a-entity id="pinGroup-2" visible="false">
+        <a-entity id="pinGroup-2" visible="false" look-at="[camera]">
 
           <!-- HITBOX -->
           <a-plane
@@ -200,9 +209,10 @@ document.addEventListener("DOMContentLoaded", () => {
             class="pin"
             position="-0.62 1.499 0.35"
             rotation="-90 0 0"
-            width="0.95"
-            height="0.25"
-            material="opacity: 0.001; transparent: true; side: double; depthWrite: false;"
+            width="1.6"
+            height="0.45"
+            depth="0.3"
+            material="opacity: 0.001; color: #EBFF00; side: double; depthWrite: false;"
           ></a-plane>
 
           <!-- PIN -->
@@ -224,6 +234,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
           <!-- TITEL (auch flach, leicht höher) -->
           <a-text
+           id="pinLabel2"
             value="GESCHÄFTSMODELL"
             position="-0.78 1.485 0.35"
             rotation="0 0 0"
@@ -236,15 +247,16 @@ document.addEventListener("DOMContentLoaded", () => {
         </a-entity>
 
 
-        <a-entity id="pinGroup-3" visible="false">
+        <a-entity id="pinGroup-3" visible="true">
         <!-- Hitbox -->
           <a-plane
             id="hit-3"
             class="pin"
             position="0.62 1 0.35"
             rotation="0 0 0"
-            width="0.75"
-            height="0.18"
+            width="1.6"
+            height="0.45"
+            depth="0.3"
             material="opacity: 0; transparent: true; side: double; depthWrite: false;"
           ></a-plane>
 
@@ -269,6 +281,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
           <!-- Titel -->
           <a-text
+            id="pinLabel3"
             value="TEAM & ARBEITSWEISE"
             position="0.78 1 0.35"
             rotation="0 0 0"
@@ -279,44 +292,47 @@ document.addEventListener("DOMContentLoaded", () => {
           ></a-text>
 
         </a-entity>
-        <a-entity id="pinGroup-4" visible="false">
+        <a-entity id="pinGroup-4" visible="false" position="0 0.5 0">
 
-        <a-plane
+          <a-plane
             id="hit-4"
             class="pin"
             position="-0.62 0.001 0.35"
             rotation="-90 0 0"
-            width="0.95"
-            height="0.25"
+            width="1.6"
+            height="0.45"
+            depth="0.3"
             material="opacity: 0.001; transparent: true; side: double; depthWrite: false;"
-        ></a-plane>
+          ></a-plane>
 
-        <a-sphere
+          <a-sphere
             id="pin-4"
             position="-0.35 0.001 0.35"
             radius="0.04"
             material="color: #EBFF00; emissive: #EBFF00; emissiveIntensity: 0.9;"
-        ></a-sphere>
+          ></a-sphere>
 
-        <a-plane
+          <a-plane
             position="-0.57 0.002 0.35"
             rotation="-90 0 0"
             width="0.39"
             height="0.01"
             material="color: #EBFF00; emissive: #EBFF00; emissiveIntensity: 0.7; shader: flat; side: double;"
-        ></a-plane>
+          ></a-plane>
 
-        <a-text
+          <a-text
+            id="pinLabel4"
             value="PROJEKTE"
             position="-0.78 0.015 0.35"
-            rotation="-90 0 0"
+            rotation="0 0 0"
             align="right"
             width="3.5"
             color="#EBFF00"
             side="double"
-        ></a-text>
+          ></a-text>
 
         </a-entity>
+
 
         <a-entity
             id="rocket-toast"
@@ -515,12 +531,12 @@ function fitPodestToRealDims(el, { height = 0.95, diameter = 1.8 } = {}) {
     const podestVisible = document.getElementById("podest-visible");
     const podestOcc = document.getElementById("podest-occluder");
 
-    const fxGroup = document.getElementById("fx-group");
-    const fxVid = document.getElementById("fxFireSmoke");
+    const fxGroup = document.getElementById("smokeRig");
+    const fxVid = document.getElementById("SmokeVid");
 
     // Beginn Animation
-    const ROCKET_IN_POS  = "0 -2 0";  // im Podest (Start)
-    const ROCKET_OUT_POS = "0 4.2 0";  // oben raus (Ziel)
+    const ROCKET_IN_POS  = "0 -3 0";  // im Podest (Start)
+    const ROCKET_OUT_POS = "0 0 0";  // oben raus (Ziel)
 
     const revealRocketFromPodest = () => {
       if (!rocket) return;
@@ -793,6 +809,31 @@ function fitPodestToRealDims(el, { height = 0.95, diameter = 1.8 } = {}) {
     if (scene.hasLoaded) enableTouchToMouseWithCoords();
     else scene.addEventListener("loaded", enableTouchToMouseWithCoords, { once: true });
 
+
+    function playSmoke() {
+  const vid = document.getElementById("smokeVid");
+  const plane = document.getElementById("smoke-front");
+
+  console.log("🔥 playSmoke", { vid: !!vid, plane: !!plane, ready: vid?.readyState });
+
+  if (!vid || !plane) return;
+
+  plane.setAttribute("visible", "true");
+
+  // wichtig: immer neu starten
+  vid.pause();
+  vid.currentTime = 0;
+
+  const p = vid.play();
+  if (p && p.catch) {
+    p.catch((err) => console.warn("❌ smoke play() blocked:", err));
+  }
+
+  vid.onplaying = () => console.log("✅ smoke playing", vid.videoWidth, vid.videoHeight);
+  vid.onerror = () => console.warn("❌ smoke video error", vid.error);
+}
+
+
     // -------------------------------------------------------
     // Mission Flow
     // -------------------------------------------------------
@@ -878,31 +919,21 @@ const startCountdown = (seconds = 3, onDone) => {
     //==================================================
     const launchBtn = document.getElementById("launch-btn");
 
-    const launchRocket3D = () => {
+  
+const launchRocket3D = () => {
   if (!rocket) return;
 
-  // reset falls wiederholt
   rocket.removeAttribute("animation__shake");
   rocket.removeAttribute("animation__lift");
   rocket.removeAttribute("animation__boost");
-  rocket.removeAttribute("animation__spin");
 
-  // Startpose (anpassen wenn deine Rakete anders steht)
   rocket.setAttribute("position", "0 0 0");
 
-  // optional: leicht drehen für Wow
-  rocket.setAttribute(
-    "animation__spin",
-    "property: rotation; dur: 1400; easing: linear; to: 0 360 0"
-  );
-
-  // shake
   rocket.setAttribute(
     "animation__shake",
     "property: position; dur: 90; dir: alternate; loop: 12; easing: easeInOutSine; to: 0 0 0.02"
   );
 
-  // lift
   setTimeout(() => {
     rocket.setAttribute(
       "animation__lift",
@@ -910,13 +941,17 @@ const startCountdown = (seconds = 3, onDone) => {
     );
   }, 700);
 
-  // boost
   setTimeout(() => {
     rocket.setAttribute(
       "animation__boost",
       "property: position; dur: 1400; easing: easeInQuad; to: 0 1.8 0"
     );
   }, 1500);
+
+  // Weiterleitung etwas später
+  setTimeout(() => {
+    window.location.href = "mehrErfahren.html";
+  }, 8000);
 };
 
 
@@ -948,6 +983,7 @@ const startCountdown = (seconds = 3, onDone) => {
                 
                               
                 revealRocketFromPodest();  
+                playSmoke();
                 
 
                 setupMission1Pins({

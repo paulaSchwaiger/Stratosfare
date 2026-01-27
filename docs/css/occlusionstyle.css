@@ -70,6 +70,31 @@ body {
   margin-inline: auto;
 }
 
+.lang-btn {
+  margin-right: 20px;
+  padding: 18px 26px;
+  border-radius: 999px;
+  font-size: 26px;
+  font-weight: bold;
+
+  background: transparent;                 /* ✅ transparent */
+  color: #ffffff;
+
+  border: 3px solid rgba(255, 255, 255, 0.8);
+  cursor: pointer;
+  transition: 0.15s ease;
+}
+
+.lang-btn:hover {
+  border-color: rgba(255, 255, 255, 1);
+}
+
+.lang-btn:active {
+  background: rgba(0, 220, 181, 0.4);                     /* ✅ blue ONLY while pressing */
+  border-color: #00DCB5;
+  transform: scale(0.98);
+}
+
 /* =========================
    FOOTER (AR)
 ========================= */
