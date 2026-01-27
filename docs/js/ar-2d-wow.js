@@ -345,7 +345,7 @@ document.getElementById("langBtn")?.addEventListener("click", () => {
           rotation="0 0 0"
           width="15"
           height="15"
-          material="shader: flat; src: #smokeVid; transparent: true; alphaTest: 0.01; depthWrite: false; side: double;"
+          material="shader: flat; src: #smokeVid; transparent: true; depthWrite: false; side: double; opacity: 0.85;"
         ></a-plane>
 
          <a-plane
@@ -355,7 +355,7 @@ document.getElementById("langBtn")?.addEventListener("click", () => {
           rotation="0 0 0"
           width="5"
           height="10"
-          material="shader: flat; src: #smokeVid; transparent: true; alphaTest: 0.01; depthWrite: false; side: double;"
+          material="shader: flat; src: #smokeVid; transparent: true; depthWrite: false; side: double;opacity: 0.85;"
           shadow="cast: true"
         ></a-plane>
 
@@ -366,7 +366,7 @@ document.getElementById("langBtn")?.addEventListener("click", () => {
           rotation="0 0 0"
           width="20"
           height="30"
-          material="shader: flat; src: #smokeVid; transparent: true; side: double; depthWrite: false; depthTest: false;  alphaTest: 0.01;"
+          material="shader: flat; src: #smokeVid; transparent: true; side: double; depthWrite: false; depthTest: false; opacity: 0.85;"
           shadow="cast: true"
          
         ></a-plane>
