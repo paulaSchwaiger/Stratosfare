@@ -95,7 +95,7 @@ document.addEventListener("DOMContentLoaded", () => {
       <a-asset-item id="podest-mtl" src="sources/3D/Podest.mtl"></a-asset-item>
 
       <video id="feuerVid"
-      src="sources/3D/rauch_3D_info/3d_info.webm"
+      src="../sources/3D/rauch_3D_info/3d_info.webm"
       muted playsinline webkit-playsinline preload="auto"
       crossorigin="anonymous"></video>
     </a-assets>
@@ -145,7 +145,8 @@ document.addEventListener("DOMContentLoaded", () => {
           rotation="0 0 0"
           scale="10 10 10"
           animation="property: rotation; to: 0 360 0; loop: true; dur: 15000; easing: linear" 
-           place-at-model-bottom="target: #rocket-video-plane; offsetY: -0.02; offsetZ: 0;">
+           place-at-model-bottom="target: #rocket-video-plane; offsetY: -0.02; offsetZ: 0;"
+           shadow="cast: true">
 
           <a-entity id="fx-group" position="0 0 0" scale="0 0 0" visible="false">
             <a-sphere radius="0.02" color="red"></a-sphere>

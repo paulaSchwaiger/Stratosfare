@@ -127,7 +127,8 @@ document.addEventListener("DOMContentLoaded", () => {
           position="0 -3 0"
           rotation="0 0 0"
           scale="10 10 10"
-          animation="property: rotation; to: 0 360 0; loop: true; dur: 15000; easing: linear" >
+          animation="property: rotation; to: 0 360 0; loop: true; dur: 15000; easing: linear" 
+          shadow="cast: true">
 
             
                  <a-entity id="fx-group"
