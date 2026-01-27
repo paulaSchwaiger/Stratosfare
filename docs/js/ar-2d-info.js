@@ -127,10 +127,10 @@ function apply2DTranslations() {
   const l3 = document.getElementById("pinLabel3");
   const l4 = document.getElementById("pinLabel4");
 
-  if (l1) l1.setAttribute("value", dict.pinLabel1);
-  if (l2) l2.setAttribute("value", dict.pinLabel2);
-  if (l3) l3.setAttribute("value", dict.pinLabel3);
-  if (l4) l4.setAttribute("value", dict.pinLabel4);
+  if (l1) l1.setAttribute("value", dict.pinTitle1);
+  if (l2) l2.setAttribute("value", dict.pinTitle2);
+  if (l3) l3.setAttribute("value", dict.pinTitle3);
+  if (l4) l4.setAttribute("value", dict.pinTitle4);
 }
 
 function toggleLang() {
@@ -241,7 +241,7 @@ document.addEventListener("DOMContentLoaded", () => {
         ></a-plane>
         -->
 
-        <a-entity id="pinGroup-1" visible="true" look-at="[camera]">>
+        <a-entity id="pinGroup-1" visible="true" look-at="[camera]">
         <!-- HITBOX als BOX (viel besser klickbar als plane) -->
           <a-box
             id="hit-1"
@@ -321,7 +321,7 @@ document.addEventListener("DOMContentLoaded", () => {
           <!-- TITEL (auch flach, leicht höher) -->
           <a-text
            id="pinLabel2"
-            value="GESCHÄFTSMODELL"
+            value="NETZWERK"
             position="-0.78 1.485 0.35"
             rotation="0 0 0"
             align="right"
@@ -1014,11 +1014,13 @@ function playLaunchSequenceAndGo() {
   -----------------------------------------*/
 
   const openInfoByIndex = (index) => {
+    console.log("openInfoByIndex index:", index, "pinContent:", pinContent[index]);
+
     if (!overlay || !titleEl || !textEl) return;
 
     const c = pinContent[index] || { title: "Info", text: "" };
     titleEl.textContent = i18n[currentLang][c.titleKey];
-textEl.textContent  = i18n[currentLang][c.textKey];
+    textEl.textContent  = i18n[currentLang][c.textKey];
 
 
     overlay.classList.remove("hidden");
@@ -1168,7 +1170,7 @@ else scene.addEventListener("loaded", setupCanvasPick, { once: true });
       const scene = document.getElementById("ar-scene");
       if (scene?.hasLoaded) initARLogic();
       else scene?.addEventListener("loaded", initARLogic, { once: true });
-
+      scene?.addEventListener("loaded", () => apply2DTranslations(), { once: true });
       setTimeout(() => loadingEl.classList.add("hidden"), 5000);
     } catch (err) {
       alert("Ohne Kamerazugriff kann AR nicht gestartet werden.");

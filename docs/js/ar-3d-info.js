@@ -243,7 +243,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
           <!-- TITEL (auch flach, leicht höher) -->
           <a-text
-            value="GESCHÄFTSMODELL"
+            value="NETZWERK & PARTNERSCHAFTEN"
             position="-0.78 1.485 0.35"
             rotation="0 0 0"
             align="right"
