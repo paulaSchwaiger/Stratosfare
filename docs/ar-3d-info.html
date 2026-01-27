@@ -24,6 +24,7 @@
           class="logo-img"
         />
       </div>
+      <button id="langBtn" type="button" class="lang-btn">EN</button>
 
       <button class="menu-toggle" aria-label="Menü öffnen">
         <span></span>
@@ -35,17 +36,17 @@
     <!-- Kamera-Erlaubnis-Overlay (unser eigener Dialog) -->
     <div id="permission-overlay">
       <div class="permission-dialog">
-        <h2>Kamera Erlaubnis</h2>
-        <p>
-          Für die AR-Darstellung greift diese Anwendung auf die Kamera deines
-          Geräts zu. Das Kamerabild wird nur lokal im Browser verarbeitet und
-          nicht gespeichert.
+        <h2 id="permission-title">Kamera Erlaubnis</h2>
+        <p id="permission-text">
+          Für die AR-Darstellung greift diese Anwendung auf die Kamera deines Geräts zu.
+          Das Kamerabild wird nur lokal im Browser verarbeitet und nicht gespeichert.
         </p>
-        <ul>
-          <li>Nur zur Erkennung des AR-Markers (z. B. HIRO).</li>
-          <li>Keine Übertragung an einen Server.</li>
-          <li>Ohne Kamerazugriff kann die Anwendung nicht genutzt werden.</li>
-        </ul>
+
+       <ul>
+        <li id="permission-li1">Nur zur Erkennung des AR-Markers (z. B. HIRO).</li>
+        <li id="permission-li2">Keine Übertragung an einen Server.</li>
+        <li id="permission-li3">Ohne Kamerazugriff kann die Anwendung nicht genutzt werden.</li>
+      </ul>
         <div class="permission-actions">
           <button id="deny-btn" class="btn btn-secondary">Zurück</button>
           <button id="allow-btn" class="btn btn-primary">
