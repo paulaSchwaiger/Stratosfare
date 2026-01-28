@@ -268,7 +268,7 @@ document.getElementById("langBtn")?.addEventListener("click", () => {
 
         <video
           id="smokeVid"
-          src="sources/2D/rocket_launch_wow/rauch_2D_wow.mov"
+          src="sources/2D/rocket_launch_wow/rauch_2D.webm"
            autoplay
             loop
             muted
