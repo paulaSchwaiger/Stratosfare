@@ -268,7 +268,7 @@ document.getElementById("langBtn")?.addEventListener("click", () => {
 
         <video
           id="smokeVid"
-          src="sources/2D/rocket_launch_wow/rauch_2d.webm"
+          src="sources/2D/rocket_launch_wow/rauch_2d_wow.webm"
            muted
           playsinline
           webkit-playsinline
