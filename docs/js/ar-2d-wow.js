@@ -269,12 +269,11 @@ document.getElementById("langBtn")?.addEventListener("click", () => {
         <video
           id="smokeVid"
           src="sources/2D/rocket_launch_wow/rauch_2D.webm"
-           autoplay
-            loop
-            muted
-            playsinline
-            webkit-playsinline
-            crossorigin="anonymous" 
+           muted
+          playsinline
+          webkit-playsinline
+          preload="auto"
+          crossorigin="anonymous"  
         ></video>
     </a-assets>
 
@@ -773,7 +772,8 @@ function applyARTranslations() {
     const rocketIdleVid   = document.getElementById("rocketDrehVid");
     const rocketLaunchVid = document.getElementById("rocketLaunchVid");
     const rocketCountdownImg = document.getElementById("rocketCountdownImg");
-    const smokeVid = document.getElementById("smokeVid");  
+    //const smokeVid = document.getElementById("smokeVid");  
+    const vid = document.getElementById("smokeVid");
     const launchVid = document.getElementById("RocketLaunchVid")
 
     let vidsUnlocked = false;
@@ -941,7 +941,7 @@ function applyARTranslations() {
     const unlockAllVidsOnce = async () => {
       if (vidsUnlocked) return;
       vidsUnlocked = true;
-      await unlockVid(smokeVid);
+      await unlockVid(vid);
       await unlockVid(launchVid); // optional (nur wenn playLaunchOnce ein Video ist)
     };
 
@@ -949,7 +949,7 @@ function applyARTranslations() {
     // Smoke Play
     // -----------------------------
   function playSmokeAll({ durationMs = 3000 } = {}) {
-  const vid = document.getElementById("smokeVid");
+  
   const front = document.getElementById("smoke-front");
   const mid = document.getElementById("smoke-middle");
   const back = document.getElementById("smoke-back");
