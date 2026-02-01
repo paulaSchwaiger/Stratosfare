@@ -751,6 +751,40 @@ function applyARTranslations() {
   setAValue("mission-banner-sub", t("missionBannerSub"));
 }
 
+//Vibration at start
+function vibrateLaunchFade({
+  totalMs = 2500,     // Gesamtdauer der Vibration
+  startMs = 70,       // “medium” Pulsdauer
+  endMs = 18,         // “soft” Pulsdauer
+  intervalMs = 180,   // Abstand zwischen Pulsen
+  pauseMs = 60,       // Pause nach jedem Puls
+} = {}) {
+  if (!("vibrate" in navigator)) return;
+
+  const start = performance.now();
+
+  const tick = (t) => {
+    const elapsed = t - start;
+    const p = Math.min(1, elapsed / totalMs); // 0..1
+
+    // linear von startMs -> endMs
+    const pulse = Math.round(startMs + (endMs - startMs) * p);
+
+    // Sicherheits-Guard: zu kleine Werte fühlen sich wie “nix” an
+    const pulseClamped = Math.max(10, pulse);
+
+    navigator.vibrate([pulseClamped, pauseMs]);
+
+    if (elapsed < totalMs) {
+      setTimeout(() => requestAnimationFrame(tick), intervalMs);
+    } else {
+      navigator.vibrate(0); // stop
+    }
+  };
+
+  requestAnimationFrame(tick);
+}
+
 
 
 // ------------------------------------------------------------------------------------------
@@ -1319,6 +1353,14 @@ const startCountdown = (seconds = 3, onDone) => {
                     launchBtn?.addEventListener("click", async (e) => {
                       e.preventDefault();
 
+                      vibrateLaunchFade({
+                        totalMs: 3200,   // ungefähr so lang wie deine Launch-Animation
+                        startMs: 75,
+                        endMs: 15,
+                        intervalMs: 170,
+                        pauseMs: 70,
+                      }); 
+
                       // ✅ unlock einmalig bei erstem Klick
                       await unlockAllVidsOnce();
 
@@ -1462,7 +1504,7 @@ const startCountdown = (seconds = 3, onDone) => {
   pinGroups.forEach((g) => setVisible(g, true));
    hitTargets.forEach((h) => h?.classList.add("pin")); // wichtig für raycaster="objects: .pin"
 
-  if (startBtn) startBtn.textContent = "MISSION 2 STARTEN";
+  if (startBtn) startBtn.textContent = t("btnStartMission2");
   setProgress();      // startet bei 0%
   setBtnEnabled(false);
 

@@ -34,9 +34,192 @@ AFRAME.registerComponent("occluder-obj", {
 });
 
 let missionStarted = false;
+//For language
+let currentLang = localStorage.getItem("lang") || "de";
+
+function setLang(lang) {
+  currentLang = lang;
+  localStorage.setItem("lang", currentLang);
+  document.documentElement.lang = currentLang;
+
+  const langBtn = document.getElementById("langBtn");
+  if (langBtn) langBtn.textContent = currentLang === "de" ? "EN" : "DE";
+}
+const i18n = {
+  de: {
+    
+    permissionTitle: "Kamera Erlaubnis",
+    permissionText:
+      "Für die AR-Darstellung greift diese Anwendung auf die Kamera deines Geräts zu. Das Kamerabild wird nur lokal im Browser verarbeitet und nicht gespeichert.",
+    permissionLi1: "Nur zur Erkennung des AR-Markers (z. B. HIRO).",
+    permissionLi2: "Keine Übertragung an einen Server.",
+    permissionLi3: "Ohne Kamerazugriff kann die Anwendung nicht genutzt werden.",
+    denyBtn: "Zurück",
+    allowBtn: "Zustimmen & starten",
+    loadingText: "Inhalte werden geladen...",
+    missionTitle: "MISSION 1",
+    missionSub: "Tippe alle Pins an",
+    tapHere: "Tippe hier",
+    footerMissionBtn: "MISSION ABSCHLIEßEN",
+    footerMinigameStatus: "Erreiche das Tap-Ziel!",
+    footerStart: "START",
+    launchBtn: "RAKETE STARTEN",
+    infoCloseAria: "Overlay schließen",
+    menuAria: "Menü öffnen",
+    mission2Title: "MISSION 2",
+    mission2Sub: "Lade die Rakete auf",
+    mgReady: "Bereit machen…",
+    mgGo: "LOS! Tippe so schnell du kannst!",
+    mgRunning: "LÄUFT…",
+    mgRetry: "NOCHMAL",
+    mgTimeOver: "Zeit vorbei!",
+    mgInstruction: "Erreiche das Tap-Ziel bevor die Zeit abläuft.",
+    pinLabel1: "MISSION",
+    pinLabel2: "NETZWERK",
+    pinLabel3: "TEAM & ARBEITSWEISE",
+    pinLabel4: "PROJEKTE",
+    
+    rocketToast: "Rakete ist vollgeladen!",
+    missionBannerSub: "Finde alle Infos über die Pins",
+    
+    btnStartMission2: "MISSION 2 STARTEN",
+    
+    pinSub1: "MISSION AKTIVIERT",
+    pinText1: "Stratosfare arbeitet daran, neue Technologien aus Start-ups in den Mittelstand zu bringen.",
+    
+    pinSub2: "VERBINDUNG HERGESTELLT",
+    pinText2: "Unternehmen, Start-ups und Forschung arbeiten gemeinsam an Lösungen.",
+    
+    pinSub3: "CREW BEREIT",
+    pinText3: "Ein interdisziplinäres Team begleitet Innovation von der Idee bis zur Umsetzung.",
+    
+    pinSub4: "PROJEKTE LAUFEN",
+    pinText4: "In Workshops und Pilotvorhaben entstehen konkrete Anwendungen.",
+
+
+  },
+
+  en: {
+    permissionTitle: "Camera Permission",
+    permissionText:
+      "For the AR experience, this application needs access to your device camera. The camera feed is processed locally in your browser and is not saved.",
+    permissionLi1: "Only for detecting the AR marker (e.g., HIRO).",
+    permissionLi2: "No data is sent to a server.",
+    permissionLi3: "Without camera access, the application cannot be used.",
+    denyBtn: "Back",
+    allowBtn: "Agree & Start",
+    loadingText: "Loading content...",
+    missionTitle: "MISSION 1",
+    missionSub: "Tap all pins",
+    tapHere: "Tap here",
+    footerMissionBtn: "COMPLETE MISSION",
+    footerMinigameStatus: "Reach the tap goal!",
+    footerStart: "START",
+    launchBtn: "LAUNCH ROCKET",
+    infoCloseAria: "Close overlay",
+    menuAria: "Open Menu",
+    mission2Title: "MISSION 2",
+    mission2Sub: "Charge the rocket",
+    mgReady: "Get ready…",
+    mgGo: "GO! Tap as fast as you can!",
+    mgRunning: "RUNNING…",
+    mgRetry: "TRY AGAIN",
+    mgTimeOver: "Time is up!",
+    mgInstruction: "Reach the tap goal before time runs out.",
+    pinLabel1: "MISSION",
+    pinLabel2: "NETWORK",
+    pinLabel3: "TEAM & METHOD",
+    pinLabel4: "PROJECTS",
+
+rocketToast: "Rocket fully charged!",
+missionBannerSub: "Find all info via the pins",
+
+btnStartMission2: "START MISSION 2",
+
+pinSub1: "MISSION ACTIVATED",
+pinText1: "Stratosfare brings new startup technologies into established companies.",
+
+pinSub2: "CONNECTED",
+pinText2: "Companies, startups and research work together on solutions.",
+
+pinSub3: "CREW READY",
+pinText3: "An interdisciplinary team supports innovation from idea to implementation.",
+
+pinSub4: "PROJECTS RUNNING",
+pinText4: "Workshops and pilot projects create real applications.",
+
+
+  },
+};
+
+function t(key) {
+  return i18n[currentLang][key];
+}
+
+function applyTranslations() {
+  const permTitle = document.querySelector("#permission-overlay h2");
+  const permText = document.querySelector("#permission-overlay p");
+  const permLis = document.querySelectorAll("#permission-overlay ul li");
+
+  if (permTitle) permTitle.textContent = t("permissionTitle");
+  if (permText) permText.textContent = t("permissionText");
+
+  if (permLis.length >= 3) {
+    permLis[0].textContent = t("permissionLi1");
+    permLis[1].textContent = t("permissionLi2");
+    permLis[2].textContent = t("permissionLi3");
+  }
+
+  const denyBtn = document.getElementById("deny-btn");
+  const allowBtn = document.getElementById("allow-btn");
+  if (denyBtn) denyBtn.textContent = t("denyBtn");
+  if (allowBtn) allowBtn.textContent = t("allowBtn");
+
+  const loadingText = document.querySelector(".loading-text");
+  if (loadingText) loadingText.textContent = t("loadingText");
+
+  const missionTitle = document.getElementById("mission-title");
+  const missionSub = document.getElementById("mission-sub");
+  if (missionTitle) missionTitle.textContent = t("missionTitle");
+  if (missionSub) missionSub.textContent = t("missionSub");
+
+  const tapBox = document.querySelector("#tap-box .tap-box-text");
+  if (tapBox) tapBox.textContent = t("tapHere");
+
+  const footerMissionBtn = document.getElementById("footer-btn-pins");
+  if (footerMissionBtn) footerMissionBtn.textContent = t("footerMissionBtn");
+
+  const mgStatus = document.getElementById("mg-status");
+  if (mgStatus) mgStatus.textContent = t("footerMinigameStatus");
+
+  const mgStartBtn = document.getElementById("mg-start-btn");
+  if (mgStartBtn) mgStartBtn.textContent = t("footerStart");
+
+  const launchBtn = document.getElementById("launch-btn");
+  if (launchBtn) launchBtn.textContent = t("launchBtn");
+
+  const infoClose = document.getElementById("info-close");
+  if (infoClose) infoClose.setAttribute("aria-label", t("infoCloseAria"));
+
+  const menuToggle = document.querySelector(".menu-toggle");
+  if (menuToggle) menuToggle.setAttribute("aria-label", t("menuAria"));
+}
 
 
 document.addEventListener("DOMContentLoaded", () => {
+
+  //language
+    setLang(currentLang);
+    applyTranslations();
+
+document.getElementById("langBtn")?.addEventListener("click", () => {
+  setLang(currentLang === "de" ? "en" : "de");
+  applyTranslations();
+  applyARTranslations();
+});
+ //ok
+
+
   const permissionOverlay = document.getElementById("permission-overlay");
   const allowBtn = document.getElementById("allow-btn");
   const denyBtn = document.getElementById("deny-btn");
@@ -205,7 +388,7 @@ document.addEventListener("DOMContentLoaded", () => {
           <!-- Titel -->
           <a-text
             id="pinLabel1"
-            value="MISSION"
+            value="${t("pinLabel1")}"
             position="0.78 2.015 0.35"
             rotation="0 0 0"
             align="left"
@@ -249,14 +432,14 @@ document.addEventListener("DOMContentLoaded", () => {
 
           <!-- TITEL (auch flach, leicht höher) -->
           <a-text
-           id="pinLabel2"
-            value="NETZWERK & PARTNERSCHAFTEN"
-            position="-0.78 1.485 0.35"
-            rotation="0 0 0"
-            align="right"
-            width="3.5"
-            color="#EBFF00"
-            side="double"
+          id="pinLabel2"
+          value="${t("pinLabel2")}"
+          position="-0.78 1.485 0.35"
+          rotation="0 0 0"
+          align="right"
+          width="3.5"
+          color="#EBFF00"
+          side="double"
           ></a-text>
 
         </a-entity>
@@ -297,7 +480,7 @@ document.addEventListener("DOMContentLoaded", () => {
           <!-- Titel -->
           <a-text
             id="pinLabel3"
-            value="TEAM & ARBEITSWEISE"
+            value="${t("pinLabel3")}"
             position="0.78 1 0.35"
             rotation="0 0 0"
             align="left"
@@ -337,7 +520,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
           <a-text
             id="pinLabel4"
-            value="PROJEKTE"
+            value="${t("pinLabel4")}"
             position="-0.78 0.015 0.35"
             rotation="0 0 0"
             align="right"
@@ -364,7 +547,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
             <!-- Text -->
             <a-text
-                value="Rakete ist vollgeladen!"
+                value="${t("rocketToast")}"
                 align="center"
                 width="2.2"
                 color="#EBFF00"
@@ -391,7 +574,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
         <a-text
             id="mission-banner-sub"
-            value="Finde alle Infos über die Pins"
+            value="${t("missionBannerSub")}"
             align="center"
             width="2.6"
             color="#e5e7eb"
@@ -526,6 +709,23 @@ function fitPodestToRealDims(el, { height = 0.95, diameter = 1.8 } = {}) {
 
   el.object3D.updateMatrixWorld(true);
 }
+function applyARTranslations() {
+  const setAValue = (id, txt) => {
+    const el = document.getElementById(id);
+    if (el) el.setAttribute("value", txt);
+  };
+
+  // pin labels
+  setAValue("pinLabel-1", t("pinLabel1"));
+  setAValue("pinLabel-2", t("pinLabel2"));
+  setAValue("pinLabel-3", t("pinLabel3"));
+  setAValue("pinLabel-4", t("pinLabel4"));
+
+  // toast + banner
+  setAValue("rocket-toast-text", t("rocketToast"));
+  setAValue("mission-banner-sub", t("missionBannerSub"));
+}
+
 
 function vibrateLaunchFade({
   totalMs = 2500,     // Gesamtdauer der Vibration
@@ -885,8 +1085,8 @@ const stopFX = () => {
         setFooterMode("minigame");
 
         showMissionScreen({
-            title: "MISSION 2",
-            sub: "Lade die Rakete auf",
+            title: t("mission2Title"),
+            sub: t("mission2Sub"),
             durationMs: 2600,
             onDone: () => {
                 setupMission2Minigame({
@@ -1014,7 +1214,7 @@ const launchRocket3D = () => {
 
           showMissionScreen({
               title: "MISSION 1",
-              sub: "Tippe alle Pins an",
+              sub: t("missionSub"),
               durationMs: 2600,
               onDone: () => {
                 
@@ -1100,12 +1300,13 @@ const launchRocket3D = () => {
   // ---- State ----
   const clickedPins = new Set(); // 0..3
 
-  const pinContent = [
-  { icon: "sources/icons/Icon_Mission.png", sub: "MISSION AKTIVIERT", text: "Stratosfare arbeitet daran, neue Technologien aus Start-ups in den Mittelstand zu bringen." },
-  { icon: "sources/icons/Icon_Netzwerk.png", sub: "VERBINDUNG HERGESTELLT", text: "Unternehmen, Start-ups und Forschung arbeiten gemeinsam an Lösungen." },
-  { icon: "sources/icons/Icon_Team.png", sub: "CREW BEREIT", text: "Ein interdisziplinäres Team begleitet Innovation von der Idee bis zur Umsetzung." },
-  { icon: "sources/icons/Icon_Projekt.png", sub: "PROJEKTE LAUFEN", text: "In Workshops und Pilotvorhaben entstehen konkrete Anwendungen." },
+   const pinContent = [
+  { icon: "sources/icons/Icon_Mission.png", sub: t("pinSub1"), text: t("pinText1") },
+  { icon: "sources/icons/Icon_Netzwerk.png", sub: t("pinSub2"), text: t("pinText2") },
+  { icon: "sources/icons/Icon_Team.png", sub: t("pinSub3"), text: t("pinText3") },
+  { icon: "sources/icons/Icon_Projekt.png", sub: t("pinSub4"), text: t("pinText4") },
 ];
+
 
 
   const setVisible = (el, visible) => {
@@ -1148,6 +1349,7 @@ const launchRocket3D = () => {
         if (subEl) subEl.textContent = c.sub;
         if (textEl) textEl.textContent = c.text;
 
+
         overlay?.classList.remove("hidden");
 
         // ✅ Fortschritt updaten + Button freischalten
@@ -1181,7 +1383,7 @@ const launchRocket3D = () => {
   pinGroups.forEach((g) => setVisible(g, true));
   hitTargets.forEach((h) => h?.classList.add("pin")); // wichtig für raycaster="objects: .pin"
 
-  if (startBtn) startBtn.textContent = "MISSION 2 STARTEN";
+  if (startBtn) startBtn.textContent = t("btnStartMission2");
   setProgress();      // startet bei 0%
   setBtnEnabled(false);
 
@@ -1327,8 +1529,9 @@ function setupMission2Minigame({ goal = 30, durationMs = 5000, onDone } = {}) {
 
 
     tapBox.classList.add("is-disabled");
-    statusEl.textContent = "Erreiche das Tap-Ziel bevor die Zeit abläuft.";
-    startBtn.textContent = "START";
+    statusEl.textContent = t("mgInstruction");
+
+    startBtn.textContent = t("footerStart");
   };
 
   const tick = () => {
@@ -1356,8 +1559,8 @@ function setupMission2Minigame({ goal = 30, durationMs = 5000, onDone } = {}) {
 
         overlay.classList.add("hidden");
     } else {
-      statusEl.textContent = `Zeit vorbei! ${taps}/${goal} Taps 😅`;
-      startBtn.textContent = "NOCHMAL";
+      statusEl.textContent = `${t("mgTimeOver")} ${taps}/${goal} taps 😅`;
+      startBtn.textContent = t("mgRetry");
     }
 
     setTimeout(() => {
@@ -1370,8 +1573,8 @@ function setupMission2Minigame({ goal = 30, durationMs = 5000, onDone } = {}) {
     running = true;
 
     tapBox.classList.remove("is-disabled");
-    statusEl.textContent = "LOS! Tippe so schnell du kannst!";
-    startBtn.textContent = "LÄUFT…";
+    statusEl.textContent = t("mgGo");
+    startBtn.textContent = t("mgRunning");
 
     startTime = performance.now();
     rafId = requestAnimationFrame(tick);
@@ -1420,7 +1623,7 @@ function setupMission2Minigame({ goal = 30, durationMs = 5000, onDone } = {}) {
 
   const startWithCountdown = () => {
     tapBox.classList.add("is-disabled");
-    statusEl.textContent = "Bereit machen…";
+    statusEl.textContent = t("mgReady");
     startBtn.textContent = "…";
     showCountdown(3, startRound);
   };
