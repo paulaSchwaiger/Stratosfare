@@ -1,4 +1,5 @@
 // ar.js
+let missionOverlayTimer = 0;
 
 //====== A-Frame Components ===============
 AFRAME.registerComponent("occluder-obj", {
@@ -611,7 +612,7 @@ function setFooterMode(mode) {
   const launchView = document.getElementById("footer-view-launch");
 
   [pinsView, mgView, launchView].forEach((v) => v?.classList.add("hidden"));
-
+  if (mode === "none") return;          // ✅ show nothing in footer
   if (mode === "minigame") mgView?.classList.remove("hidden");
   else if (mode === "launch") launchView?.classList.remove("hidden");
   else pinsView?.classList.remove("hidden");
@@ -632,34 +633,87 @@ function showARRocketToast(ms = 1600) {
   }, ms);
 }
 
+function showMissionStartScreen({ title, sub, buttonLabel, onStart }) {
+  const overlay = document.getElementById("mission-overlay");
+  const wrap = document.getElementById("mission-wrap");
+  const titleEl = document.getElementById("mission-title");
+  const subEl = document.getElementById("mission-sub");
+
+  if (!overlay || !wrap || !titleEl || !subEl) {
+    onStart && onStart();
+    return;
+  }
+
+  // cancel any old auto-hide timer from Mission 1
+  if (missionOverlayTimer) {
+    clearTimeout(missionOverlayTimer);
+    missionOverlayTimer = 0;
+  }
+
+  titleEl.textContent = title;
+  subEl.textContent = sub;
+
+  let btn = document.getElementById("mission2-start-btn");
+  if (!btn) {
+    btn = document.createElement("button");
+    btn.id = "mission2-start-btn";
+    btn.type = "button";
+    btn.className = "mission2-start-btn";
+    wrap.appendChild(btn);
+  }
+
+  btn.textContent = buttonLabel || "START";
+
+  // Make it act like a real modal
+  overlay.classList.remove("hidden");
+
+  // Prevent clicks from passing through the overlay
+  overlay.onclick = (e) => e.stopPropagation();
+  wrap.onclick = (e) => e.stopPropagation();
+
+  btn.onclick = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    overlay.classList.add("hidden");
+    onStart && onStart();
+  };
+}
+
+
 function showMissionScreen({ title, sub, durationMs = 2600, onDone }) {
   const overlay = document.getElementById("mission-overlay");
   const wrap = document.getElementById("mission-wrap");
-  const t = document.getElementById("mission-title");
-  const s = document.getElementById("mission-sub");
+  const tEl = document.getElementById("mission-title");
+  const sEl = document.getElementById("mission-sub");
 
-  if (!overlay || !wrap || !t || !s) {
+  if (!overlay || !wrap || !tEl || !sEl) {
     onDone && onDone();
     return;
   }
 
-  t.textContent = title;
-  s.textContent = sub;
+  // ✅ kill any old scheduled hide
+  if (missionOverlayTimer) {
+    clearTimeout(missionOverlayTimer);
+    missionOverlayTimer = 0;
+  }
+
+  tEl.textContent = title;
+  sEl.textContent = sub;
 
   overlay.classList.remove("hidden");
 
-  // Animation neu triggern
   wrap.classList.remove("mission-anim");
   void wrap.offsetWidth;
   wrap.classList.add("mission-anim");
 
-  // nach Animation ausblenden + callback
-  setTimeout(() => {
+  missionOverlayTimer = setTimeout(() => {
     overlay.classList.add("hidden");
     wrap.classList.remove("mission-anim");
+    missionOverlayTimer = 0;
     onDone && onDone();
   }, durationMs);
 }
+
 
 function fitPodestToRealDims(el, { height = 0.95, diameter = 1.8 } = {}) {
   const obj = el.getObject3D("mesh");
@@ -716,10 +770,10 @@ function applyARTranslations() {
   };
 
   // pin labels
-  setAValue("pinLabel-1", t("pinLabel1"));
-  setAValue("pinLabel-2", t("pinLabel2"));
-  setAValue("pinLabel-3", t("pinLabel3"));
-  setAValue("pinLabel-4", t("pinLabel4"));
+  setAValue("pinLabel1", t("pinLabel1"));
+  setAValue("pinLabel2", t("pinLabel2"));
+  setAValue("pinLabel3", t("pinLabel3"));
+  setAValue("pinLabel4", t("pinLabel4"));
 
   // toast + banner
   setAValue("rocket-toast-text", t("rocketToast"));
@@ -782,24 +836,24 @@ function vibrateLaunchFade({
     const fxVid = document.getElementById("fxVid");
 
    const revealRocketFromPodest = () => {
-  if (!rocket) return;
+    if (!rocket) return;
 
-  rocket.setAttribute("visible", "true");
+    rocket.setAttribute("visible", "true");
 
-  // Start: noch “im Podest” (musst du nur einmal passend wählen)
-  rocket.setAttribute("position", "0 -3 0");  // <- wirkt wie im Podest
+    // Start: noch “im Podest” (musst du nur einmal passend wählen)
+    rocket.setAttribute("position", "0 -3 0");  // <- wirkt wie im Podest
 
-  rocket.removeAttribute("animation__reveal");
-  rocket.setAttribute(
-    "animation__reveal",
-    "property: position; dur: 1500; easing: easeOutCubic; to: 0 0 0"
-  );
-};
+    rocket.removeAttribute("animation__reveal");
+    rocket.setAttribute(
+      "animation__reveal",
+      "property: position; dur: 1500; easing: easeOutCubic; to: 0 0 0"
+    );
+  };
 
-rocket.addEventListener("animationcomplete__reveal", () => {
-  // hier Pins/TapGrid aktivieren
-}, { once: true });
- 
+  rocket.addEventListener("animationcomplete__reveal", () => {
+    // hier Pins/TapGrid aktivieren
+  }, { once: true });
+  
 
     // -----------------------------
     // iOS/Android Autoplay-Policy Fix
@@ -1048,27 +1102,27 @@ const stopFX = () => {
 
 
     function playSmoke() {
-  const vid = document.getElementById("fxVid");
-  const plane = document.getElementById("smoke-front");
+      const vid = document.getElementById("fxVid");
+      const plane = document.getElementById("smoke-front");
 
-  console.log("🔥 playSmoke", { vid: !!vid, plane: !!plane, ready: vid?.readyState });
+      console.log("🔥 playSmoke", { vid: !!vid, plane: !!plane, ready: vid?.readyState });
 
-  if (!vid || !plane) return;
+      if (!vid || !plane) return;
 
-  plane.setAttribute("visible", "true");
+      plane.setAttribute("visible", "true");
 
-  // wichtig: immer neu starten
-  vid.pause();
-  vid.currentTime = 0;
+      // wichtig: immer neu starten
+      vid.pause();
+      vid.currentTime = 0;
 
-  const p = vid.play();
-  if (p && p.catch) {
-    p.catch((err) => console.warn("❌ smoke play() blocked:", err));
-  }
+      const p = vid.play();
+      if (p && p.catch) {
+        p.catch((err) => console.warn("❌ smoke play() blocked:", err));
+      }
 
-  vid.onplaying = () => console.log("✅ smoke playing", vid.videoWidth, vid.videoHeight);
-  vid.onerror = () => console.warn("❌ smoke video error", vid.error);
-}
+      vid.onplaying = () => console.log("✅ smoke playing", vid.videoWidth, vid.videoHeight);
+      vid.onerror = () => console.warn("❌ smoke video error", vid.error);
+    }
 
 
     // -------------------------------------------------------
@@ -1078,32 +1132,44 @@ const stopFX = () => {
     let mission2Started = false;
 
     const startMission2 = () => {
-        if (mission2Started) return;
-        mission2Started = true;
+      if (mission2Started) return;
+      mission2Started = true;
 
-        //showMissionBanner("MISSION 2", "Lade die Rakete auf");
-        setFooterMode("minigame");
+      const goal = 30;
+      const durationMs = 5000;
 
-        showMissionScreen({
-            title: t("mission2Title"),
-            sub: t("mission2Sub"),
-            durationMs: 2600,
-            onDone: () => {
-                setupMission2Minigame({
-                    goal: 30,
-                    durationMs: 5000,
-                    onDone: ({ success }) => {
-                        if (success) {
-                        if (typeof showARRocketToast === "function") showARRocketToast(1600);
-                        setFooterMode("launch");
-                        } else {
-                        setFooterMode("minigame");
-                        }
-                    },
-                });
+      const instruction =
+        currentLang === "de"
+          ? `Tippe ${goal}x in ${Math.round(durationMs / 1000)} Sekunden.`
+          : `Tap ${goal} times in ${Math.round(durationMs / 1000)} seconds.`;
+
+      showMissionStartScreen({
+        title: t("mission2Title"),
+        sub: instruction,
+        buttonLabel: t("footerStart"),
+        onStart: () => {
+          // ✅ Now bring footer back, but in minigame mode
+          setFooterMode("minigame");
+
+          setupMission2Minigame({
+            goal,
+            durationMs,
+            onDone: ({ success }) => {
+              if (success) setFooterMode("launch");
+              else setFooterMode("minigame");
             },
-        });
-    }
+          });
+
+          // ✅ Start countdown immediately (no second user tap needed)
+          requestAnimationFrame(() => {
+            requestAnimationFrame(() => {
+              document.getElementById("mg-start-btn")?.click();
+            });
+          });
+        },
+      });
+    };
+
 
     /*------------------------------------- 
 COUNTDOWN
@@ -1196,61 +1262,61 @@ const launchRocket3D = () => {
     // -------------------------------------------------------
     // Marker Verhalten
     // -------------------------------------------------------
-      marker.addEventListener("markerFound", () => {
-        rocket.setAttribute("visible", "true");
-        label?.setAttribute("visible", "true");
-        hint?.setAttribute("visible", "false");
+    marker.addEventListener("markerFound", () => {
+      rocket.setAttribute("visible", "true");
+      label?.setAttribute("visible", "true");
+      hint?.setAttribute("visible", "false");
 
-        loadingEl.classList.add("hidden");
-        arFooter.classList.remove("hidden");
+      loadingEl.classList.add("hidden");
+      arFooter.classList.remove("hidden");
 
         
         
         // ✅ Mission 1 zuerst starten (nur einmal)
-        if (!mission1Started) {
-          mission1Started = true;
+      if (!mission1Started) {
+        mission1Started = true;
 
-          setFooterMode("pins");
+        setFooterMode("pins");
 
-          showMissionScreen({
-              title: "MISSION 1",
-              sub: t("missionSub"),
-              durationMs: 2600,
-              onDone: () => {
+        showMissionScreen({
+          title: "MISSION 1",
+          sub: t("missionSub"),
+          durationMs: 2600,
+          onDone: () => {
                 
                               
-                revealRocketFromPodest();  
+            revealRocketFromPodest();
                // playSmoke();
-                
+
 
                 setupMission1Pins({
-                  onAllPinsDone: () => {
+              onAllPinsDone: () => {
                     //rocket noch drehen
-                    startMission2();
+                startMission2();
 
-                    document.getElementById("launch-btn")?.addEventListener("click", async () => {
-                      vibrateLaunchFade({
+                  document.getElementById("launch-btn")?.addEventListener("click", async () => {
+                    vibrateLaunchFade({
                         totalMs: 3200,   // ungefähr so lang wie deine Launch-Animation
-                        startMs: 75,
-                        endMs: 15,
-                        intervalMs: 170,
-                        pauseMs: 70,
-                      });  
-                      await playFX(); 
-                        launchRocket3D();
+                      startMs: 75,
+                      endMs: 15,
+                      intervalMs: 170,
+                      pauseMs: 70,
+                    });
+                    await playFX();
+                    launchRocket3D();
 
                         // optional: weiterleiten nach Ende
-                        setTimeout(() => {
-                            window.location.href = "mehrErfahren.html";
-                        }, 8000);
-                    });
+                    setTimeout(() => {
+                      window.location.href = "mehrErfahren.html";
+                    }, 8000);
+                  });
 
-                  },
-                });
               },
-          });
-        }
-      });
+            });
+              },
+        });
+      }
+    });
 
       marker.addEventListener("markerLost", () => {
               
@@ -1300,12 +1366,12 @@ const launchRocket3D = () => {
   // ---- State ----
   const clickedPins = new Set(); // 0..3
 
-   const pinContent = [
-  { icon: "sources/icons/Icon_Mission.png", sub: t("pinSub1"), text: t("pinText1") },
-  { icon: "sources/icons/Icon_Netzwerk.png", sub: t("pinSub2"), text: t("pinText2") },
-  { icon: "sources/icons/Icon_Team.png", sub: t("pinSub3"), text: t("pinText3") },
-  { icon: "sources/icons/Icon_Projekt.png", sub: t("pinSub4"), text: t("pinText4") },
-];
+  const pinContent = [
+    { icon: "sources/icons/Icon_Mission.png",  subKey: "pinSub1", textKey: "pinText1" },
+    { icon: "sources/icons/Icon_Netzwerk.png", subKey: "pinSub2", textKey: "pinText2" },
+    { icon: "sources/icons/Icon_Team.png",     subKey: "pinSub3", textKey: "pinText3" },
+    { icon: "sources/icons/Icon_Projekt.png",  subKey: "pinSub4", textKey: "pinText4" },
+  ];
 
 
 
@@ -1342,27 +1408,24 @@ const launchRocket3D = () => {
         const iconEl = document.getElementById("info-icon");
         const subEl = document.getElementById("info-subtitle");
 
-        const c = pinContent[idx];
-        if (!c) return;
+    const c = pinContent[idx];
+    if (!c) return;
 
-        if (iconEl && c.icon) iconEl.src = c.icon;
-        if (subEl) subEl.textContent = c.sub;
-        if (textEl) textEl.textContent = c.text;
+    if (iconEl && c.icon) iconEl.src = c.icon;
+    if (subEl)  subEl.textContent = t(c.subKey);
+    if (textEl) textEl.textContent = t(c.textKey);
 
-
-        overlay?.classList.remove("hidden");
+    overlay?.classList.remove("hidden");
 
         // ✅ Fortschritt updaten + Button freischalten
-        const before = clickedPins.size;
-        clickedPins.add(idx);
+    const before = clickedPins.size;
+    clickedPins.add(idx);
 
-        if (clickedPins.size !== before) {
-            setProgress();
-            if (clickedPins.size === 4) {
-                setBtnEnabled(true);
-            }
-        }
-     };
+    if (clickedPins.size !== before) {
+      setProgress();
+      if (clickedPins.size === 4) setBtnEnabled(true);
+    }
+  };
 
   // TapGrid initialisieren 
   const tg = window.TapGrid?.init({
@@ -1377,7 +1440,7 @@ const launchRocket3D = () => {
     window.addEventListener("pinselected", (e) => {
       openInfoByIndex(e.detail.index);
   });
-}
+  }
 
   // ---- Mission 1 Initialisierung: ALLES sichtbar + klickbar ----
   pinGroups.forEach((g) => setVisible(g, true));
@@ -1438,21 +1501,24 @@ const launchRocket3D = () => {
   else scene?.addEventListener("loaded", setupCanvasPick, { once: true });
 
   // ---- Button: Mission 2 starten ----
-  startBtn?.addEventListener("click", (e) => {
-    if (clickedPins.size < 4) {
-      e.preventDefault();
-      return;
-    }
+ startBtn?.addEventListener("click", (e) => {
+  if (clickedPins.size < 4) {
+    e.preventDefault();
+    return;
+  }
 
-    // Mission 1 schließen
-    pinGroups.forEach((g) => setVisible(g, false));
-    hitTargets.forEach((h) => h?.classList.remove("pin"));
-    overlay?.classList.add("hidden");
+  // Mission 1 schließen
+  pinGroups.forEach((g) => setVisible(g, false));
+  hitTargets.forEach((h) => h?.classList.remove("pin"));
+  overlay?.classList.add("hidden");
 
-    onAllPinsDone && onAllPinsDone();
-  });
-}
+  onAllPinsDone && onAllPinsDone();
 
+  // ✅ THIS is the "goes away until next user" part:
+  setFooterMode("none");   // hide footer right after pressing Mission 2 start
+  startMission2();         // show mission 2 intro overlay
+});
+  }
 
 
 function setupMission2Minigame({ goal = 30, durationMs = 5000, onDone } = {}) {
@@ -1521,7 +1587,7 @@ function setupMission2Minigame({ goal = 30, durationMs = 5000, onDone } = {}) {
     stopLoops();
     running = false;
     taps = 0;
-
+    
     tapsEl.textContent = "0";
     timeEl.textContent = fmt(durationMs);
     barEl.style.width = "0%";
