@@ -282,10 +282,10 @@ document.getElementById("langBtn")?.addEventListener("click", () => {
         shadow="receive: true"
       ></a-plane>
 
-      <a-entity id="podest-rig" position="0 0 0" rotation="0 0 0" scale="0.18 0.18 0.18">
+      <a-entity id="podest-rig" position="0 0 0" rotation="0 0 0" scale="1 1 1">
         <a-entity
           id="podest-visible"
-          obj-model="obj: url(sources/3D/Podest.obj); mtl: url(sources/3D/podest.mtl)"
+          obj-model="obj: #podest-obj; mtl: #podest-mtl"
           position="0 0 0"
           rotation="0 90 0"
           scale="1 1 1"
@@ -293,16 +293,13 @@ document.getElementById("langBtn")?.addEventListener("click", () => {
 
         <a-entity
           id="podest-occluder"
-          obj-model="obj: url(sources/3D/Podest.obj); mtl: url(sources/3D/podest.mtl)"
+          obj-model="obj: #podest-obj; mtl: #podest-mtl"
           position="0 0 0"
           rotation="0 90 0"
           scale="1 1 1"
-          occluder
+          occluder-obj
         ></a-entity>
       </a-entity>
-
-
-        
 
          <a-entity
           id="rocket"
@@ -358,7 +355,7 @@ document.getElementById("langBtn")?.addEventListener("click", () => {
         <!-- HITBOX als BOX (viel besser klickbar als plane) -->
           <a-box
             id="hit-1"
-            class="pin"
+            
             position="0.8 2 0.35"
             rotation="0 0 0"
             width="1.6"
@@ -405,7 +402,7 @@ document.getElementById("langBtn")?.addEventListener("click", () => {
           <!-- HITBOX -->
           <a-plane
             id="hit-2"
-            class="pin"
+          
             position="-0.62 1.499 0.35"
             rotation="-90 0 0"
             width="1.6"
@@ -450,7 +447,7 @@ document.getElementById("langBtn")?.addEventListener("click", () => {
         <!-- Hitbox -->
           <a-plane
             id="hit-3"
-            class="pin"
+        
             position="0.62 1 0.35"
             rotation="0 0 0"
             width="1.6"
@@ -495,7 +492,6 @@ document.getElementById("langBtn")?.addEventListener("click", () => {
 
           <a-plane
             id="hit-4"
-            class="pin"
             position="-0.62 0.001 0.35"
             rotation="-90 0 0"
             width="1.6"
@@ -850,10 +846,43 @@ function vibrateLaunchFade({
     );
   };
 
-  rocket.addEventListener("animationcomplete__reveal", () => {
-    // hier Pins/TapGrid aktivieren
-  }, { once: true });
-  
+  let gridBooted = false;
+
+const startGridAfterReveal = () => {
+  if (gridBooted) return;
+  gridBooted = true;
+
+  setupMission1Pins({
+    onAllPinsDone: () => {
+      startMission2();
+      document.getElementById("launch-btn")?.addEventListener("click", async () => {
+        vibrateLaunchFade({
+          totalMs: 3200,
+          startMs: 75,
+          endMs: 15,
+          intervalMs: 170,
+          pauseMs: 70,
+        });
+        await playFX();
+        launchRocket3D();
+      });
+    },
+  });
+
+  // ✅ VERY IMPORTANT: force raycaster to rebuild after .pin gets added
+  requestAnimationFrame(() => {
+    const cam = document.getElementById("cam");
+    cam?.components?.raycaster?.refreshObjects?.();
+  });
+};
+
+rocket.addEventListener("animationcomplete__reveal", () => {
+  // Optional: start rotation ONLY AFTER reveal (recommended)
+  // rocket.setAttribute("animation", "property: rotation; to: 0 360 0; loop: true; dur: 15000; easing: linear");
+
+  startGridAfterReveal();
+}, { once: true });
+
 
     // -----------------------------
     // iOS/Android Autoplay-Policy Fix
