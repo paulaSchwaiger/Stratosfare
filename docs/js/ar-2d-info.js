@@ -595,7 +595,7 @@ function stretchZ(el, factor = 1.2) {
   const podestOcc = document.getElementById("podest-occluder");
 
   podestVisible?.addEventListener("model-loaded", () => {
-    fitPodestToRealDims(podestVisible, { height: 0.95, diameter: 3.6 });
+    fitPodestToRealDims(podestVisible, { height: 0.95, diameter: 1.8 });
    // stretchZ(podestVisible, 1.22);
   });
 
