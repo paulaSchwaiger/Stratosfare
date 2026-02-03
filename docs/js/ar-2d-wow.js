@@ -1,4 +1,5 @@
 // ar.js
+let missionOverlayTimer = 0;
 
 //====== A-Frame Components ===============
 AFRAME.registerComponent("occluder-obj", {
@@ -634,7 +635,7 @@ function setFooterMode(mode) {
   const launchView = document.getElementById("footer-view-launch");
 
   [pinsView, mgView, launchView].forEach((v) => v?.classList.add("hidden"));
-
+   if (mode === "none") return;          // ✅ show nothing in footer
   if (mode === "minigame") mgView?.classList.remove("hidden");
   else if (mode === "launch") launchView?.classList.remove("hidden");
   else pinsView?.classList.remove("hidden");
@@ -658,16 +659,22 @@ function showARRocketToast(ms = 1600) {
 function showMissionScreen({ title, sub, durationMs = 2600, onDone }) {
   const overlay = document.getElementById("mission-overlay");
   const wrap = document.getElementById("mission-wrap");
-  const t = document.getElementById("mission-title");
-  const s = document.getElementById("mission-sub");
+  const tEl = document.getElementById("mission-title");
+  const sEl = document.getElementById("mission-sub");
 
-  if (!overlay || !wrap || !t || !s) {
+  if (!overlay || !wrap || !tEl || !sEl) {
     onDone && onDone();
     return;
   }
 
-  t.textContent = title;
-  s.textContent = sub;
+// ✅ kill any old scheduled hide
+  if (missionOverlayTimer) {
+    clearTimeout(missionOverlayTimer);
+    missionOverlayTimer = 0;
+  }
+
+  tEl.textContent = title;
+  sEl.textContent = sub;
 
   overlay.classList.remove("hidden");
 
@@ -676,10 +683,10 @@ function showMissionScreen({ title, sub, durationMs = 2600, onDone }) {
   void wrap.offsetWidth;
   wrap.classList.add("mission-anim");
 
-  // nach Animation ausblenden + callback
-  setTimeout(() => {
+  missionOverlayTimer = setTimeout(() => {
     overlay.classList.add("hidden");
     wrap.classList.remove("mission-anim");
+    missionOverlayTimer = 0;
     onDone && onDone();
   }, durationMs);
 }
@@ -741,10 +748,10 @@ function applyARTranslations() {
   };
 
   // pin labels
-  setAValue("pinLabel-1", t("pinLabel1"));
-  setAValue("pinLabel-2", t("pinLabel2"));
-  setAValue("pinLabel-3", t("pinLabel3"));
-  setAValue("pinLabel-4", t("pinLabel4"));
+   setAValue("pinLabel1", t("pinLabel1"));
+  setAValue("pinLabel2", t("pinLabel2"));
+  setAValue("pinLabel3", t("pinLabel3"));
+  setAValue("pinLabel4", t("pinLabel4"));
 
   // toast + banner
   setAValue("rocket-toast-text", t("rocketToast"));
@@ -783,6 +790,53 @@ function vibrateLaunchFade({
   };
 
   requestAnimationFrame(tick);
+}
+
+
+function showMissionStartScreen({ title, sub, buttonLabel, onStart }) {
+  const overlay = document.getElementById("mission-overlay");
+  const wrap = document.getElementById("mission-wrap");
+  const titleEl = document.getElementById("mission-title");
+  const subEl = document.getElementById("mission-sub");
+
+  if (!overlay || !wrap || !titleEl || !subEl) {
+    onStart && onStart();
+    return;
+  }
+
+  // cancel any old auto-hide timer from Mission 1
+  if (missionOverlayTimer) {
+    clearTimeout(missionOverlayTimer);
+    missionOverlayTimer = 0;
+  }
+
+  titleEl.textContent = title;
+  subEl.textContent = sub;
+
+  let btn = document.getElementById("mission2-start-btn");
+  if (!btn) {
+    btn = document.createElement("button");
+    btn.id = "mission2-start-btn";
+    btn.type = "button";
+    btn.className = "mission2-start-btn";
+    wrap.appendChild(btn);
+  }
+
+  btn.textContent = buttonLabel || "START";
+
+  // Make it act like a real modal
+  overlay.classList.remove("hidden");
+
+  // Prevent clicks from passing through the overlay
+  overlay.onclick = (e) => e.stopPropagation();
+  wrap.onclick = (e) => e.stopPropagation();
+
+  btn.onclick = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    overlay.classList.add("hidden");
+    onStart && onStart();
+  };
 }
 
 
@@ -1219,31 +1273,40 @@ function vibrateLaunchFade({
         if (mission2Started) return;
         mission2Started = true;
 
-        //showMissionBanner("MISSION 2", "Lade die Rakete auf");
-        setFooterMode("minigame");
+         const goal = 30;
+      const durationMs = 5000;
 
-        
+      const instruction =
+        currentLang === "de"
+          ? `Tippe ${goal}x in ${Math.round(durationMs / 1000)} Sekunden.`
+          : `Tap ${goal} times in ${Math.round(durationMs / 1000)} seconds.`;
 
-        showMissionScreen({
-          title: t("mission2Title"),
-          sub: t("mission2Sub"),
-            durationMs: 2600,
-            onDone: () => {
-                setupMission2Minigame({
-                    goal: 30,
-                    durationMs: 5000,
-                    onDone: ({ success }) => {
-                        if (success) {
-                        if (typeof showARRocketToast === "function") showARRocketToast(1600);
-                        setFooterMode("launch");
-                        } else {
-                        setFooterMode("minigame");
-                        }
-                    },
-                });
+      showMissionStartScreen({
+        title: t("mission2Title"),
+        sub: instruction,
+        buttonLabel: t("footerStart"),
+        onStart: () => {
+          // ✅ Now bring footer back, but in minigame mode
+          setFooterMode("minigame");
+
+          setupMission2Minigame({
+            goal,
+            durationMs,
+            onDone: ({ success }) => {
+              if (success) setFooterMode("launch");
+              else setFooterMode("minigame");
             },
-        });
-    }
+          });
+
+          // ✅ Start countdown immediately (no second user tap needed)
+          requestAnimationFrame(() => {
+            requestAnimationFrame(() => {
+              document.getElementById("mg-start-btn")?.click();
+            });
+          });
+        },
+      });
+    };
 
     /*------------------------------------- 
 COUNTDOWN
@@ -1425,10 +1488,10 @@ const startCountdown = (seconds = 3, onDone) => {
 
 
   const pinContent = [
-  { icon: "sources/icons/Icon_Mission.png", sub: t("pinSub1"), text: t("pinText1") },
-  { icon: "sources/icons/Icon_Netzwerk.png", sub: t("pinSub2"), text: t("pinText2") },
-  { icon: "sources/icons/Icon_Team.png", sub: t("pinSub3"), text: t("pinText3") },
-  { icon: "sources/icons/Icon_Projekt.png", sub: t("pinSub4"), text: t("pinText4") },
+    { icon: "sources/icons/Icon_Mission.png",  subKey: "pinSub1", textKey: "pinText1" },
+    { icon: "sources/icons/Icon_Netzwerk.png", subKey: "pinSub2", textKey: "pinText2" },
+    { icon: "sources/icons/Icon_Team.png",     subKey: "pinSub3", textKey: "pinText3" },
+    { icon: "sources/icons/Icon_Projekt.png",  subKey: "pinSub4", textKey: "pinText4" },
 ];
 
 
@@ -1469,8 +1532,8 @@ const startCountdown = (seconds = 3, onDone) => {
         if (!c) return;
 
         if (iconEl && c.icon) iconEl.src = c.icon;
-        if (subEl) subEl.textContent = c.sub;
-        if (textEl) textEl.textContent = c.text;
+        if (subEl)  subEl.textContent = t(c.subKey);
+        if (textEl) textEl.textContent = t(c.textKey);
 
         overlay?.classList.remove("hidden");
 
@@ -1480,9 +1543,7 @@ const startCountdown = (seconds = 3, onDone) => {
 
         if (clickedPins.size !== before) {
             setProgress();
-            if (clickedPins.size === 4) {
-                setBtnEnabled(true);
-            }
+            if (clickedPins.size === 4) setBtnEnabled(true);
         }
      };
 
@@ -1571,6 +1632,11 @@ const startCountdown = (seconds = 3, onDone) => {
     overlay?.classList.add("hidden");
 
     onAllPinsDone && onAllPinsDone();
+
+    
+  // ✅ THIS is the "goes away until next user" part:
+  setFooterMode("none");   // hide footer right after pressing Mission 2 start
+  startMission2();         // show mission 2 intro overlay
   });
 }
 
