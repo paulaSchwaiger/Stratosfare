@@ -205,7 +205,7 @@ document.addEventListener("DOMContentLoaded", () => {
           obj-model="obj: #podest-obj; mtl: #podest-mtl"
           position="0 0 0"
           rotation="0 90 0"
-          scale="1 1.5 1"
+          scale="1 1 1"
         ></a-entity>
 
         <a-entity
@@ -213,7 +213,7 @@ document.addEventListener("DOMContentLoaded", () => {
           obj-model="obj: #podest-obj; mtl: #podest-mtl"
           position="0 0 0"
           rotation="0 90 0"
-          scale="1 1.5 1"
+          scale="1 1 1"
           occluder-obj
         ></a-entity>
       </a-entity>
@@ -565,6 +565,11 @@ function playPngSequenceOnPlaneSafe(planeEl, {
   return { stop() { running = false; } };
 }
 
+function stretchX(el, factor = 1.2) {
+  const s = el.object3D.scale;
+  el.object3D.scale.set(s.x * factor, s.y, s.z);
+}
+
 
 
 //==========================================================================
@@ -584,10 +589,12 @@ function playPngSequenceOnPlaneSafe(planeEl, {
 
   podestVisible?.addEventListener("model-loaded", () => {
     fitPodestToRealDims(podestVisible, { height: 0.95, diameter: 1.8 });
+    stretchX(podestVisible, 1.22);
   });
 
   podestOcc?.addEventListener("model-loaded", () => {
     fitPodestToRealDims(podestOcc, { height: 0.95, diameter: 1.8 });
+    stretchX(podestOcc, 1.22);
   });
 
   if (podestVisible) {
