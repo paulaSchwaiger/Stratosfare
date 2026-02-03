@@ -839,6 +839,34 @@ function showMissionStartScreen({ title, sub, buttonLabel, onStart }) {
   };
 }
 
+function setTapGridEnabled(enabled, { hide = true } = {}) {
+  const gridEl = document.getElementById("tapGrid");
+  if (!gridEl) {
+    console.warn("setTapGridEnabled: #tapGrid nicht gefunden");
+    return;
+  }
+
+  if (enabled) {
+    // ✅ aktiv
+    gridEl.style.pointerEvents = "auto";
+    if (hide) gridEl.style.visibility = "visible";
+    if (hide) gridEl.style.opacity = "1";
+
+    // Wichtig: NICHT display:block erzwingen, falls du das über CSS steuerst
+    // Wenn du bisher display:none genutzt hast, nimm lieber visibility statt display!
+  } else {
+    // ✅ deaktiv
+    gridEl.style.pointerEvents = "none";
+
+    if (hide) {
+      // Layout bleibt erhalten (wichtig, damit TapGrid später korrekt bleibt)
+      gridEl.style.visibility = "hidden";
+      gridEl.style.opacity = "0";
+    }
+  }
+}
+
+
 
 
 // ------------------------------------------------------------------------------------------
@@ -1411,6 +1439,7 @@ const startCountdown = (seconds = 3, onDone) => {
                 setupMission1Pins({
                   onAllPinsDone: () => {
                     if (!isGltfRocket) showIdleLoop(); ;
+                    setTapGridEnabled(false);
                     startMission2();
 
                     launchBtn?.addEventListener("click", async (e) => {
