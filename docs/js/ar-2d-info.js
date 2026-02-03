@@ -199,7 +199,7 @@ document.addEventListener("DOMContentLoaded", () => {
         material="color: red; opacity: 0.25; transparent: true; side: double;"
       ></a-plane>
 
-      <a-entity id="podest-rig" position="0 0 0" rotation="0 0 0" scale="1.8 1.8 1.8">
+      <a-entity id="podest-rig" position="0 0 0" rotation="0 0 0" scale="1 1 1">
         <a-entity
           id="podest-visible"
           obj-model="obj: #podest-obj; mtl: #podest-mtl"
@@ -595,12 +595,12 @@ function stretchZ(el, factor = 1.2) {
   const podestOcc = document.getElementById("podest-occluder");
 
   podestVisible?.addEventListener("model-loaded", () => {
-    fitPodestToRealDims(podestVisible, { height: 0.95, diameter: 1.8 });
+    fitPodestToRealDims(podestVisible, { height: 1.1, diameter: 2.1 });
    // stretchZ(podestVisible, 1.22);
   });
 
   podestOcc?.addEventListener("model-loaded", () => {
-    fitPodestToRealDims(podestOcc, { height: 0.95, diameter: 1.8 });
+    fitPodestToRealDims(podestOcc, { height: 1.1, diameter: 2.1 });
    // stretchZ(podestOcc, 1.22);
   });
 
