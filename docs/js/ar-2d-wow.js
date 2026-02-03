@@ -305,10 +305,10 @@ document.getElementById("langBtn")?.addEventListener("click", () => {
         shadow="receive: true"
       ></a-plane>
 
-      <a-entity id="podest-rig" position="0 0 0" rotation="0 0 0" scale="0.18 0.18 0.18">
+      <a-entity id="podest-rig" position="0 0 0" rotation="0 0 0" scale="1 1 1">
         <a-entity
           id="podest-visible"
-          obj-model="obj: url(sources/3D/Podest.obj); mtl: url(sources/3D/podest.mtl)"
+          obj-model="obj: #podest-obj; mtl: #podest-mtl"
           position="0 0 0"
           rotation="0 90 0"
           scale="1 1 1"
@@ -316,11 +316,11 @@ document.getElementById("langBtn")?.addEventListener("click", () => {
 
         <a-entity
           id="podest-occluder"
-          obj-model="obj: url(sources/3D/Podest.obj); mtl: url(sources/3D/podest.mtl)"
+          obj-model="obj: #podest-obj; mtl: #podest-mtl"
           position="0 0 0"
           rotation="0 90 0"
           scale="1 1 1"
-          occluder
+          occluder-obj
         ></a-entity>
       </a-entity>
 

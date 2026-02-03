@@ -192,7 +192,7 @@ document.addEventListener("DOMContentLoaded", () => {
       >
 
       <a-plane
-        position="0 0 0"
+        position="0 0.01 0"
         rotation="-90 0 0"
         width="1"
         height="1"
@@ -595,7 +595,7 @@ function stretchZ(el, factor = 1.2) {
   const podestOcc = document.getElementById("podest-occluder");
 
   podestVisible?.addEventListener("model-loaded", () => {
-    fitPodestToRealDims(podestVisible, { height: 1.1, diameter: 2.7 });
+    fitPodestToRealDims(podestVisible, { height: 0.95, diameter: 3.6 });
    // stretchZ(podestVisible, 1.22);
   });
 
