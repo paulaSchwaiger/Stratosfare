@@ -570,6 +570,13 @@ function stretchX(el, factor = 1.2) {
   el.object3D.scale.set(s.x * factor, s.y, s.z);
 }
 
+function stretchZ(el, factor = 1.2) {
+  if (!el || !el.object3D) return;
+  const s = el.object3D.scale;
+  el.object3D.scale.set(s.x, s.y, s.z * factor);
+  el.object3D.updateMatrixWorld(true);
+}
+
 
 
 //==========================================================================
@@ -589,12 +596,12 @@ function stretchX(el, factor = 1.2) {
 
   podestVisible?.addEventListener("model-loaded", () => {
     fitPodestToRealDims(podestVisible, { height: 0.95, diameter: 1.8 });
-    stretchX(podestVisible, 1.22);
+    stretchZ(podestVisible, 1.22);
   });
 
   podestOcc?.addEventListener("model-loaded", () => {
     fitPodestToRealDims(podestOcc, { height: 0.95, diameter: 1.8 });
-    stretchX(podestOcc, 1.22);
+    stretchZ(podestOcc, 1.22);
   });
 
   if (podestVisible) {
