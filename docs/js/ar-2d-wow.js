@@ -618,6 +618,52 @@ document.getElementById("langBtn")?.addEventListener("click", () => {
 // Funktionen
 // ------------------------------------------------------------------------------------
 
+function showMissionStartScreen({ title, sub, buttonLabel, onStart, buttonId = "mission-start-btn" }) {
+  const overlay = document.getElementById("mission-overlay");
+  const wrap = document.getElementById("mission-wrap");
+  const titleEl = document.getElementById("mission-title");
+  const subEl = document.getElementById("mission-sub");
+
+  if (!overlay || !wrap || !titleEl || !subEl) {
+    onStart && onStart();
+    return;
+  }
+
+  // cancel any old auto-hide timer
+  if (missionOverlayTimer) {
+    clearTimeout(missionOverlayTimer);
+    missionOverlayTimer = 0;
+  }
+
+  titleEl.textContent = title;
+  subEl.textContent = sub;
+
+  // create/find button
+  let btn = document.getElementById(buttonId);
+  if (!btn) {
+    btn = document.createElement("button");
+    btn.id = buttonId;
+    btn.type = "button";
+    btn.className = "mission2-start-btn"; // keep your existing styling
+    wrap.appendChild(btn);
+  }
+
+  btn.textContent = buttonLabel || "START";
+
+  overlay.classList.remove("hidden");
+
+  // prevent clicks passing through
+  overlay.onclick = (e) => e.stopPropagation();
+  wrap.onclick = (e) => e.stopPropagation();
+
+  btn.onclick = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    overlay.classList.add("hidden");
+    onStart && onStart();
+  };
+}
+
 function pad5(n) {
   return String(n).padStart(5, "0");
 }
@@ -793,51 +839,7 @@ function vibrateLaunchFade({
 }
 
 
-function showMissionStartScreen({ title, sub, buttonLabel, onStart }) {
-  const overlay = document.getElementById("mission-overlay");
-  const wrap = document.getElementById("mission-wrap");
-  const titleEl = document.getElementById("mission-title");
-  const subEl = document.getElementById("mission-sub");
 
-  if (!overlay || !wrap || !titleEl || !subEl) {
-    onStart && onStart();
-    return;
-  }
-
-  // cancel any old auto-hide timer from Mission 1
-  if (missionOverlayTimer) {
-    clearTimeout(missionOverlayTimer);
-    missionOverlayTimer = 0;
-  }
-
-  titleEl.textContent = title;
-  subEl.textContent = sub;
-
-  let btn = document.getElementById("mission2-start-btn");
-  if (!btn) {
-    btn = document.createElement("button");
-    btn.id = "mission2-start-btn";
-    btn.type = "button";
-    btn.className = "mission2-start-btn";
-    wrap.appendChild(btn);
-  }
-
-  btn.textContent = buttonLabel || "START";
-
-  // Make it act like a real modal
-  overlay.classList.remove("hidden");
-
-  // Prevent clicks from passing through the overlay
-  overlay.onclick = (e) => e.stopPropagation();
-  wrap.onclick = (e) => e.stopPropagation();
-
-  btn.onclick = (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    overlay.classList.add("hidden");
-    onStart && onStart();
-  };
-}
 
 function setTapGridEnabled(enabled, { hide = true } = {}) {
   const gridEl = document.getElementById("tapGrid");
@@ -949,7 +951,7 @@ function setTapGridEnabled(enabled, { hide = true } = {}) {
   });
 
   // HitTargets klickbar machen (Raycaster targets)
-  hitTargets.forEach((h) => h?.classList.add("pin"));
+  hitTargets.forEach((h) => h?.classList.remove("pin"));
 
   // TapGrid einschalten (falls du es nutzt)
   const gridEl = document.getElementById("tapGrid");
@@ -973,6 +975,17 @@ function setTapGridEnabled(enabled, { hide = true } = {}) {
   ["1","2","3","4"].forEach(n => {
     document.getElementById(`hit-${n}`)?.classList.remove("pin");
   });
+
+  const glitchMarker = (marker) => {
+  if (!marker) return;
+
+  // tiny tracking toggle to force AR.js/A-Frame updates
+  marker.emit("markerLost");
+  requestAnimationFrame(() => {
+    marker.emit("markerFound");
+  });
+};
+
 
   // TapGrid deaktivieren
   const gridEl = document.getElementById("tapGrid");
@@ -1060,6 +1073,13 @@ function setTapGridEnabled(enabled, { hide = true } = {}) {
       await unlockVid(vid);
       await unlockVid(launchVid); // optional (nur wenn playLaunchOnce ein Video ist)
     };
+
+      const glitchMarker = (marker) => {
+    if (!marker) return;
+    marker.emit("markerLost");
+    requestAnimationFrame(() => marker.emit("markerFound"));
+  };
+
 
     // -----------------------------
     // Smoke Play
@@ -1296,6 +1316,37 @@ function setTapGridEnabled(enabled, { hide = true } = {}) {
     // -------------------------------------------------------
     let mission1Started = false;
     let mission2Started = false;
+    
+// Gate conditions for Mission 1 interaction
+let mission1Confirmed = false;      // Start Mission 1 pressed
+let markerTracked = false;          // markerFound/markerLost
+let mission1GridSetupDone = false;  // setupMission1Pins called once
+
+const updateMission1Active = () => {
+  const cam = document.getElementById("cam");
+  if (!mission1GridSetupDone) return;
+
+  const active = mission1Confirmed && markerTracked;
+
+  const hits = [
+    document.getElementById("hit-1"),
+    document.getElementById("hit-2"),
+    document.getElementById("hit-3"),
+    document.getElementById("hit-4"),
+  ];
+
+  hits.forEach((h) => {
+    if (!h) return;
+    if (active) h.classList.add("pin");
+    else h.classList.remove("pin");
+  });
+
+  // refresh raycaster after toggling .pin
+  requestAnimationFrame(() => {
+    cam?.components?.raycaster?.refreshObjects?.();
+  });
+};
+
 
     const startMission2 = () => {
         if (mission2Started) return;
@@ -1335,7 +1386,53 @@ function setTapGridEnabled(enabled, { hide = true } = {}) {
         },
       });
     };
+    // Mission 1 grid init is allowed only once
+let mission1GridBooted = false;
 
+const startMission1Grid = () => {
+  if (mission1GridBooted) return;
+  mission1GridBooted = true;
+
+  // user pressed Start Mission 1
+  mission1Confirmed = true;
+
+  // show pins footer
+  setFooterMode("pins");
+
+  // build mission 1 UI/listeners once
+  setupMission1Pins({
+    onAllPinsDone: () => {
+      startMission2();
+
+      // bind launch once
+      if (!window.__launchBound) {
+        window.__launchBound = true;
+
+        document.getElementById("launch-btn")?.addEventListener("click", async () => {
+          vibrateLaunchFade({
+            totalMs: 3200,
+            startMs: 75,
+            endMs: 15,
+            intervalMs: 170,
+            pauseMs: 70,
+          });
+          await playFX();
+          launchRocket3D();
+        });
+      }
+    },
+  });
+
+  // mark setup done; now allow updateMission1Active to arm clicks
+  mission1GridSetupDone = true;
+
+  // wait 2 frames so A-Frame object3D + raycaster are ready
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+      updateMission1Active(); // arms immediately if markerTracked already true
+    });
+  });
+};
     /*------------------------------------- 
 COUNTDOWN
 ---------------------------------------*/
@@ -1405,6 +1502,9 @@ const startCountdown = (seconds = 3, onDone) => {
     // Marker Verhalten
     // -------------------------------------------------------
       marker.addEventListener("markerFound", () => {
+        markerTracked = true;
+updateMission1Active();
+
         rocket.setAttribute("visible", "true");
         label?.setAttribute("visible", "true");
         hint?.setAttribute("visible", "false");
@@ -1419,7 +1519,7 @@ const startCountdown = (seconds = 3, onDone) => {
         if (!mission1Started) {
           mission1Started = true;
 
-          setFooterMode("pins");
+          setFooterMode("none");
 
           showMissionScreen({
             title: "MISSION 1",
@@ -1433,38 +1533,40 @@ const startCountdown = (seconds = 3, onDone) => {
                 revealRocketFromPodest();  
                 playSmokeAll({ durationMs: 5000 });
 
-                  // Wenn Rocket fertig “raus” -> Pins an
-                  //rocket.addEventListener("animationcomplete__rise", enablePinsAndTapGrid, { once: true });
+                // show start button AFTER reveal animation completes
+        rocket.addEventListener(
+  "animationcomplete__rise",
+  () => {
+    showMissionStartScreen({
+  title: "MISSION 1",
+  sub: t("missionSub"),
+  buttonLabel: "START MISSION 1",
+  buttonId: "mission1-start-btn",
+  onStart: () => {
+    startMission1Grid();
 
-                setupMission1Pins({
-                  onAllPinsDone: () => {
-                    if (!isGltfRocket) showIdleLoop(); ;
-                    setTapGridEnabled(false);
-                    startMission2();
+    // ✅ force tracking refresh AFTER grid is created
+    requestAnimationFrame(() => {
+      glitchMarker(marker);
 
-                    launchBtn?.addEventListener("click", async (e) => {
-                      e.preventDefault();
-
-                      vibrateLaunchFade({
-                        totalMs: 3200,   // ungefähr so lang wie deine Launch-Animation
-                        startMs: 75,
-                        endMs: 15,
-                        intervalMs: 170,
-                        pauseMs: 70,
-                      }); 
-
-                      // ✅ unlock einmalig bei erstem Klick
-                      await unlockAllVidsOnce();
-
-                      launchRocket();
-                      playSmokeAll({ durationMs: 5000 });
-                    });
-                  },
-                });
-              },
-          });
-        }
+      // ✅ also refresh raycaster a frame later
+      requestAnimationFrame(() => {
+        const cam = document.getElementById("cam");
+        cam?.components?.raycaster?.refreshObjects?.();
       });
+    });
+  },
+});
+
+  },
+  { once: true }
+);
+
+      },
+    });
+  }
+});
+
 
       marker.addEventListener("markerLost", () => {
               
@@ -1592,7 +1694,7 @@ const startCountdown = (seconds = 3, onDone) => {
 }
 // ---- Mission 1 Initialisierung: ALLES sichtbar + klickbar ----
   pinGroups.forEach((g) => setVisible(g, true));
-   hitTargets.forEach((h) => h?.classList.add("pin")); // wichtig für raycaster="objects: .pin"
+   hitTargets.forEach((h) => h?.classList.remove("pin")); // wichtig für raycaster="objects: .pin"
 
   if (startBtn) startBtn.textContent = t("btnStartMission2");
   setProgress();      // startet bei 0%
