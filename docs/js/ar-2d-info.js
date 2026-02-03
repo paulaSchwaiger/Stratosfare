@@ -202,7 +202,7 @@ document.addEventListener("DOMContentLoaded", () => {
       <a-entity id="podest-rig" position="0 0 0" rotation="0 0 0" scale="0.18 0.18 0.18">
         <a-entity
           id="podest-visible"
-          obj-model="obj: url(sources/3D/Podest.obj); mtl: url(sources/3D/podest.mtl)"
+          obj-model="obj: #podest-obj; mtl: #podest-mtl"
           position="0 0 0"
           rotation="0 90 0"
           scale="1 1 1"
@@ -210,7 +210,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
         <a-entity
           id="podest-occluder"
-          obj-model="obj: url(sources/3D/Podest.obj); mtl: url(sources/3D/podest.mtl)"
+          obj-model="obj: #podest-obj; mtl: #podest-mtl"
           position="0 0 0"
           rotation="0 90 0"
           scale="1 1 1"
