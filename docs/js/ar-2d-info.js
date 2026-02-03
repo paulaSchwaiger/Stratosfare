@@ -205,7 +205,7 @@ document.addEventListener("DOMContentLoaded", () => {
           obj-model="obj: #podest-obj; mtl: #podest-mtl"
           position="0 0 0"
           rotation="0 90 0"
-          scale="1 1 1"
+          scale="1 1.5 1"
         ></a-entity>
 
         <a-entity
@@ -213,8 +213,8 @@ document.addEventListener("DOMContentLoaded", () => {
           obj-model="obj: #podest-obj; mtl: #podest-mtl"
           position="0 0 0"
           rotation="0 90 0"
-          scale="1 1 1"
-          occluder
+          scale="1 1.5 1"
+          occluder-obj
         ></a-entity>
       </a-entity>
 
