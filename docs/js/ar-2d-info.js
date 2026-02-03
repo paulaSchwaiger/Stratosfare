@@ -596,12 +596,12 @@ function stretchZ(el, factor = 1.2) {
 
   podestVisible?.addEventListener("model-loaded", () => {
     fitPodestToRealDims(podestVisible, { height: 0.95, diameter: 1.8 });
-    stretchZ(podestVisible, 1.22);
+   // stretchZ(podestVisible, 1.22);
   });
 
   podestOcc?.addEventListener("model-loaded", () => {
     fitPodestToRealDims(podestOcc, { height: 0.95, diameter: 1.8 });
-    stretchZ(podestOcc, 1.22);
+   // stretchZ(podestOcc, 1.22);
   });
 
   if (podestVisible) {
