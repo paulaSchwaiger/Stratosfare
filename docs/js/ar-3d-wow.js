@@ -600,6 +600,51 @@ document.getElementById("langBtn")?.addEventListener("click", () => {
 // ------------------------------------------------------------------------------------
 // Funktionen
 // ------------------------------------------------------------------------------------
+function showMissionStartScreen({ title, sub, buttonLabel, onStart, buttonId = "mission-start-btn" }) {
+  const overlay = document.getElementById("mission-overlay");
+  const wrap = document.getElementById("mission-wrap");
+  const titleEl = document.getElementById("mission-title");
+  const subEl = document.getElementById("mission-sub");
+
+  if (!overlay || !wrap || !titleEl || !subEl) {
+    onStart && onStart();
+    return;
+  }
+
+  // cancel any old auto-hide timer
+  if (missionOverlayTimer) {
+    clearTimeout(missionOverlayTimer);
+    missionOverlayTimer = 0;
+  }
+
+  titleEl.textContent = title;
+  subEl.textContent = sub;
+
+  // create/find button
+  let btn = document.getElementById(buttonId);
+  if (!btn) {
+    btn = document.createElement("button");
+    btn.id = buttonId;
+    btn.type = "button";
+    btn.className = "mission2-start-btn"; // keep your existing styling
+    wrap.appendChild(btn);
+  }
+
+  btn.textContent = buttonLabel || "START";
+
+  overlay.classList.remove("hidden");
+
+  // prevent clicks passing through
+  overlay.onclick = (e) => e.stopPropagation();
+  wrap.onclick = (e) => e.stopPropagation();
+
+  btn.onclick = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    overlay.classList.add("hidden");
+    onStart && onStart();
+  };
+}
 
 
 function setFooterMode(mode) {
@@ -876,12 +921,12 @@ const startGridAfterReveal = () => {
   });
 };
 
-rocket.addEventListener("animationcomplete__reveal", () => {
+//rocket.addEventListener("animationcomplete__reveal", () => {
   // Optional: start rotation ONLY AFTER reveal (recommended)
   // rocket.setAttribute("animation", "property: rotation; to: 0 360 0; loop: true; dur: 15000; easing: linear");
 
-  startGridAfterReveal();
-}, { once: true });
+ // startGridAfterReveal();
+//}, { once: true });
 
 
     // -----------------------------
@@ -910,6 +955,12 @@ rocket.addEventListener("animationcomplete__reveal", () => {
       await unlockVid(fxVid);
       await unlockVid(launchVid); // optional (nur wenn playLaunchOnce ein Video ist)
     };
+
+      const glitchMarker = (marker) => {
+    if (!marker) return;
+    marker.emit("markerLost");
+    requestAnimationFrame(() => marker.emit("markerFound"));
+  };
 
     // -----------------------------
     // Smoke Play
@@ -1158,47 +1209,123 @@ const stopFX = () => {
     // Mission Flow
     // -------------------------------------------------------
     let mission1Started = false;
-    let mission2Started = false;
+let mission2Started = false;
 
-    const startMission2 = () => {
-      if (mission2Started) return;
-      mission2Started = true;
+// Gate conditions for Mission 1 interaction
+let mission1Confirmed = false;      // Start Mission 1 pressed
+let markerTracked = false;          // markerFound/markerLost
+let mission1GridSetupDone = false;  // setupMission1Pins called once
 
-      const goal = 30;
-      const durationMs = 5000;
+const updateMission1Active = () => {
+  const cam = document.getElementById("cam");
+  if (!mission1GridSetupDone) return;
 
-      const instruction =
-        currentLang === "de"
-          ? `Tippe ${goal}x in ${Math.round(durationMs / 1000)} Sekunden.`
-          : `Tap ${goal} times in ${Math.round(durationMs / 1000)} seconds.`;
+  const active = mission1Confirmed && markerTracked;
 
-      showMissionStartScreen({
-        title: t("mission2Title"),
-        sub: instruction,
-        buttonLabel: t("footerStart"),
-        onStart: () => {
-          // ✅ Now bring footer back, but in minigame mode
-          setFooterMode("minigame");
+  const hits = [
+    document.getElementById("hit-1"),
+    document.getElementById("hit-2"),
+    document.getElementById("hit-3"),
+    document.getElementById("hit-4"),
+  ];
 
-          setupMission2Minigame({
-            goal,
-            durationMs,
-            onDone: ({ success }) => {
-              if (success) setFooterMode("launch");
-              else setFooterMode("minigame");
-            },
-          });
+  hits.forEach((h) => {
+    if (!h) return;
+    if (active) h.classList.add("pin");
+    else h.classList.remove("pin");
+  });
 
-          // ✅ Start countdown immediately (no second user tap needed)
-          requestAnimationFrame(() => {
-            requestAnimationFrame(() => {
-              document.getElementById("mg-start-btn")?.click();
-            });
-          });
+  // refresh raycaster after toggling .pin
+  requestAnimationFrame(() => {
+    cam?.components?.raycaster?.refreshObjects?.();
+  });
+};
+
+const startMission2 = () => {
+  if (mission2Started) return;
+  mission2Started = true;
+
+  const goal = 30;
+  const durationMs = 5000;
+
+  const instruction =
+    currentLang === "de"
+      ? `Tippe ${goal}x in ${Math.round(durationMs / 1000)} Sekunden.`
+      : `Tap ${goal} times in ${Math.round(durationMs / 1000)} seconds.`;
+
+  showMissionStartScreen({
+    title: t("mission2Title"),
+    sub: instruction,
+    buttonLabel: t("footerStart"),
+    onStart: () => {
+      setFooterMode("minigame");
+
+      setupMission2Minigame({
+        goal,
+        durationMs,
+        onDone: ({ success }) => {
+          if (success) setFooterMode("launch");
+          else setFooterMode("minigame");
         },
       });
-    };
 
+      // auto-start minigame
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          document.getElementById("mg-start-btn")?.click();
+        });
+      });
+    },
+  });
+};
+
+// Mission 1 grid init is allowed only once
+let mission1GridBooted = false;
+
+const startMission1Grid = () => {
+  if (mission1GridBooted) return;
+  mission1GridBooted = true;
+
+  // user pressed Start Mission 1
+  mission1Confirmed = true;
+
+  // show pins footer
+  setFooterMode("pins");
+
+  // build mission 1 UI/listeners once
+  setupMission1Pins({
+    onAllPinsDone: () => {
+      startMission2();
+
+      // bind launch once
+      if (!window.__launchBound) {
+        window.__launchBound = true;
+
+        document.getElementById("launch-btn")?.addEventListener("click", async () => {
+          vibrateLaunchFade({
+            totalMs: 3200,
+            startMs: 75,
+            endMs: 15,
+            intervalMs: 170,
+            pauseMs: 70,
+          });
+          await playFX();
+          launchRocket3D();
+        });
+      }
+    },
+  });
+
+  // mark setup done; now allow updateMission1Active to arm clicks
+  mission1GridSetupDone = true;
+
+  // wait 2 frames so A-Frame object3D + raycaster are ready
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+      updateMission1Active(); // arms immediately if markerTracked already true
+    });
+  });
+};
 
     /*------------------------------------- 
 COUNTDOWN
@@ -1292,69 +1419,59 @@ const launchRocket3D = () => {
     // Marker Verhalten
     // -------------------------------------------------------
     marker.addEventListener("markerFound", () => {
-      rocket.setAttribute("visible", "true");
-      label?.setAttribute("visible", "true");
-      hint?.setAttribute("visible", "false");
+      markerTracked = true;
+updateMission1Active();
 
-      loadingEl.classList.add("hidden");
-      arFooter.classList.remove("hidden");
+  rocket.setAttribute("visible", "true");
+  label?.setAttribute("visible", "true");
+  hint?.setAttribute("visible", "false");
 
-        
-        
-        // ✅ Mission 1 zuerst starten (nur einmal)
-      if (!mission1Started) {
-        mission1Started = true;
+  loadingEl.classList.add("hidden");
+  arFooter.classList.remove("hidden");
 
-        setFooterMode("pins");
+  if (!mission1Started) {
+    mission1Started = true;
 
-        showMissionScreen({
-          title: "MISSION 1",
-          sub: t("missionSub"),
-          durationMs: 2600,
-          onDone: () => {
-                
-                              
-            revealRocketFromPodest();
-               // playSmoke();
+    // hide footer until user starts mission 1 (optional)
+    setFooterMode("none");
 
+    showMissionScreen({
+      title: "MISSION 1",
+      sub: t("missionSub"),
+      durationMs: 2600,
+      onDone: () => {
+        revealRocketFromPodest();
 
-                setupMission1Pins({
-              onAllPinsDone: () => {
-                    //rocket noch drehen
-                startMission2();
+        // show start button AFTER reveal animation completes
+        rocket.addEventListener(
+          "animationcomplete__reveal",
+          () => {
+           showMissionStartScreen({
+  title: "MISSION 1",
+  sub: t("missionSub"),
+  buttonLabel: "START MISSION 1",
+  onStart: () => {
+    startMission1Grid();     // your init function
+    glitchMarker(marker);    // force re-run markerFound logic
+  }
+});
 
-                  document.getElementById("launch-btn")?.addEventListener("click", async () => {
-                    vibrateLaunchFade({
-                        totalMs: 3200,   // ungefähr so lang wie deine Launch-Animation
-                      startMs: 75,
-                      endMs: 15,
-                      intervalMs: 170,
-                      pauseMs: 70,
-                    });
-                    await playFX();
-                    launchRocket3D();
-
-                        // optional: weiterleiten nach Ende
-                    setTimeout(() => {
-                      window.location.href = "mehrErfahren.html";
-                    }, 8000);
-                  });
-
-              },
-            });
-              },
-        });
-      }
+          },
+          { once: true }
+        );
+      },
     });
+  }
+});
 
-      marker.addEventListener("markerLost", () => {
-              
-        rocket.setAttribute("visible", "false");
-        label?.setAttribute("visible", "false");
-        hint?.setAttribute("visible", "true");
+marker.addEventListener("markerLost", () => {
+  
+  rocket.setAttribute("visible", "false");
+  label?.setAttribute("visible", "false");
+  hint?.setAttribute("visible", "true");
+  stopFX();
+});
 
-        stopFX();
-      });
     
     }
 
@@ -1473,7 +1590,7 @@ const launchRocket3D = () => {
 
   // ---- Mission 1 Initialisierung: ALLES sichtbar + klickbar ----
   pinGroups.forEach((g) => setVisible(g, true));
-  hitTargets.forEach((h) => h?.classList.add("pin")); // wichtig für raycaster="objects: .pin"
+  hitTargets.forEach((h) => h?.classList.remove("pin")); // wichtig für raycaster="objects: .pin"
 
   if (startBtn) startBtn.textContent = t("btnStartMission2");
   setProgress();      // startet bei 0%
