@@ -892,7 +892,7 @@ function setTapGridEnabled(enabled, { hide = true } = {}) {
     const rocketCountdownImg = document.getElementById("rocketCountdownImg");
     //const smokeVid = document.getElementById("smokeVid");  
     const vid = document.getElementById("smokeVid");
-    const launchVid = document.getElementById("RocketLaunchVid")
+    const launchVid = document.getElementById("rocketLaunchVid")
 
     let vidsUnlocked = false;
 
@@ -1496,6 +1496,11 @@ const startCountdown = (seconds = 3, onDone) => {
         });
       });
     };
+
+    if (!window.__launchRocketBound) {
+      window.__launchRocketBound = true;
+      launchBtn?.addEventListener("click", launchRocket);
+    }
 
 
     // -------------------------------------------------------
