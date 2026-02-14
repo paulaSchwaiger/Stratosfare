@@ -713,6 +713,8 @@ function showMissionScreen({ title, sub, durationMs = 2600, onDone }) {
     return;
   }
 
+  wrap.querySelectorAll("button").forEach(b => b.remove());
+
 // ✅ kill any old scheduled hide
   if (missionOverlayTimer) {
     clearTimeout(missionOverlayTimer);

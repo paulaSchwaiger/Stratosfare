@@ -58,6 +58,8 @@ const i18n = {
     denyBtn: "Zurück",
     allowBtn: "Zustimmen & starten",
     loadingText: "Inhalte werden geladen...",
+    holdToMarkerTitle: "HINWEIS",
+    holdToMarkerText: "Bitte halte die Kamera auf den Marker.",
     missionTitle: "MISSION 1",
     missionSub: "Tippe alle Pins an",
     tapHere: "Tippe hier",
@@ -110,6 +112,8 @@ const i18n = {
     denyBtn: "Back",
     allowBtn: "Agree & Start",
     loadingText: "Loading content...",
+    holdToMarkerTitle: "NOTICE",
+    holdToMarkerText: "Please hold the camera to the marker.",
     missionTitle: "MISSION 1",
     missionSub: "Tap all pins",
     tapHere: "Tap here",
@@ -672,52 +676,6 @@ function showARRocketToast(ms = 1600) {
   setTimeout(() => {
     toast.setAttribute("visible", "false");
   }, ms);
-}
-
-function showMissionStartScreen({ title, sub, buttonLabel, onStart }) {
-  const overlay = document.getElementById("mission-overlay");
-  const wrap = document.getElementById("mission-wrap");
-  const titleEl = document.getElementById("mission-title");
-  const subEl = document.getElementById("mission-sub");
-
-  if (!overlay || !wrap || !titleEl || !subEl) {
-    onStart && onStart();
-    return;
-  }
-
-  // cancel any old auto-hide timer from Mission 1
-  if (missionOverlayTimer) {
-    clearTimeout(missionOverlayTimer);
-    missionOverlayTimer = 0;
-  }
-
-  titleEl.textContent = title;
-  subEl.textContent = sub;
-
-  let btn = document.getElementById("mission2-start-btn");
-  if (!btn) {
-    btn = document.createElement("button");
-    btn.id = "mission2-start-btn";
-    btn.type = "button";
-    btn.className = "mission2-start-btn";
-    wrap.appendChild(btn);
-  }
-
-  btn.textContent = buttonLabel || "START";
-
-  // Make it act like a real modal
-  overlay.classList.remove("hidden");
-
-  // Prevent clicks from passing through the overlay
-  overlay.onclick = (e) => e.stopPropagation();
-  wrap.onclick = (e) => e.stopPropagation();
-
-  btn.onclick = (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    overlay.classList.add("hidden");
-    onStart && onStart();
-  };
 }
 
 
@@ -1434,12 +1392,11 @@ updateMission1Active();
 
     // hide footer until user starts mission 1 (optional)
     setFooterMode("none");
-
     showMissionScreen({
-      title: "MISSION 1",
-      sub: t("missionSub"),
-      durationMs: 2600,
-      onDone: () => {
+  title: t("holdToMarkerTitle"),
+  sub: t("holdToMarkerText"),
+  durationMs: 5200,
+  onDone: () => {
         revealRocketFromPodest();
 
         // show start button AFTER reveal animation completes
@@ -1455,12 +1412,12 @@ updateMission1Active();
     glitchMarker(marker);    // force re-run markerFound logic
   }
 });
-
+});
+      },
           },
           { once: true }
         );
-      },
-    });
+      
   }
 });
 
@@ -1526,6 +1483,30 @@ marker.addEventListener("markerLost", () => {
     el.setAttribute("visible", visible ? "true" : "false");
     if (el.object3D) el.object3D.visible = !!visible;
   };
+ // ===== Step-by-step pin unlock =====
+let currentStep = 0; // 0..3
+const cam = document.getElementById("cam");
+
+const setActiveStep = (step) => {
+  currentStep = Math.max(0, Math.min(3, step));
+
+  // show only the active pin group
+  pinGroups.forEach((g, i) => setVisible(g, i <= currentStep));
+
+  // make only the active hit target raycastable
+  hitTargets.forEach((h, i) => {
+    if (!h) return;
+    if (i === currentStep) h.classList.add("pin");
+    else h.classList.remove("pin");
+  });
+
+  requestAnimationFrame(() => {
+    cam?.components?.raycaster?.refreshObjects?.();
+  });
+};
+
+// init: show ONLY first pin
+setActiveStep(0);
 
   const setProgress = () => {
     const pct = Math.round((clickedPins.size / 4) * 100);
@@ -1550,28 +1531,42 @@ marker.addEventListener("markerLost", () => {
   }
 
   // ---- Öffnen ----
-  const openInfoByIndex = (idx) => {
-        const iconEl = document.getElementById("info-icon");
-        const subEl = document.getElementById("info-subtitle");
+const openInfoByIndex = (idx) => {
+  const iconEl = document.getElementById("info-icon");
+  const subEl = document.getElementById("info-subtitle");
 
-    const c = pinContent[idx];
-    if (!c) return;
+  const c = pinContent[idx];
+  if (!c) return;
 
-    if (iconEl && c.icon) iconEl.src = c.icon;
-    if (subEl)  subEl.textContent = t(c.subKey);
-    if (textEl) textEl.textContent = t(c.textKey);
+  // ✅ block clicking pins out of order
+  if (idx !== currentStep) return;
 
-    overlay?.classList.remove("hidden");
+  if (iconEl && c.icon) iconEl.src = c.icon;
+  if (subEl) subEl.textContent = t(c.subKey);
+  if (textEl) textEl.textContent = t(c.textKey);
 
-        // ✅ Fortschritt updaten + Button freischalten
-    const before = clickedPins.size;
-    clickedPins.add(idx);
+  overlay?.classList.remove("hidden");
 
-    if (clickedPins.size !== before) {
-      setProgress();
-      if (clickedPins.size === 4) setBtnEnabled(true);
+  const before = clickedPins.size;
+  clickedPins.add(idx);
+
+  if (clickedPins.size !== before) {
+    setProgress();
+
+    // ✅ unlock next pin
+    if (idx < 3) setActiveStep(idx + 1);
+
+    // ✅ all done
+    if (clickedPins.size === 4) {
+      setBtnEnabled(true);
+
+      // optional: show all pins at the end (or keep last one only)
+      // pinGroups.forEach((g) => setVisible(g, true));
+      // hitTargets.forEach((h) => h?.classList.add("pin"));
+      // cam?.components?.raycaster?.refreshObjects?.();
     }
-  };
+  }
+};
 
   // TapGrid initialisieren 
   const tg = window.TapGrid?.init({
@@ -1588,9 +1583,7 @@ marker.addEventListener("markerLost", () => {
   });
   }
 
-  // ---- Mission 1 Initialisierung: ALLES sichtbar + klickbar ----
-  pinGroups.forEach((g) => setVisible(g, true));
-  hitTargets.forEach((h) => h?.classList.remove("pin")); // wichtig für raycaster="objects: .pin"
+
 
   if (startBtn) startBtn.textContent = t("btnStartMission2");
   setProgress();      // startet bei 0%
@@ -1614,9 +1607,7 @@ marker.addEventListener("markerLost", () => {
     });
   });
 
-  // ---- ✅ Zuverlässiger Pick: Canvas click + Raycaster intersectedEls ----
   
-  const cam = document.getElementById("cam");
 
   const setupCanvasPick = () => {
     const canvas = scene?.canvas;
