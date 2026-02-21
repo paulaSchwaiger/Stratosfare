@@ -24,9 +24,9 @@
           class="logo-img"
         />
       </div>
-      <button id="langBtn" class="lang-btn" type="button" aria-label="Sprache wechseln">
+      <button id="langBtn" class="lang-btn" type="button" aria-label="Sprache wechseln">EN</button>
+      
   
-
       <button class="menu-toggle" aria-label="Menü öffnen">
         <span></span>
         <span></span>
@@ -37,6 +37,7 @@
     <!-- Kamera-Erlaubnis-Overlay (unser eigener Dialog) -->
     <div id="permission-overlay">
       <div class="permission-dialog">
+        <button id="langBtnPermission" type="button" class="lang-btn-permission">EN</button>
         <h2>Kamera Erlaubnis</h2>
         <p>
           Für die AR-Darstellung greift diese Anwendung auf die Kamera deines
@@ -74,7 +75,13 @@
     </div>
 
     <div id="tapGrid" aria-hidden="true"></div>
-
+    
+    <div id="hinweis-overlay" class="hidden">
+  <div id="hinweis-wrap">
+    <h2 id="hinweis-title"></h2>
+    <p id="hinweis-sub"></p>
+  </div>
+</div>
     <!-- Mission Text -->
     <div id="mission-overlay" class="mission-overlay hidden">
       <div class="mission-wrap" id="mission-wrap">

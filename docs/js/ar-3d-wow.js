@@ -1,5 +1,7 @@
 // ar.js
 let missionOverlayTimer = 0;
+let missionOverlayMode = "none"; 
+// "none" | "hinweis" | "mission1start" | "other"
 
 //====== A-Frame Components ===============
 AFRAME.registerComponent("occluder-obj", {
@@ -43,8 +45,13 @@ function setLang(lang) {
   localStorage.setItem("lang", currentLang);
   document.documentElement.lang = currentLang;
 
+  const nextLabel = currentLang === "de" ? "EN" : "DE";
+
   const langBtn = document.getElementById("langBtn");
-  if (langBtn) langBtn.textContent = currentLang === "de" ? "EN" : "DE";
+  if (langBtn) langBtn.textContent = nextLabel;
+
+  const langBtnPermission = document.getElementById("langBtnPermission");
+  if (langBtnPermission) langBtnPermission.textContent = nextLabel;
 }
 const i18n = {
   de: {
@@ -174,7 +181,14 @@ function applyTranslations() {
     permLis[1].textContent = t("permissionLi2");
     permLis[2].textContent = t("permissionLi3");
   }
+  const mgGoal = document.getElementById("mg-goal");
+const mgTaps = document.getElementById("mg-taps");
+// (these are numbers, no translation needed)
 
+const missionStartBtn = document.getElementById("mission-start-btn");
+if (missionStartBtn && missionOverlayMode === "mission1start") {
+  missionStartBtn.textContent = t("startMission1Btn");
+}
   const denyBtn = document.getElementById("deny-btn");
   const allowBtn = document.getElementById("allow-btn");
   if (denyBtn) denyBtn.textContent = t("denyBtn");
@@ -217,11 +231,14 @@ document.addEventListener("DOMContentLoaded", () => {
     setLang(currentLang);
     applyTranslations();
 
-document.getElementById("langBtn")?.addEventListener("click", () => {
+const toggleLanguage = () => {
   setLang(currentLang === "de" ? "en" : "de");
   applyTranslations();
   applyARTranslations();
-});
+};
+
+document.getElementById("langBtn")?.addEventListener("click", toggleLanguage);
+document.getElementById("langBtnPermission")?.addEventListener("click", toggleLanguage);
  //ok
 
 
@@ -604,6 +621,11 @@ document.getElementById("langBtn")?.addEventListener("click", () => {
 // ------------------------------------------------------------------------------------
 // Funktionen
 // ------------------------------------------------------------------------------------
+function refreshLanguageUI() {
+  setLang(currentLang);       // updates currentLang + localStorage + BOTH button labels
+  applyTranslations();        // normal DOM (permission, footer, overlays)
+  applyARTranslations();      // AR DOM (a-text labels etc), if scene exists
+}
 function showMissionStartScreen({ title, sub, buttonLabel, onStart, buttonId = "mission-start-btn" }) {
   const overlay = document.getElementById("mission-overlay");
   const wrap = document.getElementById("mission-wrap");
@@ -615,30 +637,33 @@ function showMissionStartScreen({ title, sub, buttonLabel, onStart, buttonId = "
     return;
   }
 
-  // cancel any old auto-hide timer
   if (missionOverlayTimer) {
     clearTimeout(missionOverlayTimer);
     missionOverlayTimer = 0;
   }
 
+  // ✅ mark mode
+  missionOverlayMode = "mission1start";
+
   titleEl.textContent = title;
   subEl.textContent = sub;
 
-  // create/find button
   let btn = document.getElementById(buttonId);
   if (!btn) {
     btn = document.createElement("button");
     btn.id = buttonId;
     btn.type = "button";
-    btn.className = "mission2-start-btn"; // keep your existing styling
+    btn.className = "mission2-start-btn";
     wrap.appendChild(btn);
   }
+
+  // ✅ ensure button is visible again (Hinweis may have hidden it)
+  btn.style.display = "";
 
   btn.textContent = buttonLabel || "START";
 
   overlay.classList.remove("hidden");
 
-  // prevent clicks passing through
   overlay.onclick = (e) => e.stopPropagation();
   wrap.onclick = (e) => e.stopPropagation();
 
@@ -646,10 +671,10 @@ function showMissionStartScreen({ title, sub, buttonLabel, onStart, buttonId = "
     e.preventDefault();
     e.stopPropagation();
     overlay.classList.add("hidden");
+    missionOverlayMode = "none"; // ✅ clear mode when closed
     onStart && onStart();
   };
 }
-
 
 function setFooterMode(mode) {
  const pinsView = document.getElementById("footer-view-pins");
@@ -677,6 +702,49 @@ function showARRocketToast(ms = 1600) {
     toast.setAttribute("visible", "false");
   }, ms);
 }
+let hinweisVisible = false;
+
+function showHinweisOverlay({ title, sub } = {}) {
+  const overlay = document.getElementById("mission-overlay");
+  const wrap = document.getElementById("mission-wrap");
+  const tEl = document.getElementById("mission-title");
+  const sEl = document.getElementById("mission-sub");
+  if (!overlay || !wrap || !tEl || !sEl) return;
+
+  if (missionOverlayTimer) {
+    clearTimeout(missionOverlayTimer);
+    missionOverlayTimer = 0;
+  }
+
+  // ✅ mark mode
+  missionOverlayMode = "hinweis";
+
+  // ✅ hide Mission 1 button if it exists
+  const missionBtn = document.getElementById("mission-start-btn");
+  if (missionBtn) missionBtn.style.display = "none";
+
+  tEl.textContent = title ?? "";
+  sEl.textContent = sub ?? "";
+
+  overlay.classList.remove("hidden");
+
+  wrap.classList.remove("mission-anim", "hinweis-anim");
+  void wrap.offsetWidth;
+  wrap.classList.add("hinweis-anim");
+}
+
+function hideHinweisOverlay() {
+  if (missionOverlayMode !== "hinweis") return; // don't touch Mission 1 overlay
+
+  const overlay = document.getElementById("mission-overlay");
+  const wrap = document.getElementById("mission-wrap");
+
+  overlay?.classList.add("hidden");
+  wrap?.classList.remove("hinweis-anim");
+
+  missionOverlayMode = "none";
+}
+
 
 
 function showMissionScreen({ title, sub, durationMs = 2600, onDone }) {
@@ -762,23 +830,43 @@ function fitPodestToRealDims(el, { height = 0.95, diameter = 1.8 } = {}) {
 
   el.object3D.updateMatrixWorld(true);
 }
+
+
 function applyARTranslations() {
   const setAValue = (id, txt) => {
     const el = document.getElementById(id);
     if (el) el.setAttribute("value", txt);
   };
 
-  // pin labels
+  // AR pin labels
   setAValue("pinLabel1", t("pinLabel1"));
   setAValue("pinLabel2", t("pinLabel2"));
   setAValue("pinLabel3", t("pinLabel3"));
   setAValue("pinLabel4", t("pinLabel4"));
 
-  // toast + banner
-  setAValue("rocket-toast-text", t("rocketToast"));
+  // AR banner + toast
   setAValue("mission-banner-sub", t("missionBannerSub"));
-}
+  setAValue("rocket-toast-text", t("rocketToast"));
 
+  // If the notice is currently open, refresh its text too
+  if (missionOverlayMode === "hinweis") {
+    const titleEl = document.getElementById("mission-title");
+    const subEl = document.getElementById("mission-sub");
+    if (titleEl) titleEl.textContent = t("holdToMarkerTitle");
+    if (subEl) subEl.textContent = t("holdToMarkerText");
+  }
+
+  // If Mission 1 start screen is currently open, refresh it too
+  if (missionOverlayMode === "mission1start") {
+    const titleEl = document.getElementById("mission-title");
+    const subEl = document.getElementById("mission-sub");
+    const btn = document.getElementById("mission-start-btn");
+
+    if (titleEl) titleEl.textContent = t("missionTitle");
+    if (subEl) subEl.textContent = t("missionSub");
+    if (btn) btn.textContent = t("startMission1Btn");
+  }
+}
 
 function vibrateLaunchFade({
   totalMs = 2500,     // Gesamtdauer der Vibration
@@ -1376,9 +1464,9 @@ const launchRocket3D = () => {
     // -------------------------------------------------------
     // Marker Verhalten
     // -------------------------------------------------------
-    marker.addEventListener("markerFound", () => {
-      markerTracked = true;
-updateMission1Active();
+   marker.addEventListener("markerFound", () => {
+  markerTracked = true;
+  updateMission1Active();
 
   rocket.setAttribute("visible", "true");
   label?.setAttribute("visible", "true");
@@ -1387,48 +1475,71 @@ updateMission1Active();
   loadingEl.classList.add("hidden");
   arFooter.classList.remove("hidden");
 
-  if (!mission1Started) {
-    mission1Started = true;
-
-    // hide footer until user starts mission 1 (optional)
-    setFooterMode("none");
-    showMissionScreen({
-  title: t("holdToMarkerTitle"),
-  sub: t("holdToMarkerText"),
-  durationMs: 5200,
-  onDone: () => {
-        revealRocketFromPodest();
-
-        // show start button AFTER reveal animation completes
-        rocket.addEventListener(
-          "animationcomplete__reveal",
-          () => {
-           showMissionStartScreen({
-  title: "MISSION 1",
-  sub: t("missionSub"),
-  buttonLabel: "START MISSION 1",
-  onStart: () => {
-    startMission1Grid();     // your init function
-    glitchMarker(marker);    // force re-run markerFound logic
+  // If Hinweis is visible, hide it now
+  if (missionOverlayMode === "hinweis") {
+    hideHinweisOverlay();
   }
-});
-});
-      },
-          },
-          { once: true }
-        );
-      
+
+  // If Mission 1 not started yet, show Mission 1 start
+  if (!mission1Confirmed) {
+    setFooterMode("none");
+
+    // only reveal once
+    if (!mission1Started) {
+      mission1Started = true;
+      revealRocketFromPodest();
+
+      rocket.addEventListener(
+        "animationcomplete__reveal",
+        () => {
+          showMissionStartScreen({
+            title: "MISSION 1",
+            sub: t("missionSub"),
+            buttonLabel: "START MISSION 1",
+            onStart: () => {
+              mission1Confirmed = true;
+              missionOverlayMode = "none";
+              startMission1Grid();
+              glitchMarker(marker);
+            },
+          });
+        },
+        { once: true }
+      );
+    } else {
+      // marker was lost and found again before pressing start
+      showMissionStartScreen({
+        title: "MISSION 1",
+        sub: t("missionSub"),
+        buttonLabel: "START MISSION 1",
+        onStart: () => {
+          mission1Confirmed = true;
+          missionOverlayMode = "none";
+          startMission1Grid();
+          glitchMarker(marker);
+        },
+      });
+    }
   }
 });
 
 marker.addEventListener("markerLost", () => {
-  
+  markerTracked = false;
+  updateMission1Active();
+
   rocket.setAttribute("visible", "false");
   label?.setAttribute("visible", "false");
   hint?.setAttribute("visible", "true");
   stopFX();
-});
 
+  // Before Mission 1 is confirmed, switch back to Hinweis
+  if (!mission1Confirmed) {
+    showHinweisOverlay({
+      title: t("holdToMarkerTitle"),
+      sub: t("holdToMarkerText"),
+    });
+  }
+});
     
     }
 
@@ -1893,7 +2004,16 @@ function setupMission2Minigame({ goal = 30, durationMs = 5000, onDone } = {}) {
       if (scene?.hasLoaded) initARLogic();
       else scene?.addEventListener("loaded", initARLogic, { once: true });
 
-      setTimeout(() => loadingEl.classList.add("hidden"), 5000);
+      setTimeout(() => {
+  loadingEl.classList.add("hidden");
+
+  // ✅ show Hinweis ONLY after loading is gone
+  showHinweisOverlay({
+    title: t("holdToMarkerTitle"),
+    sub: t("holdToMarkerText"),
+  });
+},);
+
     } catch (err) {
       alert("Ohne Kamerazugriff kann AR nicht gestartet werden.");
       window.location.href = "index.html";
