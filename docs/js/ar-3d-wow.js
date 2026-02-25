@@ -1,6 +1,10 @@
 // ar.js
 let missionOverlayTimer = 0;
 let missionOverlayMode = "none"; 
+let currentMissionForHelp = "mission1"; // "mission1" | "mission2"
+let missionHelpVisible = false;
+let missionHelpIdleTimer = 0;
+let markerIsTrackedForHelp = false;
 // "none" | "hinweis" | "mission1start" | "other"
 
 //====== A-Frame Components ===============
@@ -55,7 +59,8 @@ function setLang(lang) {
 }
 const i18n = {
   de: {
-    
+    startMission1Btn: "MISSION 1 STARTEN",
+    startMission2Btn: "MISSION 2 STARTEN",
     permissionTitle: "Kamera Erlaubnis",
     permissionText:
       "Für die AR-Darstellung greift diese Anwendung auf die Kamera deines Geräts zu. Das Kamerabild wird nur lokal im Browser verarbeitet und nicht gespeichert.",
@@ -110,6 +115,8 @@ const i18n = {
   },
 
   en: {
+    startMission1Btn: "START MISSION 1",
+    startMission2Btn: "START MISSION 2",
     permissionTitle: "Camera Permission",
     permissionText:
       "For the AR experience, this application needs access to your device camera. The camera feed is processed locally in your browser and is not saved.",
@@ -185,10 +192,17 @@ function applyTranslations() {
 const mgTaps = document.getElementById("mg-taps");
 // (these are numbers, no translation needed)
 
-const missionStartBtn = document.getElementById("mission-start-btn");
-if (missionStartBtn && missionOverlayMode === "mission1start") {
-  missionStartBtn.textContent = t("startMission1Btn");
+const mission1Btn = document.getElementById("mission-start-btn");
+const mission2Btn = document.getElementById("mission2-start-btn");
+
+if (missionOverlayMode === "mission1start" && mission1Btn) {
+  mission1Btn.textContent = t("startMission1Btn");
 }
+if (missionOverlayMode === "mission2start" && mission2Btn) {
+  mission2Btn.textContent = t("startMission2Btn");
+}
+
+
   const denyBtn = document.getElementById("deny-btn");
   const allowBtn = document.getElementById("allow-btn");
   if (denyBtn) denyBtn.textContent = t("denyBtn");
@@ -197,16 +211,32 @@ if (missionStartBtn && missionOverlayMode === "mission1start") {
   const loadingText = document.querySelector(".loading-text");
   if (loadingText) loadingText.textContent = t("loadingText");
 
-  const missionTitle = document.getElementById("mission-title");
-  const missionSub = document.getElementById("mission-sub");
-  if (missionTitle) missionTitle.textContent = t("missionTitle");
-  if (missionSub) missionSub.textContent = t("missionSub");
+  const missionTitleEl = document.getElementById("mission-title");
+const missionSubEl = document.getElementById("mission-sub");
+
+if (missionTitleEl && missionSubEl) {
+  if (missionOverlayMode === "hinweis") {
+    missionTitleEl.textContent = t("holdToMarkerTitle");
+    missionSubEl.textContent = t("holdToMarkerText");
+  } else if (missionOverlayMode === "mission1start") {
+    missionTitleEl.textContent = t("missionTitle");
+    missionSubEl.textContent = t("missionSub");
+  } else if (missionOverlayMode === "mission2start") {
+    missionTitleEl.textContent = t("mission2Title");
+
+    const goal = 30;
+    const durationMs = 5000;
+    missionSubEl.textContent =
+      currentLang === "de"
+        ? `Tippe ${goal}x in ${Math.round(durationMs / 1000)} Sekunden.`
+        : `Tap ${goal} times in ${Math.round(durationMs / 1000)} seconds.`;
+  }
+}
 
   const tapBox = document.querySelector("#tap-box .tap-box-text");
   if (tapBox) tapBox.textContent = t("tapHere");
 
-  const footerMissionBtn = document.getElementById("footer-btn-pins");
-  if (footerMissionBtn) footerMissionBtn.textContent = t("footerMissionBtn");
+
 
   const mgStatus = document.getElementById("mg-status");
   if (mgStatus) mgStatus.textContent = t("footerMinigameStatus");
@@ -565,6 +595,7 @@ document.getElementById("langBtnPermission")?.addEventListener("click", toggleLa
 
             <!-- Text -->
             <a-text
+                id="rocket-toast-text"
                 value="${t("rocketToast")}"
                 align="center"
                 width="2.2"
@@ -626,12 +657,13 @@ function refreshLanguageUI() {
   applyTranslations();        // normal DOM (permission, footer, overlays)
   applyARTranslations();      // AR DOM (a-text labels etc), if scene exists
 }
-function showMissionStartScreen({ title, sub, buttonLabel, onStart, buttonId = "mission-start-btn" }) {
+function showMissionStartScreen({ title, sub, buttonLabel, onStart, buttonId = "mission-start-btn", mode = "mission1start" }) {
   const overlay = document.getElementById("mission-overlay");
+  overlay.classList.add("mission-dialog-mode");
   const wrap = document.getElementById("mission-wrap");
   const titleEl = document.getElementById("mission-title");
   const subEl = document.getElementById("mission-sub");
-
+  
   if (!overlay || !wrap || !titleEl || !subEl) {
     onStart && onStart();
     return;
@@ -643,10 +675,14 @@ function showMissionStartScreen({ title, sub, buttonLabel, onStart, buttonId = "
   }
 
   // ✅ mark mode
-  missionOverlayMode = "mission1start";
+  missionOverlayMode = mode ;
 
   titleEl.textContent = title;
   subEl.textContent = sub;
+  
+wrap.querySelectorAll("button").forEach((b) => {
+    b.style.display = "none";
+  });
 
   let btn = document.getElementById(buttonId);
   if (!btn) {
@@ -671,6 +707,7 @@ function showMissionStartScreen({ title, sub, buttonLabel, onStart, buttonId = "
     e.preventDefault();
     e.stopPropagation();
     overlay.classList.add("hidden");
+    overlay.classList.remove("mission-dialog-mode");
     missionOverlayMode = "none"; // ✅ clear mode when closed
     onStart && onStart();
   };
@@ -706,6 +743,7 @@ let hinweisVisible = false;
 
 function showHinweisOverlay({ title, sub } = {}) {
   const overlay = document.getElementById("mission-overlay");
+  overlay.classList.remove("mission-dialog-mode");
   const wrap = document.getElementById("mission-wrap");
   const tEl = document.getElementById("mission-title");
   const sEl = document.getElementById("mission-sub");
@@ -831,6 +869,91 @@ function fitPodestToRealDims(el, { height = 0.95, diameter = 1.8 } = {}) {
   el.object3D.updateMatrixWorld(true);
 }
 
+function setupMissionHelpButton() {
+  const ui = document.getElementById("mission-help-ui");
+  const btn = document.getElementById("mission-help-btn");
+  const bar = document.getElementById("mission-help-bar");
+  const textEl = document.getElementById("mission-help-text");
+
+  if (!ui || !btn || !bar || !textEl) return;
+
+  ui.classList.add("hidden");
+
+  const getMissionHelpText = () => {
+    if (currentMissionForHelp === "mission2") {
+      return currentLang === "de" ? "Tippe so schnell wie möglich" : "Tap as fast as possible";
+    }
+    return currentLang === "de" ? "Tippe alle Pins an" : "Tap all pins";
+  };
+
+  const getMarkerLostText = () => {
+    return currentLang === "de"
+      ? "Bitte halte die Kamera auf den Marker"
+      : "Please hold the camera to the marker";
+  };
+
+  const showBar = (msg) => {
+    textEl.textContent = msg || "";
+    bar.classList.remove("hidden");
+    missionHelpVisible = true;
+  };
+
+  const hideBar = () => {
+    bar.classList.add("hidden");
+    missionHelpVisible = false;
+  };
+
+  const resetIdleHintTimer = () => {
+    if (missionHelpIdleTimer) clearTimeout(missionHelpIdleTimer);
+
+    missionHelpIdleTimer = setTimeout(() => {
+      // only show idle hint if marker is tracked OR mission2 is active
+      if (currentMissionForHelp === "mission2" || markerIsTrackedForHelp) {
+        showBar(getMissionHelpText());
+      }
+    }, 5000);
+  };
+
+  // expose helpers globally so you can use them from mission code
+  window.showMissionHelpBar = showBar;
+  window.hideMissionHelpBar = hideBar;
+  window.resetMissionHelpText = () => showBar(getMissionHelpText());
+  window.showMarkerLostHelp = () => {
+    if (currentMissionForHelp === "mission1") showBar(getMarkerLostText());
+  };
+  window.resetMissionHelpIdleTimer = resetIdleHintTimer;
+  window.clearMissionHelpIdleTimer = () => {
+    if (missionHelpIdleTimer) clearTimeout(missionHelpIdleTimer);
+    missionHelpIdleTimer = 0;
+  };
+
+  btn.onclick = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    // Toggle gray bar on button click
+    if (missionHelpVisible) {
+      hideBar();
+    } else {
+      showBar(getMissionHelpText());
+    }
+
+    // restart idle timer after pressing help
+    resetIdleHintTimer();
+  };
+
+  // start hidden
+  hideBar();
+}
+
+function showMissionHelpButton() {
+  document.getElementById("mission-help-ui")?.classList.remove("hidden");
+}
+
+function hideMissionHelpButton() {
+  document.getElementById("mission-help-ui")?.classList.add("hidden");
+  document.getElementById("mission-help-bar")?.classList.add("hidden"); // also close gray bar
+}
 
 function applyARTranslations() {
   const setAValue = (id, txt) => {
@@ -866,6 +989,24 @@ function applyARTranslations() {
     if (subEl) subEl.textContent = t("missionSub");
     if (btn) btn.textContent = t("startMission1Btn");
   }
+  if (missionOverlayMode === "mission2start") {
+  const titleEl = document.getElementById("mission-title");
+  const subEl = document.getElementById("mission-sub");
+  const btn = document.getElementById("mission2-start-btn");
+
+  if (titleEl) titleEl.textContent = t("mission2Title");
+
+  // rebuild the dynamic instruction text (30 taps / 5s)
+  const goal = 30;
+  const durationMs = 5000;
+  const instruction =
+    currentLang === "de"
+      ? `Tippe ${goal}x in ${Math.round(durationMs / 1000)} Sekunden.`
+      : `Tap ${goal} times in ${Math.round(durationMs / 1000)} seconds.`;
+
+  if (subEl) subEl.textContent = instruction;
+  if (btn) btn.textContent = t("startMission2Btn");
+}
 }
 
 function vibrateLaunchFade({
@@ -1302,8 +1443,11 @@ const startMission2 = () => {
   showMissionStartScreen({
     title: t("mission2Title"),
     sub: instruction,
-    buttonLabel: t("footerStart"),
+    buttonLabel: t("startMission2Btn"),
+    buttonId: "mission2-start-btn",   // ✅ different button id
+    mode: "mission2start",            // ✅ explicit mode
     onStart: () => {
+      
       setFooterMode("minigame");
 
       setupMission2Minigame({
@@ -1315,7 +1459,6 @@ const startMission2 = () => {
         },
       });
 
-      // auto-start minigame
       requestAnimationFrame(() => {
         requestAnimationFrame(() => {
           document.getElementById("mg-start-btn")?.click();
@@ -1329,6 +1472,10 @@ const startMission2 = () => {
 let mission1GridBooted = false;
 
 const startMission1Grid = () => {
+  currentMissionForHelp = "mission1";
+  window.resetMissionHelpText?.();
+  showMissionHelpButton(); // ✅ show from Mission 1 onward
+  window.resetMissionHelpIdleTimer?.();
   if (mission1GridBooted) return;
   mission1GridBooted = true;
 
@@ -1341,8 +1488,11 @@ const startMission1Grid = () => {
   // build mission 1 UI/listeners once
   setupMission1Pins({
     onAllPinsDone: () => {
+      currentMissionForHelp = "mission2";
+      window.hideMissionHelpBar?.();
+       window.resetMissionHelpIdleTimer?.();
       startMission2();
-
+      
       // bind launch once
       if (!window.__launchBound) {
         window.__launchBound = true;
@@ -1465,9 +1615,12 @@ const launchRocket3D = () => {
     // Marker Verhalten
     // -------------------------------------------------------
    marker.addEventListener("markerFound", () => {
+  
   markerTracked = true;
   updateMission1Active();
-
+  markerIsTrackedForHelp = true;
+window.hideMissionHelpBar?.();            // hide "hold marker" text
+window.resetMissionHelpIdleTimer?.();     // start 5s idle timer
   rocket.setAttribute("visible", "true");
   label?.setAttribute("visible", "true");
   hint?.setAttribute("visible", "false");
@@ -1526,19 +1679,24 @@ const launchRocket3D = () => {
 marker.addEventListener("markerLost", () => {
   markerTracked = false;
   updateMission1Active();
+  markerIsTrackedForHelp = false;
+window.clearMissionHelpIdleTimer?.();
+
 
   rocket.setAttribute("visible", "false");
   label?.setAttribute("visible", "false");
   hint?.setAttribute("visible", "true");
   stopFX();
-
-  // Before Mission 1 is confirmed, switch back to Hinweis
+  if (mission1Confirmed && currentMissionForHelp === "mission1") {
+  window.showMarkerLostHelp?.();
+}// Before Mission 1 is confirmed, switch back to Hinweis
   if (!mission1Confirmed) {
     showHinweisOverlay({
       title: t("holdToMarkerTitle"),
       sub: t("holdToMarkerText"),
     });
   }
+
 });
     
     }
@@ -1579,14 +1737,15 @@ marker.addEventListener("markerLost", () => {
 
   // ---- State ----
   const clickedPins = new Set(); // 0..3
-
+  let mission1Completed = false;
+  let mission2Queued = false;
   const pinContent = [
     { icon: "sources/icons/Icon_Mission.png",  subKey: "pinSub1", textKey: "pinText1" },
     { icon: "sources/icons/Icon_Netzwerk.png", subKey: "pinSub2", textKey: "pinText2" },
     { icon: "sources/icons/Icon_Team.png",     subKey: "pinSub3", textKey: "pinText3" },
     { icon: "sources/icons/Icon_Projekt.png",  subKey: "pinSub4", textKey: "pinText4" },
   ];
-
+  
 
 
   const setVisible = (el, visible) => {
@@ -1631,18 +1790,41 @@ setActiveStep(0);
   };
 
   // ---- Overlay close (nur 1x binden) ----
-  const closeInfo = () => overlay?.classList.add("hidden");
+  const closeInfo = () => {
+  overlay?.classList.add("hidden");
 
-  if (overlay && overlay.dataset.boundClose !== "1") {
-    overlay.dataset.boundClose = "1";
-    closeBtn?.addEventListener("click", closeInfo);
-    overlay.addEventListener("click", (e) => {
-      if (e.target === overlay) closeInfo();
-    });
+  // only after user closed the last pin overlay
+  if (mission1Completed && !mission2Queued) {
+    mission2Queued = true;
+
+    // let the close render first, then move to mission 2
+    setTimeout(() => {
+      // hide Mission 1 pins/hit targets
+      pinGroups.forEach((g) => setVisible(g, false));
+      hitTargets.forEach((h) => h?.classList.remove("pin"));
+
+      setFooterMode("none");
+
+      onAllPinsDone && onAllPinsDone();
+
+      // safety reset
+      mission1Completed = false;
+    }, 120);
   }
+};
+if (overlay && overlay.dataset.boundClose !== "1") {
+  overlay.dataset.boundClose = "1";
 
+  closeBtn?.addEventListener("click", closeInfo);
+
+  overlay.addEventListener("click", (e) => {
+    if (e.target === overlay) closeInfo();
+  });
+}
   // ---- Öffnen ----
 const openInfoByIndex = (idx) => {
+  window.resetMissionHelpIdleTimer?.();
+  window.hideMissionHelpBar?.(); 
   const iconEl = document.getElementById("info-icon");
   const subEl = document.getElementById("info-subtitle");
 
@@ -1669,13 +1851,10 @@ const openInfoByIndex = (idx) => {
 
     // ✅ all done
     if (clickedPins.size === 4) {
-      setBtnEnabled(true);
-
-      // optional: show all pins at the end (or keep last one only)
-      // pinGroups.forEach((g) => setVisible(g, true));
-      // hitTargets.forEach((h) => h?.classList.add("pin"));
-      // cam?.components?.raycaster?.refreshObjects?.();
-    }
+   mission1Completed = true;
+ // keep footer hidden / inactive (no button interaction needed)
+  setFooterMode("none");
+}
   }
 };
 
@@ -1696,9 +1875,9 @@ const openInfoByIndex = (idx) => {
 
 
 
-  if (startBtn) startBtn.textContent = t("btnStartMission2");
+  
   setProgress();      // startet bei 0%
-  setBtnEnabled(false);
+
 
   // ---- Hover Cursor (optional, bleibt wie bei dir) ----
   let hoverCount = 0;
@@ -1749,23 +1928,8 @@ const openInfoByIndex = (idx) => {
   else scene?.addEventListener("loaded", setupCanvasPick, { once: true });
 
   // ---- Button: Mission 2 starten ----
- startBtn?.addEventListener("click", (e) => {
-  if (clickedPins.size < 4) {
-    e.preventDefault();
-    return;
-  }
 
-  // Mission 1 schließen
-  pinGroups.forEach((g) => setVisible(g, false));
-  hitTargets.forEach((h) => h?.classList.remove("pin"));
-  overlay?.classList.add("hidden");
 
-  onAllPinsDone && onAllPinsDone();
-
-  // ✅ THIS is the "goes away until next user" part:
-  setFooterMode("none");   // hide footer right after pressing Mission 2 start
-  startMission2();         // show mission 2 intro overlay
-});
   }
 
 
@@ -1943,6 +2107,8 @@ function setupMission2Minigame({ goal = 30, durationMs = 5000, onDone } = {}) {
   };
 
   const registerTap = () => {
+    window.resetMissionHelpIdleTimer?.();
+    window.hideMissionHelpBar?.(); // optional
     if (!running) return;
 
     taps += 1;
@@ -1994,25 +2160,24 @@ function setupMission2Minigame({ goal = 30, durationMs = 5000, onDone } = {}) {
         audio: false,
       });
       stream.getTracks().forEach((t) => t.stop());
-
+  
       permissionOverlay.classList.add("hidden");
       loadingEl.classList.remove("hidden");
 
       arRoot.innerHTML = createARScene();
-
+      setupMissionHelpButton();
       const scene = document.getElementById("ar-scene");
       if (scene?.hasLoaded) initARLogic();
       else scene?.addEventListener("loaded", initARLogic, { once: true });
 
       setTimeout(() => {
   loadingEl.classList.add("hidden");
-
   // ✅ show Hinweis ONLY after loading is gone
   showHinweisOverlay({
     title: t("holdToMarkerTitle"),
     sub: t("holdToMarkerText"),
   });
-},);
+},1500);
 
     } catch (err) {
       alert("Ohne Kamerazugriff kann AR nicht gestartet werden.");

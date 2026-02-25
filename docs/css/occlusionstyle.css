@@ -420,6 +420,81 @@ body {
 }
 
 
+
+/* =========================
+   MISSION HELP BAR 
+========================= */
+.mission-help-ui {
+  position: fixed;
+  left: 8px;
+  bottom: 78px;           /* above footer */
+  z-index: 120001;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  pointer-events: auto;
+}
+
+/* round info button */
+.mission-help-btn {
+  width: 34px;
+  height: 34px;
+  border-radius: 999px;
+  border: 1px solid rgba(255,255,255,0.35);
+  background: rgba(96, 103, 112, 0.95);
+  color: #fff;
+  font-weight: 900;
+  font-size: 22px;
+  line-height: 1;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  box-shadow: 0 4px 14px rgba(0,0,0,0.25);
+  flex: 0 0 auto;
+}
+
+.mission-help-btn:active {
+  transform: scale(0.97);
+}
+
+/* hidden gray text bar */
+.mission-help-bar {
+  height: 34px;
+  min-width: 220px;
+  max-width: calc(100vw - 70px);
+  border-radius: 999px;
+  background: rgba(140, 140, 140, 0.9);
+  border: 1px solid rgba(255,255,255,0.35);
+  box-shadow: 0 4px 14px rgba(0,0,0,0.25);
+  display: flex;
+  align-items: center;
+  overflow: hidden;
+  position: relative;
+}
+
+/* blue top line accent */
+.mission-help-bar::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0; right: 0;
+  height: 2px;
+  background: rgba(140, 140, 140, 0.9);
+  opacity: 0.9;
+}
+
+.mission-help-text {
+  color: #fff;
+  font-size: 0.95rem;
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  padding: 0 12px;
+  line-height: 34px;
+}
+
+
 /* ===================================================================
    MINIGAME (Mission 2)
 ========================================================================= */
@@ -698,7 +773,7 @@ body.page-ar {
   z-index: 30000 !important;
 }
 
-/* --- FIX: AR.js Video mittig + keine komischen Offsets --- */
+/*  AR.js Video mittig + keine komischen Offsets --- */
 #arjs-video, video {
   left: 50% !important;
   top: 50% !important;
@@ -882,3 +957,86 @@ background: rgba(0,220,181,0.12);
    /*   border: 2px solid #00DCB5;*/
 }
 
+/* =========================
+   MISSION START OVERLAY (MISSION 1 + 2) -> permission style
+   Hinweis stays unchanged
+========================= */
+
+/* only when JS adds this class */
+
+#mission-overlay.mission-dialog-mode {
+ /* background: rgba(15, 23, 42, 0.9);
+  backdrop-filter: blur(8px);*/
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px;
+
+  pointer-events: auto;
+}
+
+/* card */
+#mission-overlay.mission-dialog-mode #mission-wrap {
+  width: min(92vw, 420px);
+  max-width: 380px;
+
+  background: #12244C;
+  border: 1px solid rgba(18, 36, 76, 1);
+  border-radius: 18px;
+
+  padding: 10px 18px 18px;
+  position: relative;
+  box-shadow: 0 24px 60px rgba(15, 23, 42, 0.9);
+
+  text-align: left;
+  pointer-events: auto;
+}
+
+/* override your old big yellow mission title */
+#mission-overlay.mission-dialog-mode .mission-title,
+#mission-overlay.mission-dialog-mode #mission-title {
+  margin: 8px 0 10px;
+  font-size: 1.25rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+
+  color: #00DCB5;
+  text-shadow: none;
+  text-align: left;
+}
+
+/* override your old mission-sub */
+#mission-overlay.mission-dialog-mode .mission-sub,
+#mission-overlay.mission-dialog-mode #mission-sub {
+  margin: 0;
+  font-size: 0.92rem;
+  font-weight: 400;
+  line-height: 1.45;
+
+  color: #e5e7eb;
+  text-shadow: none;
+  text-align: left;
+}
+
+/* button like permission primary */
+#mission-overlay.mission-dialog-mode #mission-wrap button {
+  width: 100%;
+  margin-top: 14px;
+
+  padding: 0.55rem 1.1rem;
+  border-radius: 999px;
+
+  border: 1px solid #00DCB5;
+  background: #eaff0000;
+  color: #00DCB5;
+
+  font-size: 0.9rem;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 10px 10px rgba(0, 220, 181, 0.2);
+}
+
+#mission-overlay.mission-dialog-mode #mission-wrap button:active {
+  transform: scale(0.99);
+}
