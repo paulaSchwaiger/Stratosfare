@@ -304,6 +304,24 @@ document.getElementById("langBtnPermission")?.addEventListener("click", toggleLa
             webkit-playsinline
             crossorigin="anonymous" 
         ></video>
+        <video
+          id="smokeVid"
+          src="sources/3D/rauch_3D_wow/rauch.webm"
+           muted
+          playsinline
+          webkit-playsinline
+          preload="auto"
+          crossorigin="anonymous"  
+        ></video>
+         <video
+          id="fireVid"
+          src="sources/3D/rauch_3D_wow/feuer.webm"
+           muted
+          playsinline
+          webkit-playsinline
+          preload="auto"
+          crossorigin="anonymous"  
+        ></video>
     </a-assets>
 
 
