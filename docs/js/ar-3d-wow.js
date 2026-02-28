@@ -306,7 +306,7 @@ document.getElementById("langBtnPermission")?.addEventListener("click", toggleLa
         ></video>
         <video
           id="smokeVid"
-          src="sources/3D/rauch_3D_wow/rauch.webm"
+          src="sources/3D/rauch_3D_wow/rauch_szene.webm"
            muted
           playsinline
           webkit-playsinline
@@ -347,18 +347,11 @@ document.getElementById("langBtnPermission")?.addEventListener("click", toggleLa
         rotation="-90 0 0"
         width="1"
         height="1"
-        material="color: red; opacity: 0.25; transparent: true; side: double;"
+        material="color: red; opacity: 0; transparent: true; side: double;"
         shadow="receive: true"
       ></a-plane>
 
-      <a-entity id="podest-rig" position="0 0 0" rotation="0 0 0" scale="1 1 1">
-        <a-entity
-          id="podest-visible"
-          obj-model="obj: #podest-obj; mtl: #podest-mtl"
-          position="0 0 0"
-          rotation="0 90 0"
-          scale="1 1 1"
-        ></a-entity>
+     
 
         <a-entity
           id="podest-occluder"
@@ -378,50 +371,65 @@ document.getElementById("langBtnPermission")?.addEventListener("click", toggleLa
           rotation="0 0 0"
           scale="10 10 10"
           animation="property: rotation; to: 0 360 0; loop: true; dur: 15000; easing: linear" 
-          shadow="cast: true">
+           place-at-model-bottom="target: #rocket-video-plane; offsetY: -0.02; offsetZ: 0;"
+           shadow="cast: true">
 
-            
-                 <a-entity id="fx-group"
-                      visible="false"
-                      position="0 -0.12 0"
-                      rotation="0 0 0"
-                      scale="0.55 0.55 0.55">
+          <a-entity id="fx-group" position="0 0 0" scale="1 1 1" visible="false">
 
-                      <a-video id="fx-1"
-                        src="#fxVid"
-                        position="0 0 0"
-                        rotation="0 180 0"
-                        width="1" height="1"
-                        material="shader: flat; side: double; transparent: true; opacity: 1; depthWrite: false; depthTest: false;"
-                        additive-blend>
-                      </a-video>
-
-                      <a-video id="fx-2"
-                        src="#fxVid"
-                        position="0 0 0"
-                        rotation="0 240 0"
-                        width="1" height="1"
-                        material="shader: flat; side: double; transparent: true; opacity: 1; depthWrite: false; depthTest: false;"
-                        additive-blend>
-                      </a-video>
-
-                      <a-video id="fx-3"
-                        src="#fxVid"
-                        position="0 0 0"
-                        rotation="0 300 0"
-                        width="1" height="1"
-                        material="shader: flat; side: double; transparent: true; opacity: 1; depthWrite: false; depthTest: false;"
-                        additive-blend>
-                      </a-video>
-
-                    </a-entity>
+           <a-video
+              id="smoke-front"
+              visible="false"
+              position="0 -4 0.05"
+              rotation="0 180 0"
+              width="0.25"
+              height="0.35"
+              src="#fireVid"
+              transparent="true"
+              material="shader: flat; side: double; depthWrite: false; depthTest: false;"
+            ></a-video>
+          </a-entity>
 
         </a-entity>
+
+    
+
+        <a-plane
+          id="smoke-back"
+          visible="false"
+          position="0 3 -1.5"
+          rotation="0 0 0"
+          width="7"
+          height="7"
+          material="shader: flat; src: #smokeVid; transparent: true; depthWrite: false; side: double; opacity: 0.85;"
+        ></a-plane>
+
+         <a-plane
+          id="smoke-middle"
+          visible="false"
+          position="0 3 0.1"
+          rotation="0 0 0"
+          width="4"
+          height="6.5"
+          material="shader: flat; src: #smokeVid; transparent: true; side: double; depthWrite: false; depthTest: false; opacity: 1;"
+          shadow="cast: true"
+         
+        ></a-plane>
+
+        <a-plane
+          id="smoke-front"
+          visible="false"
+          position="0 5 1"
+          rotation="0 0 0"
+          width="10"
+          height="15"
+          material="shader: flat; src: #smokeVid; transparent: true; side: double; depthWrite: false; depthTest: false; opacity: 1;"
+          shadow="cast: true"
+         
+        ></a-plane>
 
         
 
        <a-entity id="pinGroup-1" visible="false" >
-        <!-- HITBOX als BOX (viel besser klickbar als plane) -->
           <a-box
             id="hit-1"
             
@@ -1080,6 +1088,8 @@ function vibrateLaunchFade({
 
     const fxGroup = document.getElementById("fx-group");
     const fxVid = document.getElementById("fxVid");
+    const vid = document.getElementById("smokeVid");
+    const rocketVid = document.getElementById("fireVid");
 
    const revealRocketFromPodest = () => {
     if (!rocket) return;
@@ -1113,7 +1123,7 @@ const startGridAfterReveal = () => {
           intervalMs: 170,
           pauseMs: 70,
         });
-        await playFX();
+       // await playFX();
         launchRocket3D();
       });
     },
@@ -1133,6 +1143,23 @@ const startGridAfterReveal = () => {
  // startGridAfterReveal();
 //}, { once: true });
 
+const playLaunchOnce = async (onDone) => {
+      rocketIdleVid?.pause();
+      if (rocketIdleVid) rocketIdleVid.currentTime = 0;
+
+      setRocketSrc("#rocketLaunchVid");
+
+      if (!rocketLaunchVid) { onDone && onDone(); return; }
+
+      rocketLaunchVid.currentTime = 0;
+      await safePlay(rocketLaunchVid);
+
+      const ended = () => {
+        rocketLaunchVid.removeEventListener("ended", ended);
+        onDone && onDone();
+      };
+      rocketLaunchVid.addEventListener("ended", ended);
+    };
 
     // -----------------------------
     // iOS/Android Autoplay-Policy Fix
@@ -1170,6 +1197,38 @@ const startGridAfterReveal = () => {
     // -----------------------------
     // Smoke Play
     // -----------------------------
+
+  function playSmokeAll({ durationMs = 3000 } = {}) {
+  
+  const front = document.getElementById("smoke-front");
+  const mid = document.getElementById("smoke-middle");
+  const back = document.getElementById("smoke-back");
+
+  console.log("🔥 playSmokeAll", { vid: !!vid, front: !!front, mid: !!mid, back: !!back });
+  if (!vid || !front || !mid || !back) return;
+
+  // Planes sichtbar
+  [front, mid, back].forEach((p) => {
+    p.setAttribute("visible", "true");
+    if (p.object3D) p.object3D.visible = true;
+  });
+
+  // Video reset + play
+  try { vid.pause(); } catch {}
+  try { vid.currentTime = 0; } catch {}
+  vid.muted = true;
+
+  const p = vid.play();
+  if (p?.catch) p.catch((e) => console.warn("❌ smoke play blocked:", e));
+
+  // nach Dauer wieder aus
+  window.setTimeout(() => {
+    [front, mid, back].forEach((p) => {
+      p.setAttribute("visible", "false");
+      if (p.object3D) p.object3D.visible = false;
+    });
+  }, durationMs);
+}
  
 const playFX = async () => {
   if (!fxGroup || !fxVid) return;
@@ -1386,30 +1445,6 @@ const stopFX = () => {
     else scene.addEventListener("loaded", enableTouchToMouseWithCoords, { once: true });
 
 
-    function playSmoke() {
-      const vid = document.getElementById("fxVid");
-      const plane = document.getElementById("smoke-front");
-
-      console.log("🔥 playSmoke", { vid: !!vid, plane: !!plane, ready: vid?.readyState });
-
-      if (!vid || !plane) return;
-
-      plane.setAttribute("visible", "true");
-
-      // wichtig: immer neu starten
-      vid.pause();
-      vid.currentTime = 0;
-
-      const p = vid.play();
-      if (p && p.catch) {
-        p.catch((err) => console.warn("❌ smoke play() blocked:", err));
-      }
-
-      vid.onplaying = () => console.log("✅ smoke playing", vid.videoWidth, vid.videoHeight);
-      vid.onerror = () => console.warn("❌ smoke video error", vid.error);
-    }
-
-
     // -------------------------------------------------------
     // Mission Flow
     // -------------------------------------------------------
@@ -1523,7 +1558,8 @@ const startMission1Grid = () => {
             intervalMs: 170,
             pauseMs: 70,
           });
-          await playFX();
+          playRocketVid();
+          playSmokeAll({ durationMs: 7000 });
           launchRocket3D();
         });
       }
@@ -1610,14 +1646,14 @@ const launchRocket3D = () => {
   setTimeout(() => {
     rocket.setAttribute(
       "animation__lift",
-      "property: position; dur: 900; easing: easeOutQuad; to: 0 0.2 0"
+      "property: position; dur: 900; easing: easeOutQuad; to: 0 10 0"
     );
   }, 700);
 
   setTimeout(() => {
     rocket.setAttribute(
       "animation__boost",
-      "property: position; dur: 1400; easing: easeInQuad; to: 0 1.8 0"
+      "property: position; dur: 10000; easing: easeInQuad; to: 0 100 0"
     );
   }, 1500);
 
@@ -1626,6 +1662,17 @@ const launchRocket3D = () => {
     window.location.href = "mehrErfahren.html";
   }, 8000);
 };
+
+
+/* ---------------------------------------
+  Fire play
+  -----------------------------------------*/
+  const playRocketVid = async () => {
+    if (!rocketVid || !fxGroup) return;
+    fxGroup.setAttribute("visible", "true");
+    rocketVid.currentTime = 0;
+    try { await rocketVid.play(); } catch (e) {}
+  };
 
 
 
@@ -1659,6 +1706,7 @@ window.resetMissionHelpIdleTimer?.();     // start 5s idle timer
     if (!mission1Started) {
       mission1Started = true;
       revealRocketFromPodest();
+       playSmokeAll({ durationMs: 5000 });
 
       rocket.addEventListener(
         "animationcomplete__reveal",
