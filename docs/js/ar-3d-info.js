@@ -238,17 +238,8 @@ document.addEventListener("DOMContentLoaded", () => {
         rotation="-90 0 0"
         width="1"
         height="1"
-        material="color: red; opacity: 0.25; transparent: true; side: double;"
+        material="color: red; opacity: 0; transparent: true; side: double;"
       ></a-plane>
-
-      <a-entity id="podest-rig" position="0 0 0" rotation="0 0 0" scale="1 1 1">
-        <a-entity
-          id="podest-visible"
-          obj-model="obj: #podest-obj; mtl: #podest-mtl"
-          position="0 0 0"
-          rotation="0 90 0"
-          scale="1 1 1"
-        ></a-entity>
 
         <a-entity
           id="podest-occluder"

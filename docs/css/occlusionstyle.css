@@ -1016,7 +1016,7 @@ body.page-ar {
 /* nur aktive sind tappbar */
 .tapCell.active{
   pointer-events: auto;
-background: rgba(0,220,181,0.12);
+background: rgba(0,220,181,0);
    /*   border: 2px solid #00DCB5;*/
 }
 
