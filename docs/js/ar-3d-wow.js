@@ -6,6 +6,7 @@ let missionHelpVisible = false;
 let missionHelpIdleTimer = 0;
 let markerIsTrackedForHelp = false;
 // "none" | "hinweis" | "mission1start" | "other"
+let rocketDetached = false;
 
 //====== A-Frame Components ===============
 AFRAME.registerComponent("occluder-obj", {
@@ -73,7 +74,7 @@ const i18n = {
     holdToMarkerTitle: "HINWEIS",
     holdToMarkerText: "Bitte halte die Kamera auf den Marker.",
     missionTitle: "MISSION 1",
-    missionSub: "Tippe alle Pins an",
+    missionSub: "Entdecke Stratosfare: Tippe die Pins an und erfahre mehr über Mission, Netzwerk, Team und Projekte.",
     tapHere: "Tippe hier",
     footerMissionBtn: "MISSION ABSCHLIEßEN",
     footerMinigameStatus: "Erreiche das Tap-Ziel!",
@@ -82,6 +83,7 @@ const i18n = {
     infoCloseAria: "Overlay schließen",
     menuAria: "Menü öffnen",
     mission2Title: "MISSION 2",
+    mission2StartText: "Tippe so schnell du kannst, um die Rakete aufzuladen!",
     mission2Sub: "Lade die Rakete auf",
     mgReady: "Bereit machen…",
     mgGo: "LOS! Tippe so schnell du kannst!",
@@ -93,7 +95,8 @@ const i18n = {
     pinLabel2: "NETZWERK",
     pinLabel3: "TEAM & ARBEITSWEISE",
     pinLabel4: "PROJEKTE",
-    
+    helpMission1: "Tippe alle Pins an",
+    helpMission2: "Tippe so schnell wie möglich",
     rocketToast: "Rakete ist vollgeladen!",
     missionBannerSub: "Finde alle Infos über die Pins",
     
@@ -129,7 +132,7 @@ const i18n = {
     holdToMarkerTitle: "NOTICE",
     holdToMarkerText: "Please hold the camera to the marker.",
     missionTitle: "MISSION 1",
-    missionSub: "Tap all pins",
+    missionSub: "Discover Stratosfare: tap the pins to learn about the mission, network, team and projects.",
     tapHere: "Tap here",
     footerMissionBtn: "COMPLETE MISSION",
     footerMinigameStatus: "Reach the tap goal!",
@@ -138,6 +141,7 @@ const i18n = {
     infoCloseAria: "Close overlay",
     menuAria: "Open Menu",
     mission2Title: "MISSION 2",
+    mission2StartText: "Tap as fast as you can to charge the rocket!",
     mission2Sub: "Charge the rocket",
     mgReady: "Get ready…",
     mgGo: "GO! Tap as fast as you can!",
@@ -149,9 +153,10 @@ const i18n = {
     pinLabel2: "NETWORK",
     pinLabel3: "TEAM & METHOD",
     pinLabel4: "PROJECTS",
-
-rocketToast: "Rocket fully charged!",
-missionBannerSub: "Find all info via the pins",
+    helpMission1: "Tap all pins",
+    helpMission2: "Tap as fast as possible", 
+    rocketToast: "Rocket fully charged!",
+    missionBannerSub: "Find all info via the pins",
 
 btnStartMission2: "START MISSION 2",
 
@@ -223,13 +228,15 @@ if (missionTitleEl && missionSubEl) {
     missionSubEl.textContent = t("missionSub");
   } else if (missionOverlayMode === "mission2start") {
     missionTitleEl.textContent = t("mission2Title");
+    missionSubEl.textContent = t("mission2StartText");
+    
 
     const goal = 30;
     const durationMs = 5000;
     missionSubEl.textContent =
       currentLang === "de"
-        ? `Tippe ${goal}x in ${Math.round(durationMs / 1000)} Sekunden.`
-        : `Tap ${goal} times in ${Math.round(durationMs / 1000)} seconds.`;
+        ? `Tippe so schnell du kannst, um die Rakete aufzuladen!`
+        : `Tap as fast as you can to charge the rocket!`;
   }
 }
 
@@ -241,8 +248,8 @@ if (missionTitleEl && missionSubEl) {
   const mgStatus = document.getElementById("mg-status");
   if (mgStatus) mgStatus.textContent = t("footerMinigameStatus");
 
-  const mgStartBtn = document.getElementById("mg-start-btn");
-  if (mgStartBtn) mgStartBtn.textContent = t("footerStart");
+ 
+  
 
   const launchBtn = document.getElementById("launch-btn");
   if (launchBtn) launchBtn.textContent = t("launchBtn");
@@ -256,6 +263,7 @@ if (missionTitleEl && missionSubEl) {
 
 
 document.addEventListener("DOMContentLoaded", () => {
+     bindFooterHeightToCSSVar();   // ✅ add this
 
   //language
     setLang(currentLang);
@@ -379,8 +387,8 @@ document.getElementById("langBtnPermission")?.addEventListener("click", toggleLa
            <a-video
               id="smoke-front"
               visible="false"
-              position="0 -4 0.05"
-              rotation="0 180 0"
+              position="0 -0.18 0"
+              rotation="0 0 0"
               width="0.25"
               height="0.35"
               src="#fireVid"
@@ -906,11 +914,9 @@ function setupMissionHelpButton() {
   ui.classList.add("hidden");
 
   const getMissionHelpText = () => {
-    if (currentMissionForHelp === "mission2") {
-      return currentLang === "de" ? "Tippe so schnell wie möglich" : "Tap as fast as possible";
-    }
-    return currentLang === "de" ? "Tippe alle Pins an" : "Tap all pins";
-  };
+  if (currentMissionForHelp === "mission2") return t("helpMission2");
+  return t("helpMission1");
+};
 
   const getMarkerLostText = () => {
     return currentLang === "de"
@@ -981,6 +987,33 @@ function hideMissionHelpButton() {
   document.getElementById("mission-help-bar")?.classList.add("hidden"); // also close gray bar
 }
 
+function bindFooterHeightToCSSVar() {
+  const footer = document.getElementById("ar-footer");
+  if (!footer) return;
+
+  const setVar = () => {
+    const h = footer.getBoundingClientRect().height || 0;
+    document.documentElement.style.setProperty("--ar-footer-h", `${Math.ceil(h)}px`);
+  };
+
+  setVar();
+
+  // Update on resize + when footer content changes
+  const ro = new ResizeObserver(setVar);
+  ro.observe(footer);
+
+  window.addEventListener("resize", () => setTimeout(setVar, 50));
+  window.addEventListener("orientationchange", () => setTimeout(setVar, 150));
+}
+
+function hideTapGrid() {
+  const grid = document.getElementById("tapGrid");
+  if (!grid) return;
+  grid.classList.add("hidden");
+  grid.style.pointerEvents = "none";
+}
+
+
 function applyARTranslations() {
   const setAValue = (id, txt) => {
     const el = document.getElementById(id);
@@ -1015,25 +1048,18 @@ function applyARTranslations() {
     if (subEl) subEl.textContent = t("missionSub");
     if (btn) btn.textContent = t("startMission1Btn");
   }
-  if (missionOverlayMode === "mission2start") {
+ if (missionOverlayMode === "mission2start") {
   const titleEl = document.getElementById("mission-title");
   const subEl = document.getElementById("mission-sub");
   const btn = document.getElementById("mission2-start-btn");
 
   if (titleEl) titleEl.textContent = t("mission2Title");
-
-  // rebuild the dynamic instruction text (30 taps / 5s)
-  const goal = 30;
-  const durationMs = 5000;
-  const instruction =
-    currentLang === "de"
-      ? `Tippe ${goal}x in ${Math.round(durationMs / 1000)} Sekunden.`
-      : `Tap ${goal} times in ${Math.round(durationMs / 1000)} seconds.`;
-
-  if (subEl) subEl.textContent = instruction;
+  if (subEl) subEl.textContent = t("mission2StartText"); // ✅ your fun text
   if (btn) btn.textContent = t("startMission2Btn");
 }
 }
+
+
 
 function vibrateLaunchFade({
   totalMs = 2500,     // Gesamtdauer der Vibration
@@ -1090,6 +1116,9 @@ function vibrateLaunchFade({
     const fxVid = document.getElementById("fxVid");
     const vid = document.getElementById("smokeVid");
     const rocketVid = document.getElementById("fireVid");
+    const fireEl = document.querySelector("#smoke-front");
+//fireEl.setAttribute("scale", "0 0 0");
+//fireEl.setAttribute("visible", "false");
 
    const revealRocketFromPodest = () => {
     if (!rocket) return;
@@ -1115,6 +1144,7 @@ const startGridAfterReveal = () => {
   setupMission1Pins({
     onAllPinsDone: () => {
       startMission2();
+      hideTapGrid();
       document.getElementById("launch-btn")?.addEventListener("click", async () => {
         vibrateLaunchFade({
           totalMs: 3200,
@@ -1494,11 +1524,11 @@ const startMission2 = () => {
       : `Tap ${goal} times in ${Math.round(durationMs / 1000)} seconds.`;
 
   showMissionStartScreen({
-    title: t("mission2Title"),
-    sub: instruction,
-    buttonLabel: t("startMission2Btn"),
-    buttonId: "mission2-start-btn",   // ✅ different button id
-    mode: "mission2start",            // ✅ explicit mode
+  title: t("mission2Title"),
+  sub: t("mission2StartText"),
+  buttonLabel: t("startMission2Btn"),
+  buttonId: "mission2-start-btn",
+  mode: "mission2start",
     onStart: () => {
       
       setFooterMode("minigame");
@@ -1506,10 +1536,17 @@ const startMission2 = () => {
       setupMission2Minigame({
         goal,
         durationMs,
-        onDone: ({ success }) => {
-          if (success) setFooterMode("launch");
-          else setFooterMode("minigame");
-        },
+        
+ onDone: ({ success }) => {
+  if (success) {
+    hideMissionHelpButton();
+    window.clearMissionHelpIdleTimer?.();
+    currentMissionForHelp = "none";
+    setFooterMode("launch");
+  } else {
+    setFooterMode("minigame");
+  }
+},
       });
 
       requestAnimationFrame(() => {
@@ -1628,36 +1665,61 @@ const startCountdown = (seconds = 3, onDone) => {
     //==================================================
     const launchBtn = document.getElementById("launch-btn");
 
-  
+ let launchRaf = null;
+
 const launchRocket3D = () => {
   if (!rocket) return;
 
+  // Reset
   rocket.removeAttribute("animation__shake");
-  rocket.removeAttribute("animation__lift");
-  rocket.removeAttribute("animation__boost");
-
+  rocket.removeAttribute("animation");  
+  if (launchRaf) cancelAnimationFrame(launchRaf);
   rocket.setAttribute("position", "0 0 0");
 
+  // Shake (optional, kurz)
   rocket.setAttribute(
     "animation__shake",
-    "property: position; dur: 90; dir: alternate; loop: 12; easing: easeInOutSine; to: 0 0 0.02"
+    "property: position; dur: 120; dir: alternate; loop: 10; easing: easeInOutSine; to: 0 0 0.02"
   );
 
+  // Nach dem Shake: smooth accelerate
   setTimeout(() => {
-    rocket.setAttribute(
-      "animation__lift",
-      "property: position; dur: 900; easing: easeOutQuad; to: 0 10 0"
-    );
-  }, 700);
+    rocket.removeAttribute("animation__shake");
 
-  setTimeout(() => {
-    rocket.setAttribute(
-      "animation__boost",
-      "property: position; dur: 10000; easing: easeInQuad; to: 0 100 0"
-    );
-  }, 1500);
+    const start = performance.now();
+    const y0 = 0;
 
-  // Weiterleitung etwas später
+    // Parameter: hier “Gefühl” einstellen
+    const initialVel = 0.2;   // Startgeschwindigkeit (klein)
+    const accel = 1.6;        // Beschleunigung (größer = schnelleres Aufdrehen)
+    const duration = 4500;    // wie lange bis “aus dem Frame”
+    const maxY = 160;         // wie weit er fliegt
+
+    let v = initialVel;
+    let y = y0;
+    let last = performance.now();
+
+    const tick = (t) => {
+      const dt = (t - last) / 1000; // Sekunden
+      last = t;
+
+      // kontinuierliche Beschleunigung
+      v += accel * dt;
+      y += v * dt;
+
+      // Clamp / Ende
+      if (t - start >= duration || y >= maxY) {
+        rocket.setAttribute("position", `0 ${maxY} 0`);
+        return;
+      }
+
+      rocket.setAttribute("position", `0 ${y} 0`);
+      launchRaf = requestAnimationFrame(tick);
+    };
+
+    launchRaf = requestAnimationFrame(tick);
+  }, 120 * 10); // ungefähr Shake-Dauer (dur * loop)
+
   setTimeout(() => {
     window.location.href = "mehrErfahren.html";
   }, 8000);
@@ -1712,9 +1774,9 @@ window.resetMissionHelpIdleTimer?.();     // start 5s idle timer
         "animationcomplete__reveal",
         () => {
           showMissionStartScreen({
-            title: "MISSION 1",
+            title: t("missionTitle"),
             sub: t("missionSub"),
-            buttonLabel: "START MISSION 1",
+            buttonLabel: t("startMission1Btn"),
             onStart: () => {
               mission1Confirmed = true;
               missionOverlayMode = "none";
@@ -1730,7 +1792,7 @@ window.resetMissionHelpIdleTimer?.();     // start 5s idle timer
       showMissionStartScreen({
         title: "MISSION 1",
         sub: t("missionSub"),
-        buttonLabel: "START MISSION 1",
+        buttonLabel: t("startMission1Btn"),
         onStart: () => {
           mission1Confirmed = true;
           missionOverlayMode = "none";
@@ -1868,7 +1930,7 @@ setActiveStep(0);
       // hide Mission 1 pins/hit targets
       pinGroups.forEach((g) => setVisible(g, false));
       hitTargets.forEach((h) => h?.classList.remove("pin"));
-
+      hideTapGrid();
       setFooterMode("none");
 
       onAllPinsDone && onAllPinsDone();
@@ -2004,7 +2066,8 @@ function setupMission2Minigame({ goal = 30, durationMs = 5000, onDone } = {}) {
   const overlay = document.getElementById("minigame-overlay");
   const tapBox = document.getElementById("tap-box");
   const barEl = document.getElementById("minigame-progress-bar");
-
+  const hintEl = document.getElementById("minigame-hint");
+  const mgFooterView = document.getElementById("footer-view-minigame");
   // Footer Elements
   const statusEl = document.getElementById("mg-status");
   const timeEl = document.getElementById("minigame-time");
@@ -2073,9 +2136,10 @@ function setupMission2Minigame({ goal = 30, durationMs = 5000, onDone } = {}) {
 
 
     tapBox.classList.add("is-disabled");
-    statusEl.textContent = t("mgInstruction");
-
-    startBtn.textContent = t("footerStart");
+    if (hintEl) hintEl.textContent = t("mgInstruction");
+  
+    startBtn.textContent = "";            // ✅ no text
+    startBtn.setAttribute("aria-label", t("mgRetry")); // for screen reader
   };
 
   const tick = () => {
@@ -2092,33 +2156,40 @@ function setupMission2Minigame({ goal = 30, durationMs = 5000, onDone } = {}) {
   };
 
   const finish = (success) => {
-    running = false;
-    stopLoops();
-    tapBox.classList.add("is-disabled");
+  running = false;
+  stopLoops();
+  tapBox.classList.add("is-disabled");
 
-    if (success) {
-        showARRocketToast(1600);
-        barEl.style.width = "100%";
-        setFooterMode("launch");
+  if (success) {
+    // hide mission2 overlay
+    overlay.classList.add("hidden");
 
-        overlay.classList.add("hidden");
-    } else {
-      statusEl.textContent = `${t("mgTimeOver")} ${taps}/${goal} taps 😅`;
-      startBtn.textContent = t("mgRetry");
-    }
+    // hide minigame footer view 
+    mgFooterView?.classList.remove("show-retry");
+    startBtn.classList.add("hidden");
 
-    setTimeout(() => {
-      onDone && onDone({ success, taps, goal });
-    }, 150);
-  };
+    // hide the info/help button permanently after Mission 2
+    hideMissionHelpButton();
+    window.clearMissionHelpIdleTimer?.();
+    currentMissionForHelp = "none";
+  } else {
+    startBtn.classList.remove("hidden");
+    startBtn.textContent = "";
+    startBtn.setAttribute("aria-label", t("mgRetry"));
+  }
+
+  setTimeout(() => {
+    onDone && onDone({ success, taps, goal });
+  }, 150);
+};
 
   const startRound = () => {
     reset();
     running = true;
 
     tapBox.classList.remove("is-disabled");
-    statusEl.textContent = t("mgGo");
-    startBtn.textContent = t("mgRunning");
+    if (hintEl) hintEl.textContent = t("mgGo");
+    
 
     startTime = performance.now();
     rafId = requestAnimationFrame(tick);
@@ -2167,8 +2238,8 @@ function setupMission2Minigame({ goal = 30, durationMs = 5000, onDone } = {}) {
 
   const startWithCountdown = () => {
     tapBox.classList.add("is-disabled");
-    statusEl.textContent = t("mgReady");
-    startBtn.textContent = "…";
+    
+    
     showCountdown(3, startRound);
   };
 
@@ -2189,14 +2260,22 @@ function setupMission2Minigame({ goal = 30, durationMs = 5000, onDone } = {}) {
   };
 
   startBtn.onclick = () => {
-    if (running) return;
+     if (running) {
+    stopLoops();
+    // hard reset UI + restart with countdown
+    reset();
+    startWithCountdown();
+    return;
+  }
+
+  // If not running -> start normally
+  startWithCountdown();
 
     if (startBtn.textContent === "WEITER") {
       overlay.classList.add("hidden");
       return;
     }
 
-    startWithCountdown();
   };
 
   tapBox.addEventListener("click", registerTap);

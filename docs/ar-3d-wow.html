@@ -99,14 +99,19 @@
 
     <!-- Center Area -->
     <section class="minigame-stage">
-      <div class="minigame-progress">
-        <div id="minigame-progress-bar" class="minigame-progress-bar"></div>
-      </div>
+      <div class="minigame-stage">
+        <div class="minigame-time" id="minigame-time"></div>
 
-      <div class="minigame-time" id="minigame-time">5.0s</div>
+        <div class="minigame-progress">
+          <div class="minigame-progress-bar" id="minigame-progress-bar"></div>
+        </div>
 
-      <div id="tap-box" class="tap-box is-disabled" role="button" aria-label="Tap here">
-        <div class="tap-box-text">Tap here</div>
+       <!-- <div id="minigame-hint" class="minigame-hint"></div>-->
+          <div class="mg-meta">
+              <span><span id="mg-taps">0</span>/<span id="mg-goal">30</span> Taps</span>
+            </div>
+          <div id="tap-box" class="tap-box is-disabled" role="button" aria-label="Tap here">
+          <div class="tap-box-text">Tap here</div>
       </div>
     </section>
 </div>

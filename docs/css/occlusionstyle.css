@@ -427,7 +427,7 @@ body {
 .mission-help-ui {
   position: fixed;
   left: 8px;
-  bottom: 78px;           /* above footer */
+  bottom: calc(var(--ar-footer-h, 140px) + 10px + env(safe-area-inset-bottom, 0px));
   z-index: 120001;
   display: flex;
   align-items: center;
@@ -573,7 +573,7 @@ body {
   justify-content: center;
 
   padding: 10px 10px;
-  padding-top: 120px;      /* Header-Puffer (anpassen) */
+  padding-top: 90px;      /* Header-Puffer (anpassen) */
   padding-bottom: 170px;   /* Footer-Puffer */
   gap: 6px;                /* ✅ kleiner Abstand zwischen Progress/Time/Tapbox */
 }
@@ -604,10 +604,36 @@ body {
   margin-bottom: 15px;
 
   text-align: center;
+   font-size: 1.35rem;
+  font-weight: 900;
+  letter-spacing: 0.06em;
+  color: #EBFF00;
+}
+
+.minigame-hint {
+  width: min(78vw, 360px);
+  margin-top: 2px;
+  margin-bottom: 15px;
+
+  text-align: center;
+   
   font-weight: 700;
   letter-spacing: 0.06em;
-  color: rgba(229, 231, 235, 0.95);
+  color: #ffffff;
 }
+
+.mg-meta{
+  width: min(78vw, 360px);
+  margin-top: 2px;
+  margin-bottom: 15px;
+
+  text-align: center;
+   
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  color: #ffffff;
+}
+
 
 /* Tap-Quadrat */
 .tap-box {
@@ -691,7 +717,44 @@ body {
 }
 
 /* ===== Minigame Layout im Footer ===== */
-.footer-view-minigame .mg-row {
+
+
+/* hide all footer text in minigame */
+#footer-view-minigame .mg-text,
+#footer-view-minigame .mg-status,
+#footer-view-minigame .mg-meta{
+  display: none !important;
+}
+
+/* center in footer */
+#footer-view-minigame{
+  display:flex;
+  justify-content:center;
+  align-items:center;
+}
+
+/* always show icon button */
+#footer-view-minigame #mg-start-btn{
+  display:flex;
+  width:52px;
+  height:52px;
+  padding:0;
+  border-radius:999px;
+  border:2px solid #fff;
+  background: rgba(0,0,0,0.25);
+  align-items:center;
+  justify-content:center;
+}
+
+#footer-view-minigame #mg-start-btn::before{
+  content:"↻";
+  font-size:28px;
+  font-weight:900;
+  line-height:1;
+  color:#fff;
+}
+
+/*.footer-view-minigame .mg-row {
   display: flex;
   align-items: center;
   gap: 12px;
@@ -714,7 +777,7 @@ body {
   color: rgba(229, 231, 235, 0.9);
   font-size: 0.9rem;
   line-height: 1.1;
-}
+}*/
 
 /* Button im Minigame-Footer nicht full-width */
 .footer-view-minigame .footer-cta {
@@ -1039,4 +1102,25 @@ background: rgba(0,220,181,0.12);
 
 #mission-overlay.mission-dialog-mode #mission-wrap button:active {
   transform: scale(0.99);
+}
+/* Center Mission 1 + Mission 2 start overlay (dialog mode only) */
+#mission-overlay.mission-dialog-mode #mission-wrap {
+  text-align: center;
+}
+
+/* Title centered */
+#mission-overlay.mission-dialog-mode .mission-title,
+#mission-overlay.mission-dialog-mode #mission-title {
+  text-align: center !important;
+}
+
+/* Description centered */
+#mission-overlay.mission-dialog-mode .mission-sub,
+#mission-overlay.mission-dialog-mode #mission-sub {
+  text-align: center !important;
+}
+
+/* Optional: center the start button label too */
+#mission-overlay.mission-dialog-mode #mission-wrap button {
+  text-align: center;
 }
