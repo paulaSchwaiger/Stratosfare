@@ -101,8 +101,6 @@ GitHub Pages ist ideal für WebAR, weil du automatisch **HTTPS** bekommst (wicht
 4. **Save** → nach kurzer Zeit bekommst du eine URL wie:
    - `https://<username>.github.io/<repo>/`
 
-> Wichtig: Da deine Entry-HTMLs im Ordner `docs/` liegen, muss GitHub Pages auf **/docs** zeigen.
-
 ---
 
 ### 2) Prototypen online öffnen
