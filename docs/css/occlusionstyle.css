@@ -136,7 +136,7 @@ body {
   font-size: 16px;
   font-weight: bold;
 
-  background: transparent;                 /* ✅ transparent */
+  background: transparent;                
   color: #ffffff;
 
   border: 3px solid rgba(255, 255, 255, 0.8);
@@ -149,7 +149,7 @@ body {
 }
 
 .lang-btn:active {
-  background: rgba(0, 220, 181, 0.4);                     /* ✅ blue ONLY while pressing */
+  background: rgba(0, 220, 181, 0.4);                     
   border-color: #00DCB5;
   transform: scale(0.98);
 }
@@ -575,7 +575,7 @@ body {
   padding: 10px 10px;
   padding-top: 90px;      /* Header-Puffer (anpassen) */
   padding-bottom: 170px;   /* Footer-Puffer */
-  gap: 6px;                /* ✅ kleiner Abstand zwischen Progress/Time/Tapbox */
+  gap: 6px;                /*  kleiner Abstand zwischen Progress/Time/Tapbox */
 }
 
 
@@ -754,30 +754,6 @@ body {
   color:#fff;
 }
 
-/*.footer-view-minigame .mg-row {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.footer-view-minigame .mg-text {
-  flex: 1;
-  min-width: 0;
-}
-
-.footer-view-minigame .mg-status {
-  color: #e5e7eb;
-  font-weight: 700;
-  font-size: 0.95rem;
-  line-height: 1.15;
-  margin-bottom: 6px;
-}
-
-.footer-view-minigame .mg-meta {
-  color: rgba(229, 231, 235, 0.9);
-  font-size: 0.9rem;
-  line-height: 1.1;
-}*/
 
 /* Button im Minigame-Footer nicht full-width */
 .footer-view-minigame .footer-cta {

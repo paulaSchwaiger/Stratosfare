@@ -335,7 +335,7 @@ function applyTranslations() {
 
 document.addEventListener("DOMContentLoaded", () => {
   // Bind dynamic footer height to a CSS variable for layout calculations.
-  bindFooterHeightToCSSVar();   // ✅ add this
+  bindFooterHeightToCSSVar();   
 
   // Initialize language from persisted state and apply initial translations.
   setLang(currentLang);
@@ -2370,7 +2370,7 @@ function setupMission2Minigame({ goal = 30, durationMs = 5000, onDone } = {}) {
     if (hintEl) hintEl.textContent = t("mgInstruction");
 
     // Start button uses aria-label; visible text is intentionally empty.
-    startBtn.textContent = "";            // ✅ no text
+    startBtn.textContent = "";            
     startBtn.setAttribute("aria-label", t("mgRetry")); // for screen reader
   };
 
@@ -2564,7 +2564,7 @@ function setupMission2Minigame({ goal = 30, durationMs = 5000, onDone } = {}) {
       // After initial scene boot, hide loading and show the marker guidance overlay.
       setTimeout(() => {
         loadingEl.classList.add("hidden");
-        // ✅ show Hinweis ONLY after loading is gone
+        //  show Hinweis ONLY after loading is gone
         showHinweisOverlay({
           title: t("holdToMarkerTitle"),
           sub: t("holdToMarkerText"),
